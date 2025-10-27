@@ -1,36 +1,56 @@
 package org.schedule.entity;
 
-public class MireaScheduleData {
-    private Long id;
-    private String targetTitle;
-    private String fullTitle;
-    private Integer scheduleTarget;
-    private String iCalLink;
-    private String scheduleImageLink;
-    private String scheduleUpdateImageLink;
-    private String scheduleUIAddToCalendarLink;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+public class MireaScheduleData {
+    @JsonProperty("id")
+    private Long id;
+
+    @JsonProperty("scheduleTarget")
+    private Integer scheduleTarget;
+
+    @JsonProperty("isStatic")
+    private Boolean isStatic;
+
+    @JsonProperty("personalScheduleId")
+    private Long personalScheduleId;
+
+    @JsonProperty("title")
+    private String title;
+
+    @JsonProperty("iCalContent")
+    private String iCalContent;
+
+    @JsonProperty("iCalLink")
+    private String iCalLink;
+
+    @JsonProperty("scheduleImageLink")
+    private String scheduleImageLink;
+
+    @JsonProperty("scheduleUpdateImageLink")
+    private String scheduleUpdateImageLink;
+
+    // Конструкторы
     public MireaScheduleData() {}
 
-    public MireaScheduleData(Long id, String targetTitle, String fullTitle, Integer scheduleTarget) {
-        this.id = id;
-        this.targetTitle = targetTitle;
-        this.fullTitle = fullTitle;
-        this.scheduleTarget = scheduleTarget;
-    }
-
-    // Getters and Setters
+    // Геттеры и сеттеры
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getTargetTitle() { return targetTitle; }
-    public void setTargetTitle(String targetTitle) { this.targetTitle = targetTitle; }
-
-    public String getFullTitle() { return fullTitle; }
-    public void setFullTitle(String fullTitle) { this.fullTitle = fullTitle; }
-
     public Integer getScheduleTarget() { return scheduleTarget; }
     public void setScheduleTarget(Integer scheduleTarget) { this.scheduleTarget = scheduleTarget; }
+
+    public Boolean getIsStatic() { return isStatic; }
+    public void setIsStatic(Boolean isStatic) { this.isStatic = isStatic; }
+
+    public Long getPersonalScheduleId() { return personalScheduleId; }
+    public void setPersonalScheduleId(Long personalScheduleId) { this.personalScheduleId = personalScheduleId; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+
+    public String getICalContent() { return iCalContent; }
+    public void setICalContent(String iCalContent) { this.iCalContent = iCalContent; }
 
     public String getICalLink() { return iCalLink; }
     public void setICalLink(String iCalLink) { this.iCalLink = iCalLink; }
@@ -40,7 +60,4 @@ public class MireaScheduleData {
 
     public String getScheduleUpdateImageLink() { return scheduleUpdateImageLink; }
     public void setScheduleUpdateImageLink(String scheduleUpdateImageLink) { this.scheduleUpdateImageLink = scheduleUpdateImageLink; }
-
-    public String getScheduleUIAddToCalendarLink() { return scheduleUIAddToCalendarLink; }
-    public void setScheduleUIAddToCalendarLink(String scheduleUIAddToCalendarLink) { this.scheduleUIAddToCalendarLink = scheduleUIAddToCalendarLink; }
 }

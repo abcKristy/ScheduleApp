@@ -25,7 +25,7 @@ public class ScheduleController {
     }
 
     @GetMapping("/{titles}")
-    public ResponseEntity<List<ResponseDto>> getSchedule(
+    public ResponseEntity<List<ScheduleDto>> getSchedule(
             @PathVariable("titles") String titles
     ) {
         log.info("called getSchedule with titles: {}", titles);

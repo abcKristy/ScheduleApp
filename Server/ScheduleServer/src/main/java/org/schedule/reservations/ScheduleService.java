@@ -1,6 +1,7 @@
 package org.schedule.reservations;
 
 import org.schedule.entity.ResponseDto;
+import org.schedule.entity.ScheduleDto;
 import org.schedule.mapping.ScheduleMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,10 +19,11 @@ public class ScheduleService {
         this.scheduleMapper = scheduleMapper;
     }
 
-    public List<ResponseDto> getSchedule(List<String> titleList) {
+    public List<ScheduleDto> getSchedule(List<String> titleList) {
         log.info("called getSchedule with titles: {}", titleList);
         List<ResponseDto> response = scheduleMapper.mapToResponseDto(titleList, MIREA_API_URL);
         log.info("finish getSchedule with titles: {}", response);
-        return response;
+
+        return scheduleMapper.mapToScheduleDto(response);
     }
 }
