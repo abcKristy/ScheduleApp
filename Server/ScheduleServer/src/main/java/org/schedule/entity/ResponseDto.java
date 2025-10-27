@@ -2,34 +2,33 @@ package org.schedule.entity;
 
 public class ResponseDto {
     private Long id;
-    private String targetTitle;
     private String fullTitle;
+    private Integer target;
 
-    // constructors, getters, setters
     public ResponseDto() {}
 
-    public ResponseDto(Long id, String targetTitle, String fullTitle) {
+    public ResponseDto(Long id, String fullTitle, Integer target) {
         this.id = id;
-        this.targetTitle = targetTitle;
         this.fullTitle = fullTitle;
+        this.target = target;
     }
 
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getTargetTitle() { return targetTitle; }
-    public void setTargetTitle(String targetTitle) { this.targetTitle = targetTitle; }
-
     public String getFullTitle() { return fullTitle; }
     public void setFullTitle(String fullTitle) { this.fullTitle = fullTitle; }
 
+    public Integer getTarget() { return target; }
+    public void setTarget(Integer target) { this.target = target; }
+
     @Override
     public String toString() {
-        return "ScheduleResponseDto{" +
+        return "ResponseDto{" +
                 "id=" + id +
-                ", targetTitle='" + targetTitle + '\'' +
                 ", fullTitle='" + fullTitle + '\'' +
+                ", target=" + target +
                 '}';
     }
 }

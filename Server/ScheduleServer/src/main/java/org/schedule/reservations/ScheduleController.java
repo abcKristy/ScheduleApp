@@ -30,7 +30,7 @@ public class ScheduleController {
     ) {
         log.info("called getSchedule with titles: {}", titles);
 
-        List<String> titleList = Arrays.stream(titles.split("%"))
+        List<String> titleList = Arrays.stream(titles.split(":"))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
