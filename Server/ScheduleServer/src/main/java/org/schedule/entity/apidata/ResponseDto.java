@@ -1,4 +1,4 @@
-package org.schedule.entity;
+package org.schedule.entity.apidata;
 
 public class ResponseDto {
     private Long id;

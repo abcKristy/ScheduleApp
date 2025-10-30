@@ -1,4 +1,4 @@
-package org.schedule.entity;
+package org.schedule.entity.schedule;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;

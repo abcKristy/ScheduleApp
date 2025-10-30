@@ -1,4 +1,4 @@
-package org.schedule.entity;
+package org.schedule.entity.schedule;
 
 public class ScheduleDto {
     private Long id;
@@ -24,6 +24,10 @@ public class ScheduleDto {
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+
+    public String getiCalContent() {
+        return iCalContent;
+    }
 
     public String getICalContent() { return iCalContent; }
     public void setICalContent(String iCalContent) { this.iCalContent = iCalContent; }

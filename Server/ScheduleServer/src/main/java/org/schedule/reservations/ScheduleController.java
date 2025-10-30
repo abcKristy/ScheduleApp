@@ -1,7 +1,7 @@
 package org.schedule.reservations;
 
-import org.schedule.entity.ResponseDto;
-import org.schedule.entity.ScheduleDto;
+import org.schedule.entity.forBD.LessonEntity;
+import org.schedule.entity.schedule.ScheduleDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -24,11 +24,11 @@ public class ScheduleController {
         this.scheduleService = scheduleService;
     }
 
-    @GetMapping("/{titles}")
-    public ResponseEntity<List<ScheduleDto>> getSchedule(
+    @GetMapping("/api/{titles}")
+    public ResponseEntity<List<ScheduleDto>> getScheduleFromApi(
             @PathVariable("titles") String titles
     ) {
-        log.info("called getSchedule with titles: {}", titles);
+        log.info("called getScheduleFromApi with titles: {}", titles);
 
         List<String> titleList = Arrays.stream(titles.split(":"))
                 .map(String::trim)
@@ -37,6 +37,23 @@ public class ScheduleController {
 
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(scheduleService.getSchedule(titleList));
+                .body(scheduleService.getScheduleFromApi(titleList));
     }
+
+    @GetMapping("/final/{titles}")
+    public ResponseEntity<List<LessonEntity>> getScheduleForGroups(
+            @PathVariable("titles") String titles
+    ) {
+        log.info("called getScheduleFromApi with titles: {}", titles);
+
+        List<String> titleList = Arrays.stream(titles.split(":"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(scheduleService.getScheduleForGroups(titleList));
+    }
+
 }

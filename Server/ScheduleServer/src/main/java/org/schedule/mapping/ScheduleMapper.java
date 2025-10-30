@@ -1,6 +1,12 @@
 package org.schedule.mapping;
 
-import org.schedule.entity.*;
+import org.schedule.entity.apidata.MireaApi;
+import org.schedule.entity.apidata.MireaApiData;
+import org.schedule.entity.apidata.ResponseDto;
+import org.schedule.entity.forBD.LessonEntity;
+import org.schedule.entity.schedule.MireaSchedule;
+import org.schedule.entity.schedule.MireaScheduleData;
+import org.schedule.entity.schedule.ScheduleDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +20,11 @@ import java.util.List;
 public class ScheduleMapper {
     private static final Logger log = LoggerFactory.getLogger(ScheduleMapper.class);
     private final RestTemplate restTemplate;
+    private final ParserToLesson parser;
 
-    public ScheduleMapper(RestTemplate restTemplate) {
+    public ScheduleMapper(RestTemplate restTemplate, ParserToLesson parser) {
         this.restTemplate = restTemplate;
+        this.parser = parser;
     }
 
     public List<ResponseDto> mapToResponseDto(List<String> titleList, String mireaApiUrl) {
@@ -115,5 +123,48 @@ public class ScheduleMapper {
         log.info("Successfully converted {} ResponseDto objects to {} ScheduleDto objects",
                 responseDtos.size(), result.size());
         return result;
+    }
+
+    public List<LessonEntity> parseStringData(List<ScheduleDto> schedule) {
+        log.info("Начало парсинга {} ScheduleDto объектов", schedule.size());
+
+        List<LessonEntity> lessons = new ArrayList<>();
+
+        for (ScheduleDto dto : schedule) {
+            String data = dto.getiCalContent();
+
+            if (data == null) {
+                log.warn("Пустые iCal данные (null) для ScheduleDto: {}", dto.getId());
+                continue;
+            }
+
+            if (data.trim().isEmpty()) {
+                log.warn("Пустые iCal данные (empty string) для ScheduleDto: {}", dto.getId());
+                continue;
+            }
+
+            log.info("Парсинг ScheduleDto {}: длина iCal данных = {} символов",
+                    dto.getId(), data.length());
+
+            List<LessonEntity> parsedLessons = parser.parseICalendarToLessons(data);
+
+            if (parsedLessons != null && !parsedLessons.isEmpty()) {
+                lessons.addAll(parsedLessons);
+                log.info("Добавлено {} занятий из ScheduleDto {}", parsedLessons.size(), dto.getId());
+            } else {
+                log.warn("Не удалось распарсить занятия для ScheduleDto {} (0 занятий)", dto.getId());
+
+                // ДИАГНОСТИКА: проверяем содержимое iCalContent
+                if (data.contains("BEGIN:VCALENDAR") && data.contains("BEGIN:VEVENT")) {
+                    log.warn("iCal данные содержат VEVENT, но парсер не нашел занятий");
+                } else {
+                    log.warn("iCal данные не содержат ожидаемую структуру VEVENT/VCALENDAR");
+                }
+            }
+        }
+
+        log.info("Парсинг завершен. Всего получено {} занятий из {} ScheduleDto",
+                lessons.size(), schedule.size());
+        return lessons;
     }
 }

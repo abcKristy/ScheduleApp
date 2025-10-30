@@ -1,4 +1,4 @@
-package org.schedule.entity;
+package org.schedule.entity.apidata;
 
 public class MireaApiData {
     private Long id;
