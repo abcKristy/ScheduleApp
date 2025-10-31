@@ -81,8 +81,12 @@ public class ScheduleService {
 
         finalSchedule.addAll(parsedLessons);
 
+
+
         log.info("Успешно получено и сохранено расписание для {} групп, найдено {} занятий",
                 remainingGroups.size(), parsedLessons.size());
+
+        log.info("Успешно получено и сохранено расписание num {}", finalSchedule.size());
 
         return finalSchedule;
     }

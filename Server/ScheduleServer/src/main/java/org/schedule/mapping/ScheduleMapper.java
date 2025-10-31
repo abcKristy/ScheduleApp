@@ -146,7 +146,7 @@ public class ScheduleMapper {
             log.info("Парсинг ScheduleDto {}: длина iCal данных = {} символов",
                     dto.getId(), data.length());
 
-            List<LessonEntity> parsedLessons = parser.parseICalendarToLessons(data);
+            List<LessonEntity> parsedLessons = parser.parseICalendarToLessons(data,dto.getTitle());
 
             if (parsedLessons != null && !parsedLessons.isEmpty()) {
                 lessons.addAll(parsedLessons);

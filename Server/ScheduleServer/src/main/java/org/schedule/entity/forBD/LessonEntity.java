@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@Table(name = "allLessons")
+@Table(name = "lessons")
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
@@ -38,14 +38,15 @@ public class LessonEntity {
     @Column(name = "teacher")
     private String teacher;
 
-    @Column(name = "summary")
-    private String summary;
+    // Удалено поле summary, добавлено поле для хранения групп в виде строки
+    @Column(name = "groups_summary")
+    private String groupsSummary; // Строка с названиями групп для быстрого доступа
 
     @Column(name = "description")
     private String description;
 
     @Column(name = "uid", unique = true)
-    private String uid; // Добавляем поле uid
+    private String uid;
 
     @ManyToMany
     @JoinTable(
@@ -54,7 +55,7 @@ public class LessonEntity {
             inverseJoinColumns = @JoinColumn(name = "group_id")
     )
     @ToString.Exclude
-    private List<StudentGroup> groups = new ArrayList<>();
+    private List<GroupEntity> groups = new ArrayList<>();
 
     @Embedded
     private RecurrenceRule recurrence;
@@ -82,12 +83,21 @@ public class LessonEntity {
         return Objects.hash(discipline, lessonType, startTime, endTime, room, teacher);
     }
 
-    public List<StudentGroup> getGroups() {
+    public List<GroupEntity> getGroups() {
         return groups;
     }
 
-    public void setGroups(List<StudentGroup> groups) {
+    public void setGroups(List<GroupEntity> groups) {
         this.groups = groups;
+        // Автоматически обновляем groupsSummary при установке групп
+        if (groups != null && !groups.isEmpty()) {
+            this.groupsSummary = groups.stream()
+                    .map(GroupEntity::getGroupName)
+                    .reduce((g1, g2) -> g1 + ", " + g2)
+                    .orElse("");
+        } else {
+            this.groupsSummary = "";
+        }
     }
 
     public RecurrenceRule getRecurrence() {
@@ -162,12 +172,12 @@ public class LessonEntity {
         this.teacher = teacher;
     }
 
-    public String getSummary() {
-        return summary;
+    public String getGroupsSummary() {
+        return groupsSummary;
     }
 
-    public void setSummary(String summary) {
-        this.summary = summary;
+    public void setGroupsSummary(String groupsSummary) {
+        this.groupsSummary = groupsSummary;
     }
 
     public String getDescription() {
