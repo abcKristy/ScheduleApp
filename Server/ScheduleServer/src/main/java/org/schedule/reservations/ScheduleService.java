@@ -2,7 +2,7 @@ package org.schedule.reservations;
 
 import jakarta.transaction.Transactional;
 import org.schedule.entity.apidata.ResponseDto;
-import org.schedule.entity.forBD.LessonEntity;
+import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.schedule.ScheduleDto;
 import org.schedule.mapping.CheckDataInMemory;
 import org.schedule.mapping.SaverToMemory;

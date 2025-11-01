@@ -3,7 +3,7 @@ package org.schedule.mapping;
 import org.schedule.entity.apidata.MireaApi;
 import org.schedule.entity.apidata.MireaApiData;
 import org.schedule.entity.apidata.ResponseDto;
-import org.schedule.entity.forBD.LessonEntity;
+import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.schedule.MireaSchedule;
 import org.schedule.entity.schedule.MireaScheduleData;
 import org.schedule.entity.schedule.ScheduleDto;

@@ -1,11 +1,9 @@
 package org.schedule.mapping;
 
-import org.schedule.entity.forBD.LessonEntity;
+import org.schedule.entity.forBD.basic.LessonEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 public class CheckDataInMemory {

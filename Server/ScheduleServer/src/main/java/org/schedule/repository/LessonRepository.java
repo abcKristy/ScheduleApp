@@ -1,6 +1,6 @@
 package org.schedule.repository;
 
-import org.schedule.entity.forBD.LessonEntity;
+import org.schedule.entity.forBD.basic.LessonEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

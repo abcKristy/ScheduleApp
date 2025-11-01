@@ -1,9 +1,9 @@
 package org.schedule.mapping;
 
-import org.schedule.entity.forBD.LessonEntity;
+import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.forBD.LessonType;
 import org.schedule.entity.forBD.RecurrenceRule;
-import org.schedule.entity.forBD.GroupEntity;
+import org.schedule.entity.forBD.basic.GroupEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

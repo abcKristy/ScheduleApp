@@ -1,10 +1,12 @@
 package org.schedule.mapping;
 
-import org.schedule.entity.forBD.LessonEntity;
-import org.schedule.entity.forBD.GroupEntity;
-import org.schedule.entity.forBD.TeacherEntity;
+import org.schedule.entity.forBD.basic.LessonEntity;
+import org.schedule.entity.forBD.basic.GroupEntity;
+import org.schedule.entity.forBD.basic.RoomEntity;
+import org.schedule.entity.forBD.basic.TeacherEntity;
 import org.schedule.repository.LessonRepository;
 import org.schedule.repository.GroupRepository;
+import org.schedule.repository.RoomRepository;
 import org.schedule.repository.TeacherRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,13 +24,16 @@ public class SaverToMemory {
     private final LessonRepository lessonRepository;
     private final GroupRepository groupRepository;
     private final TeacherRepository teacherRepository;
+    private final RoomRepository roomRepository;
 
     public SaverToMemory(LessonRepository lessonRepository,
                          GroupRepository groupRepository,
-                         TeacherRepository teacherRepository) {
+                         TeacherRepository teacherRepository,
+                         RoomRepository roomRepository) {
         this.lessonRepository = lessonRepository;
         this.groupRepository = groupRepository;
         this.teacherRepository = teacherRepository;
+        this.roomRepository = roomRepository;
     }
 
     /**
@@ -43,17 +48,23 @@ public class SaverToMemory {
     /**
      * Сохраняет одно занятие в базу данных с обработкой связей
      */
+    /**
+     * Сохраняет одно занятие в базу данных с обработкой связей
+     */
     @Transactional
     public void saveToDatabase(LessonEntity lesson) {
         try {
             log.info("Сохранение занятия в БД: {} - {}",
                     lesson.getDiscipline(), lesson.getStartTime());
 
-            // Обрабатываем группы (проверяем существование и сохраняем связи)
+            // Обрабатываем группы
             processGroups(lesson);
 
-            // Обрабатываем преподавателя (если есть)
-            processTeacher(lesson);
+            // Обрабатываем преподавателей
+            processTeachers(lesson);
+
+            // Обрабатываем аудитории
+            processRooms(lesson);
 
             // Проверяем существование занятия по UID
             if (lesson.getUid() != null) {
@@ -100,6 +111,7 @@ public class SaverToMemory {
                 savedCount, skippedCount);
     }
 
+
     /**
      * Обрабатывает группы занятия: проверяет существование и устанавливает связи
      */
@@ -127,17 +139,61 @@ public class SaverToMemory {
     }
 
     /**
-     * Обрабатывает преподавателя занятия
+     * Обрабатывает преподавателей занятия
      */
-    private void processTeacher(LessonEntity lesson) {
+    private void processTeachers(LessonEntity lesson) {
         String teacherName = lesson.getTeacher();
         if (teacherName == null || teacherName.trim().isEmpty()) {
             return;
         }
 
-        // TODO: Реализовать логику связывания с сущностью TeacherEntity
-        // Пока сохраняем только имя преподавателя как строку в LessonEntity
-        log.debug("Преподаватель занятия: {}", teacherName);
+        List<TeacherEntity> processedTeachers = new ArrayList<>();
+
+        // Разделяем преподавателей, если их несколько (через запятую или \n)
+        String[] teacherNames = teacherName.split("[,\n]");
+        for (String name : teacherNames) {
+            String cleanName = name.trim();
+            if (!cleanName.isEmpty()) {
+                TeacherEntity existingTeacher = teacherRepository.findByFullName(cleanName)
+                        .orElseGet(() -> {
+                            TeacherEntity newTeacher = new TeacherEntity();
+                            newTeacher.setFullName(cleanName);
+                            return teacherRepository.save(newTeacher);
+                        });
+                processedTeachers.add(existingTeacher);
+            }
+        }
+
+        lesson.setTeachers(processedTeachers);
+    }
+
+    /**
+     * Обрабатывает аудитории занятия
+     */
+    private void processRooms(LessonEntity lesson) {
+        String roomName = lesson.getRoom();
+        if (roomName == null || roomName.trim().isEmpty()) {
+            return;
+        }
+
+        List<RoomEntity> processedRooms = new ArrayList<>();
+
+        // Разделяем аудитории, если их несколько (через запятую)
+        String[] roomNames = roomName.split(",");
+        for (String name : roomNames) {
+            String cleanName = name.trim();
+            if (!cleanName.isEmpty()) {
+                RoomEntity existingRoom = roomRepository.findByRoomName(cleanName)
+                        .orElseGet(() -> {
+                            RoomEntity newRoom = new RoomEntity();
+                            newRoom.setRoomName(cleanName);
+                            return roomRepository.save(newRoom);
+                        });
+                processedRooms.add(existingRoom);
+            }
+        }
+
+        lesson.setRooms(processedRooms);
     }
 
     /**
@@ -151,9 +207,8 @@ public class SaverToMemory {
         existing.setLessonType(newData.getLessonType());
         existing.setStartTime(newData.getStartTime());
         existing.setEndTime(newData.getEndTime());
-        existing.setRoom(newData.getRoom());
-        existing.setTeacher(newData.getTeacher());
-        // Удален setSummary, теперь используем groups
+        existing.setRoom(newData.getRoom()); // Сохраняем для обратной совместимости
+        existing.setTeacher(newData.getTeacher()); // Сохраняем для обратной совместимости
         existing.setRecurrence(newData.getRecurrence());
         existing.setExceptions(newData.getExceptions());
 
@@ -161,6 +216,18 @@ public class SaverToMemory {
         existing.getGroups().clear();
         if (newData.getGroups() != null) {
             existing.getGroups().addAll(newData.getGroups());
+        }
+
+        // Обновляем преподавателей
+        existing.getTeachers().clear();
+        if (newData.getTeachers() != null) {
+            existing.getTeachers().addAll(newData.getTeachers());
+        }
+
+        // Обновляем аудитории
+        existing.getRooms().clear();
+        if (newData.getRooms() != null) {
+            existing.getRooms().addAll(newData.getRooms());
         }
 
         lessonRepository.save(existing);

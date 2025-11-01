@@ -1,7 +1,9 @@
-package org.schedule.entity.forBD;
+package org.schedule.entity.forBD.basic;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.schedule.entity.forBD.LessonType;
+import org.schedule.entity.forBD.RecurrenceRule;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -56,6 +58,26 @@ public class LessonEntity {
     )
     @ToString.Exclude
     private List<GroupEntity> groups = new ArrayList<>();
+
+    // Связь Many-to-Many с преподавателями
+    @ManyToMany
+    @JoinTable(
+            name = "lesson_teacher",
+            joinColumns = @JoinColumn(name = "lesson_id"),
+            inverseJoinColumns = @JoinColumn(name = "teacher_id")
+    )
+    @ToString.Exclude
+    private List<TeacherEntity> teachers = new ArrayList<>();
+
+    // Связь Many-to-Many с аудиториями
+    @ManyToMany
+    @JoinTable(
+            name = "lesson_room",
+            joinColumns = @JoinColumn(name = "lesson_id"),
+            inverseJoinColumns = @JoinColumn(name = "room_id")
+    )
+    @ToString.Exclude
+    private List<RoomEntity> rooms = new ArrayList<>();
 
     @Embedded
     private RecurrenceRule recurrence;
@@ -194,5 +216,21 @@ public class LessonEntity {
 
     public void setUid(String uid) {
         this.uid = uid;
+    }
+
+    public List<TeacherEntity> getTeachers() {
+        return teachers;
+    }
+
+    public void setTeachers(List<TeacherEntity> teachers) {
+        this.teachers = teachers;
+    }
+
+    public List<RoomEntity> getRooms() {
+        return rooms;
+    }
+
+    public void setRooms(List<RoomEntity> rooms) {
+        this.rooms = rooms;
     }
 }

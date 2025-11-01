@@ -1,4 +1,4 @@
-package org.schedule.entity.forBD;
+package org.schedule.entity.forBD.basic;
 
 import jakarta.persistence.*;
 

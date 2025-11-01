@@ -1,6 +1,6 @@
 package org.schedule.reservations;
 
-import org.schedule.entity.forBD.LessonEntity;
+import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.schedule.ScheduleDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
