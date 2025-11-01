@@ -19,10 +19,21 @@ public class TeacherEntity {
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
+    @Column(name = "id_from_api")
+    private Long idFromApi;
+
     // Связь Many-to-Many с уроками
     @ManyToMany(mappedBy = "teachers")
     @ToString.Exclude
     private List<LessonEntity> lessons = new ArrayList<>();
+
+    public Long getIdFromApi() {
+        return idFromApi;
+    }
+
+    public void setIdFromApi(Long idFromApi) {
+        this.idFromApi = idFromApi;
+    }
 
     public Long getId() {
         return id;

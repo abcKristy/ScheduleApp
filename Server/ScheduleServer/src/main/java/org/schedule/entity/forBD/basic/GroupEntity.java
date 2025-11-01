@@ -14,6 +14,17 @@ public class GroupEntity {
     @Column(name = "group_name", unique = true, nullable = false)
     private String groupName;
 
+    @Column(name = "id_from_api")
+    private Long idFromApi;
+
+    public Long getIdFromApi() {
+        return idFromApi;
+    }
+
+    public void setIdFromApi(Long idFromApi) {
+        this.idFromApi = idFromApi;
+    }
+
     public GroupEntity() {}
 
     public Long getId() {

@@ -4,6 +4,7 @@ import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.forBD.basic.GroupEntity;
 import org.schedule.entity.forBD.basic.RoomEntity;
 import org.schedule.entity.forBD.basic.TeacherEntity;
+import org.schedule.entity.schedule.ScheduleDto;
 import org.schedule.repository.LessonRepository;
 import org.schedule.repository.GroupRepository;
 import org.schedule.repository.RoomRepository;
@@ -231,5 +232,112 @@ public class SaverToMemory {
         }
 
         lessonRepository.save(existing);
+    }
+
+    @Transactional
+    public void updateIdFromApi(ScheduleDto scheduleDto) {
+        try {
+            log.info("Обновление id_from_api для ScheduleDto: id={}, target={}, title='{}'",
+                    scheduleDto.getId(), scheduleDto.getScheduleTarget(), scheduleDto.getTitle());
+
+            Long apiId = scheduleDto.getId();
+            String title = scheduleDto.getTitle();
+            Integer target = scheduleDto.getScheduleTarget();
+
+            if (apiId == null || title == null || target == null) {
+                log.warn("Недостаточно данных для обновления id_from_api");
+                return;
+            }
+
+            switch (target) {
+                case 1: // Группы
+                    updateGroupIdFromApi(title, apiId);
+                    break;
+                case 2: // Преподаватели
+                    updateTeacherIdFromApi(title, apiId);
+                    break;
+                case 3: // Аудитории
+                    updateRoomIdFromApi(title, apiId);
+                    break;
+                default:
+                    log.warn("Неизвестный target: {}", target);
+            }
+
+            log.info("Успешно обновлен id_from_api для target={}, title='{}'", target, title);
+
+        } catch (Exception e) {
+            log.error("Ошибка при обновлении id_from_api для ScheduleDto {}: {}",
+                    scheduleDto.getId(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Обновляет id_from_api для группы
+     */
+    private void updateGroupIdFromApi(String groupName, Long apiId) {
+        Optional<GroupEntity> groupOpt = groupRepository.findByGroupName(groupName);
+        if (groupOpt.isPresent()) {
+            GroupEntity group = groupOpt.get();
+            group.setIdFromApi(apiId);
+            groupRepository.save(group);
+            log.debug("Обновлен id_from_api для группы '{}': {}", groupName, apiId);
+        } else {
+            log.warn("Группа '{}' не найдена в БД для обновления id_from_api", groupName);
+        }
+    }
+
+    /**
+     * Обновляет id_from_api для преподавателя
+     */
+    private void updateTeacherIdFromApi(String teacherName, Long apiId) {
+        Optional<TeacherEntity> teacherOpt = teacherRepository.findByFullName(teacherName);
+        if (teacherOpt.isPresent()) {
+            TeacherEntity teacher = teacherOpt.get();
+            teacher.setIdFromApi(apiId);
+            teacherRepository.save(teacher);
+            log.debug("Обновлен id_from_api для преподавателя '{}': {}", teacherName, apiId);
+        } else {
+            log.warn("Преподаватель '{}' не найден в БД для обновления id_from_api", teacherName);
+        }
+    }
+
+    /**
+     * Обновляет id_from_api для аудитории
+     */
+    private void updateRoomIdFromApi(String roomName, Long apiId) {
+        Optional<RoomEntity> roomOpt = roomRepository.findByRoomName(roomName);
+        if (roomOpt.isPresent()) {
+            RoomEntity room = roomOpt.get();
+            room.setIdFromApi(apiId);
+            roomRepository.save(room);
+            log.debug("Обновлен id_from_api для аудитории '{}': {}", roomName, apiId);
+        } else {
+            log.warn("Аудитория '{}' не найдена в БД для обновления id_from_api", roomName);
+        }
+    }
+
+    /**
+     * Обновляет id_from_api для списка ScheduleDto
+     */
+    @Transactional
+    public void updateAllIdsFromApi(List<ScheduleDto> scheduleDtos) {
+        log.info("Обновление id_from_api для {} ScheduleDto объектов", scheduleDtos.size());
+
+        int updatedCount = 0;
+        int skippedCount = 0;
+
+        for (ScheduleDto dto : scheduleDtos) {
+            try {
+                updateIdFromApi(dto);
+                updatedCount++;
+            } catch (Exception e) {
+                log.warn("Не удалось обновить id_from_api для ScheduleDto {}: {}",
+                        dto.getId(), e.getMessage());
+                skippedCount++;
+            }
+        }
+
+        log.info("Обновление id_from_api завершено: успешно - {}, пропущено - {}",
+                updatedCount, skippedCount);
     }
 }

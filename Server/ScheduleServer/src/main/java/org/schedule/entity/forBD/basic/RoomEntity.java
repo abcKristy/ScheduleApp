@@ -16,8 +16,8 @@ public class RoomEntity {
     @Column(name = "room_name", unique = true, nullable = false)
     private String roomName;
 
-    @Column(name = "description")
-    private String description;
+    @Column(name = "id_from_api")
+    private Long idFromApi;
 
     public Long getId() {
         return id;
@@ -35,11 +35,11 @@ public class RoomEntity {
         this.roomName = roomName;
     }
 
-    public String getDescription() {
-        return description;
+    public Long getIdFromApi() {
+        return idFromApi;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setIdFromApi(Long idFromApi) {
+        this.idFromApi = idFromApi;
     }
 }

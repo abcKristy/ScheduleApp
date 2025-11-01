@@ -78,6 +78,7 @@ public class ScheduleService {
             saver.saveToDatabase(parsed);
             saver.saveToCache(parsed);
         }
+        saver.updateAllIdsFromApi(schedule);
 
         finalSchedule.addAll(parsedLessons);
 
