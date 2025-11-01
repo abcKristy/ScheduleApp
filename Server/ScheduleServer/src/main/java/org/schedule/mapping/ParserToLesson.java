@@ -206,21 +206,22 @@ public class ParserToLesson {
      * @param scheduleTitle заголовок расписания (используется как fallback)
      */
     private String extractTeacher(Map<String, String> properties, String scheduleTitle) {
-        // Из DESCRIPTION
-        String description = properties.getOrDefault("DESCRIPTION", "");
-        log.info("!!!!!!!!!!!!!!see description = {}", description);
-        if (description.contains("Преподаватель:")) {
-            Pattern teacherPattern = Pattern.compile("Преподаватель:\\s*([^\\n\\r]+)");
-            Matcher matcher = teacherPattern.matcher(description);
-            if (matcher.find()) {
-                return cleanText(matcher.group(1));
-            }
-        }
-
-        // Из X-META-TEACHER
+        // Из X-META-TEACHER (основной источник)
         String teacher = properties.get("X-META-TEACHER");
         if (teacher != null && !teacher.trim().isEmpty()) {
             return cleanText(teacher);
+        }
+
+        // Ищем все свойства, начинающиеся с X-META-TEACHER (могут быть с параметрами)
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith("X-META-TEACHER") && !entry.getValue().trim().isEmpty()) {
+                String teacherValue = entry.getValue().trim();
+                if (!teacherValue.isEmpty()) {
+                    log.debug("Найден преподаватель в {}: {}", key, teacherValue);
+                    return cleanText(teacherValue);
+                }
+            }
         }
 
         // Из SUMMARY - пытаемся извлечь имя преподавателя из названия
