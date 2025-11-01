@@ -67,6 +67,8 @@ public class ParserToLesson {
      */
     private LessonEntity parseEventBlock(String eventBlock, String scheduleTitle) {
         Map<String, String> properties = extractProperties(eventBlock);
+        log.info("!!!!!!!!!!!!!!see eventBlock = {}", eventBlock);
+        log.info("!!!!!!!!!!!!!!see properties = {}", properties);
 
         String summary = properties.getOrDefault("SUMMARY", "");
 
@@ -112,7 +114,7 @@ public class ParserToLesson {
     private Map<String, String> extractProperties(String eventBlock) {
         Map<String, String> properties = new HashMap<>();
 
-        String[] lines = eventBlock.split("\r\n|\r|\n");
+        String[] lines = eventBlock.split("\r\n");
 
         String currentKey = null;
         StringBuilder currentValue = new StringBuilder();
@@ -206,6 +208,7 @@ public class ParserToLesson {
     private String extractTeacher(Map<String, String> properties, String scheduleTitle) {
         // Из DESCRIPTION
         String description = properties.getOrDefault("DESCRIPTION", "");
+        log.info("!!!!!!!!!!!!!!see description = {}", description);
         if (description.contains("Преподаватель:")) {
             Pattern teacherPattern = Pattern.compile("Преподаватель:\\s*([^\\n\\r]+)");
             Matcher matcher = teacherPattern.matcher(description);
@@ -271,38 +274,38 @@ public class ParserToLesson {
     private List<GroupEntity> extractGroups(Map<String, String> properties) {
         List<GroupEntity> groups = new ArrayList<>();
 
-        // Из DESCRIPTION - ищем любые группы в формате "XXXX-XX-XX" или подобном
-        String description = properties.getOrDefault("DESCRIPTION", "");
-        if (description.contains("Группы:") || description.contains("Группа:")) {
-            Pattern groupPattern = Pattern.compile("[А-ЯA-Z]{2,10}-[\\d-]+");
-            Matcher matcher = groupPattern.matcher(description);
-            while (matcher.find()) {
-                String groupName = matcher.group();
-                GroupEntity group = new GroupEntity();
-                group.setGroupName(groupName);
-                groups.add(group);
-            }
-        }
-
-        // Из SUMMARY - иногда группы указаны в названии события
-        String summary = properties.getOrDefault("SUMMARY", "");
-        if (summary.contains("(") && summary.contains(")")) {
-            // Ищем группы в скобках в SUMMARY (но не ФИО)
-            Pattern summaryGroupPattern = Pattern.compile("\\(([А-ЯA-Z]{2,10}-[\\d-]+(?:,\\s*[А-ЯA-Z]{2,10}-[\\d-]+)*)\\)");
-            Matcher matcher = summaryGroupPattern.matcher(summary);
-            if (matcher.find()) {
-                String groupsStr = matcher.group(1);
-                // Проверяем, что это действительно группа, а не ФИО
-                if (groupsStr.matches("[А-ЯA-Z]{2,10}-[\\d-]+(?:,\\s*[А-ЯA-Z]{2,10}-[\\d-]+)*")) {
-                    String[] groupNames = groupsStr.split(",\\s*");
-                    for (String groupName : groupNames) {
-                        GroupEntity group = new GroupEntity();
-                        group.setGroupName(groupName.trim());
-                        groups.add(group);
-                    }
-                }
-            }
-        }
+//        // Из DESCRIPTION - ищем любые группы в формате "XXXX-XX-XX" или подобном
+//        String description = properties.getOrDefault("DESCRIPTION", "");
+//        if (description.contains("Группы:") || description.contains("Группа:")) {
+//            Pattern groupPattern = Pattern.compile("[А-ЯA-Z]{2,10}-[\\d-]+");
+//            Matcher matcher = groupPattern.matcher(description);
+//            while (matcher.find()) {
+//                String groupName = matcher.group();
+//                GroupEntity group = new GroupEntity();
+//                group.setGroupName(groupName);
+//                groups.add(group);
+//            }
+//        }
+//
+//        // Из SUMMARY - иногда группы указаны в названии события
+//        String summary = properties.getOrDefault("SUMMARY", "");
+//        if (summary.contains("(") && summary.contains(")")) {
+//            // Ищем группы в скобках в SUMMARY (но не ФИО)
+//            Pattern summaryGroupPattern = Pattern.compile("\\(([А-ЯA-Z]{2,10}-[\\d-]+(?:,\\s*[А-ЯA-Z]{2,10}-[\\d-]+)*)\\)");
+//            Matcher matcher = summaryGroupPattern.matcher(summary);
+//            if (matcher.find()) {
+//                String groupsStr = matcher.group(1);
+//                // Проверяем, что это действительно группа, а не ФИО
+//                if (groupsStr.matches("[А-ЯA-Z]{2,10}-[\\d-]+(?:,\\s*[А-ЯA-Z]{2,10}-[\\d-]+)*")) {
+//                    String[] groupNames = groupsStr.split(",\\s*");
+//                    for (String groupName : groupNames) {
+//                        GroupEntity group = new GroupEntity();
+//                        group.setGroupName(groupName.trim());
+//                        groups.add(group);
+//                    }
+//                }
+//            }
+//        }
 
         // Из X-META-GROUP свойств
         for (Map.Entry<String, String> entry : properties.entrySet()) {
