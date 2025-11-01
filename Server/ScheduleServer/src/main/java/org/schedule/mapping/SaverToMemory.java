@@ -1,5 +1,6 @@
 package org.schedule.mapping;
 
+import org.schedule.entity.apidata.ResponseDto;
 import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.forBD.basic.GroupEntity;
 import org.schedule.entity.forBD.basic.RoomEntity;
@@ -235,39 +236,39 @@ public class SaverToMemory {
     }
 
     @Transactional
-    public void updateIdFromApi(ScheduleDto scheduleDto) {
+    public void updateIdFromApi(ResponseDto responseDto) {
         try {
-            log.info("Обновление id_from_api для ScheduleDto: id={}, target={}, title='{}'",
-                    scheduleDto.getId(), scheduleDto.getScheduleTarget(), scheduleDto.getTitle());
+            log.info("Обновление id_from_api для ResponseDto: id={}, target={}, fullTitle='{}'",
+                    responseDto.getId(), responseDto.getTarget(), responseDto.getFullTitle());
 
-            Long apiId = scheduleDto.getId();
-            String title = scheduleDto.getTitle();
-            Integer target = scheduleDto.getScheduleTarget();
+            Long apiId = responseDto.getId();
+            String fullTitle = responseDto.getFullTitle();
+            Integer target = responseDto.getTarget();
 
-            if (apiId == null || title == null || target == null) {
+            if (apiId == null || fullTitle == null || target == null) {
                 log.warn("Недостаточно данных для обновления id_from_api");
                 return;
             }
 
             switch (target) {
                 case 1: // Группы
-                    updateGroupIdFromApi(title, apiId);
+                    updateGroupIdFromApi(fullTitle, apiId);
                     break;
                 case 2: // Преподаватели
-                    updateTeacherIdFromApi(title, apiId);
+                    updateTeacherIdFromApi(fullTitle, apiId);
                     break;
                 case 3: // Аудитории
-                    updateRoomIdFromApi(title, apiId);
+                    updateRoomIdFromApi(fullTitle, apiId);
                     break;
                 default:
                     log.warn("Неизвестный target: {}", target);
             }
 
-            log.info("Успешно обновлен id_from_api для target={}, title='{}'", target, title);
+            log.info("Успешно обновлен id_from_api для target={}, fullTitle='{}'", target, fullTitle);
 
         } catch (Exception e) {
-            log.error("Ошибка при обновлении id_from_api для ScheduleDto {}: {}",
-                    scheduleDto.getId(), e.getMessage(), e);
+            log.error("Ошибка при обновлении id_from_api для ResponseDto {}: {}",
+                    responseDto.getId(), e.getMessage(), e);
         }
     }
 
@@ -320,18 +321,18 @@ public class SaverToMemory {
      * Обновляет id_from_api для списка ScheduleDto
      */
     @Transactional
-    public void updateAllIdsFromApi(List<ScheduleDto> scheduleDtos) {
-        log.info("Обновление id_from_api для {} ScheduleDto объектов", scheduleDtos.size());
+    public void updateAllIdsFromApi(List<ResponseDto> responseDtos) {
+        log.info("Обновление id_from_api для {} ResponseDto объектов", responseDtos.size());
 
         int updatedCount = 0;
         int skippedCount = 0;
 
-        for (ScheduleDto dto : scheduleDtos) {
+        for (ResponseDto dto : responseDtos) {
             try {
                 updateIdFromApi(dto);
                 updatedCount++;
             } catch (Exception e) {
-                log.warn("Не удалось обновить id_from_api для ScheduleDto {}: {}",
+                log.warn("Не удалось обновить id_from_api для ResponseDto {}: {}",
                         dto.getId(), e.getMessage());
                 skippedCount++;
             }

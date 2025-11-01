@@ -71,18 +71,15 @@ public class ScheduleService {
 
         List<ResponseDto> response = scheduleMapper.mapToResponseDto(remainingGroups, MIREA_API_URL);
         List<ScheduleDto> schedule = scheduleMapper.mapToScheduleDto(response);
-
         List<LessonEntity> parsedLessons = scheduleMapper.parseStringData(schedule);
 
         for (LessonEntity parsed : parsedLessons) {
             saver.saveToDatabase(parsed);
             saver.saveToCache(parsed);
         }
-        saver.updateAllIdsFromApi(schedule);
+        saver.updateAllIdsFromApi(response);
 
         finalSchedule.addAll(parsedLessons);
-
-
 
         log.info("Успешно получено и сохранено расписание для {} групп, найдено {} занятий",
                 remainingGroups.size(), parsedLessons.size());
