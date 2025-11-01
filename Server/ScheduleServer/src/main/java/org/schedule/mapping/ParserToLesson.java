@@ -120,22 +120,28 @@ public class ParserToLesson {
         StringBuilder currentValue = new StringBuilder();
 
         for (String line : lines) {
-            line = line.trim();
             if (line.isEmpty()) continue;
 
             if (line.contains(":") && !line.startsWith(" ")) {
                 if (currentKey != null) {
-                    properties.put(currentKey, currentValue.toString().trim());
+                    properties.put(currentKey, currentValue.toString());
                 }
 
                 int colonIndex = line.indexOf(":");
                 currentKey = line.substring(0, colonIndex).trim();
-                currentValue = new StringBuilder(line.substring(colonIndex + 1).trim());
+                currentValue = new StringBuilder(line.substring(colonIndex + 1));
             } else {
                 if (currentKey != null) {
                     if (line.startsWith(" ")) {
-                        currentValue.append(line.substring(1));
+                        // Убираем начальный пробел и добавляем как продолжение
+                        String continuation = line.substring(1);
+                        currentValue.append(continuation);
                     } else {
+                        // Если строка не начинается с пробела, это новая property
+                        // Но в iCal такого быть не должно, на всякий случай обработаем
+                        if (currentValue.length() > 0 && !endsWithWhitespace(currentValue)) {
+                            currentValue.append(" ");
+                        }
                         currentValue.append(line);
                     }
                 }
@@ -143,10 +149,19 @@ public class ParserToLesson {
         }
 
         if (currentKey != null) {
-            properties.put(currentKey, currentValue.toString().trim());
+            properties.put(currentKey, currentValue.toString());
         }
 
         return properties;
+    }
+
+    /**
+     * Проверяет, заканчивается ли StringBuilder на пробельный символ
+     */
+    private boolean endsWithWhitespace(StringBuilder sb) {
+        if (sb.length() == 0) return false;
+        char lastChar = sb.charAt(sb.length() - 1);
+        return Character.isWhitespace(lastChar);
     }
 
     private boolean isWeekEvent(Map<String, String> properties) {
@@ -215,7 +230,7 @@ public class ParserToLesson {
         // Ищем все свойства, начинающиеся с X-META-TEACHER (могут быть с параметрами)
         for (Map.Entry<String, String> entry : properties.entrySet()) {
             String key = entry.getKey();
-            if (key.startsWith("X-META-TEACHER") && !entry.getValue().trim().isEmpty()) {
+            if (key.startsWith("X-META-TEACHER") && !entry.getValue().isEmpty()) {
                 String teacherValue = entry.getValue().trim();
                 if (!teacherValue.isEmpty()) {
                     log.debug("Найден преподаватель в {}: {}", key, teacherValue);
