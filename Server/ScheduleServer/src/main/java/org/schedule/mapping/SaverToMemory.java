@@ -289,7 +289,7 @@ public class SaverToMemory {
 
     public void saveToCache(List<LessonEntity> lessons) {
         log.debug("Вход в saveToCache, занятий: {}", lessons.size());
-        // TODO: Реализовать сохранение в Redis/Memcached
+        // TODO: Реализовать сохранение в saveToCache
         log.debug("Выход из saveToCache");
     }
 }
