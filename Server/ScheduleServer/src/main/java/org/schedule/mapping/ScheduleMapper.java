@@ -1,5 +1,6 @@
 package org.schedule.mapping;
 
+import org.schedule.entity.ScheduleResponseDto;
 import org.schedule.entity.apidata.MireaApi;
 import org.schedule.entity.apidata.MireaApiData;
 import org.schedule.entity.apidata.ResponseDto;
@@ -12,9 +13,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.schedule.entity.forBD.basic.GroupEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.web.client.RestClientException;
 
 @Component
@@ -135,5 +139,59 @@ public class ScheduleMapper {
 
         log.info("Выход из parseStringData, результат: {} занятий", lessons.size());
         return lessons;
+    }
+
+    public ScheduleResponseDto toResponseDto(LessonEntity lesson) {
+        if (lesson == null) {
+            return null;
+        }
+
+        try {
+            List<String> groupNames = lesson.getGroups().stream()
+                    .map(GroupEntity::getGroupName)
+                    .collect(Collectors.toList());
+
+            return new ScheduleResponseDto(
+                    lesson.getId(),
+                    lesson.getDiscipline(),
+                    lesson.getLessonType(),
+                    lesson.getStartTime(),
+                    lesson.getEndTime(),
+                    lesson.getRoom(),
+                    lesson.getTeacher(),
+                    groupNames,
+                    lesson.getGroupsSummary(),
+                    lesson.getDescription()
+            );
+        } catch (Exception e) {
+            log.error("Ошибка при маппинге LessonEntity в ScheduleResponseDto для занятия: {}",
+                    lesson.getDiscipline(), e);
+            return createFallbackResponse(lesson);
+        }
+    }
+
+    public List<ScheduleResponseDto> toResponseDtoList(List<LessonEntity> lessons) {
+        if (lessons == null) {
+            return List.of();
+        }
+
+        return lessons.stream()
+                .map(this::toResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    private ScheduleResponseDto createFallbackResponse(LessonEntity lesson) {
+        return new ScheduleResponseDto(
+                lesson.getId(),
+                lesson.getDiscipline(),
+                lesson.getLessonType(),
+                lesson.getStartTime(),
+                lesson.getEndTime(),
+                lesson.getRoom(),
+                lesson.getTeacher(),
+                List.of(),
+                lesson.getGroupsSummary(),
+                lesson.getDescription()
+        );
     }
 }

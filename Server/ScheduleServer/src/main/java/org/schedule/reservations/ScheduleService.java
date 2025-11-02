@@ -1,5 +1,6 @@
 package org.schedule.reservations;
 
+import org.schedule.entity.ScheduleResponseDto;
 import org.schedule.entity.apidata.ResponseDto;
 import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.schedule.ScheduleDto;
@@ -24,15 +25,18 @@ public class ScheduleService {
     private final ScheduleMapper scheduleMapper;
     private final ScheduleReadService readService;
     private final ScheduleWriteService writeService;
+    private final ScheduleMapper mapper;
 
     private static final String MIREA_API_URL = "https://schedule-of.mirea.ru/schedule/api/search?match=";
 
     public ScheduleService(ScheduleMapper scheduleMapper,
                            ScheduleReadService readService,
-                           ScheduleWriteService writeService) {
+                           ScheduleWriteService writeService,
+                           ScheduleMapper mapper) {
         this.scheduleMapper = scheduleMapper;
         this.readService = readService;
         this.writeService = writeService;
+        this.mapper = mapper;
     }
 
     public List<ScheduleDto> getScheduleFromApi(List<String> titleList) {
@@ -43,7 +47,7 @@ public class ScheduleService {
         return result;
     }
 
-    public List<LessonEntity> getScheduleForGroups(List<String> entityList) {
+    public List<ScheduleResponseDto> getScheduleForGroups(List<String> entityList) {
         log.info("Вход в getScheduleForGroups с entityList: {} элементов", entityList.size());
 
         if (entityList.isEmpty()) {
@@ -52,16 +56,16 @@ public class ScheduleService {
 
         try {
             // Шаг 1: Получаем данные из кэша/БД (только чтение)
-            List<LessonEntity> finalSchedule = readService.getLessonsFromCacheOrDatabase(entityList);
+            List<LessonEntity> lessonsFromDb = readService.getLessonsFromCacheOrDatabase(entityList);
 
-            // Если все данные найдены в кэше/БД - возвращаем результат
-            if (finalSchedule.size() >= entityList.size()) {
-                log.info("Все данные получены из кэша/БД, результат: {} занятий", finalSchedule.size());
-                return finalSchedule;
+            // Если все данные найдены в кэше/БД - возвращаем результат как DTO
+            if (lessonsFromDb.size() >= entityList.size()) {
+                log.info("Все данные получены из кэша/БД, результат: {} занятий", lessonsFromDb.size());
+                return mapper.toResponseDtoList(lessonsFromDb);
             }
 
             // Шаг 2: Получаем недостающие данные из внешнего API
-            List<String> remainingEntities = getRemainingEntities(entityList, finalSchedule);
+            List<String> remainingEntities = getRemainingEntities(entityList, lessonsFromDb);
             log.info("Получение данных из внешнего источника для {} сущностей", remainingEntities.size());
 
             List<ResponseDto> response = scheduleMapper.mapToResponseDto(remainingEntities, MIREA_API_URL);
@@ -72,15 +76,19 @@ public class ScheduleService {
             writeService.saveLessonsAndUpdateIds(parsedLessons, response);
 
             // Шаг 4: Получаем сохраненные данные из БД (чтение)
-            List<LessonEntity> lessonsFromDb = readService.getLessonsFromDatabase(remainingEntities);
+            List<LessonEntity> newLessonsFromDb = readService.getLessonsFromDatabase(remainingEntities);
 
             // Шаг 5: Сохраняем в кэш (неблокирующая операция)
-            writeService.saveToCache(lessonsFromDb);
+            writeService.saveToCache(newLessonsFromDb);
 
-            finalSchedule.addAll(lessonsFromDb);
+            // Объединяем все занятия и преобразуем в DTO
+            List<LessonEntity> allLessons = new ArrayList<>(lessonsFromDb);
+            allLessons.addAll(newLessonsFromDb);
 
-            log.info("Выход из getScheduleForGroups, результат: {} занятий", finalSchedule.size());
-            return finalSchedule;
+            List<ScheduleResponseDto> result = mapper.toResponseDtoList(allLessons);
+
+            log.info("Выход из getScheduleForGroups, результат: {} занятий", result.size());
+            return result;
 
         } catch (Exception e) {
             log.error("Критическая ошибка в getScheduleForGroups", e);
