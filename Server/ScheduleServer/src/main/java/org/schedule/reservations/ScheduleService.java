@@ -102,7 +102,7 @@ public class ScheduleService {
             List<ScheduleDto> schedule = scheduleMapper.mapToScheduleDto(response);
             List<LessonEntity> parsedLessons = scheduleMapper.parseStringData(schedule);
 
-            saver.saveLessons(parsedLessons);
+            saver.saveAllToDatabase(parsedLessons);
             saver.updateAllIdsFromApi(response);
 
             List<LessonEntity> lessonsFromDb = new ArrayList<>();

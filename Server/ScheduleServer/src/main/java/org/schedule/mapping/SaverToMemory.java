@@ -43,6 +43,12 @@ public class SaverToMemory {
             throw new IllegalArgumentException("Занятие не может быть null");
         }
         try {
+            // Сначала сохраняем связанные сущности
+            processGroups(lesson);
+            processTeachers(lesson);
+            processRooms(lesson);
+
+            // Теперь проверяем существование занятия
             if (lesson.getUid() != null) {
                 Optional<LessonEntity> existingLesson = lessonRepository.findByUid(lesson.getUid());
                 if (existingLesson.isPresent()) {
@@ -51,10 +57,7 @@ public class SaverToMemory {
                 }
             }
 
-            processGroups(lesson);
-            processTeachers(lesson);
-            processRooms(lesson);
-
+            // Сохраняем занятие
             lessonRepository.save(lesson);
 
         } catch (Exception e) {
@@ -92,10 +95,12 @@ public class SaverToMemory {
 
         for (GroupEntity group : lesson.getGroups()) {
             if (group.getGroupName() != null && !group.getGroupName().trim().isEmpty()) {
+                // Ищем существующую группу или создаем новую
                 GroupEntity existingGroup = groupRepository.findByGroupName(group.getGroupName())
                         .orElseGet(() -> {
                             GroupEntity newGroup = new GroupEntity();
                             newGroup.setGroupName(group.getGroupName());
+                            // ЯВНО сохраняем новую группу перед использованием
                             return groupRepository.save(newGroup);
                         });
                 processedGroups.add(existingGroup);
@@ -121,6 +126,7 @@ public class SaverToMemory {
                         .orElseGet(() -> {
                             TeacherEntity newTeacher = new TeacherEntity();
                             newTeacher.setFullName(cleanName);
+                            // ЯВНО сохраняем нового преподавателя
                             return teacherRepository.save(newTeacher);
                         });
                 processedTeachers.add(existingTeacher);
@@ -146,6 +152,7 @@ public class SaverToMemory {
                         .orElseGet(() -> {
                             RoomEntity newRoom = new RoomEntity();
                             newRoom.setRoomName(cleanName);
+                            // ЯВНО сохраняем новую аудиторию
                             return roomRepository.save(newRoom);
                         });
                 processedRooms.add(existingRoom);
@@ -265,26 +272,6 @@ public class SaverToMemory {
         }
 
         log.info("Выход из updateAllIdsFromApi, результат: успешно - {}, пропущено - {}", updatedCount, skippedCount);
-    }
-
-    @Transactional
-    public void saveLessons(List<LessonEntity> lessons) {
-        log.info("Вход в saveLessons, занятий: {}", lessons.size());
-
-        int savedCount = 0;
-        int skippedCount = 0;
-
-        for (LessonEntity lesson : lessons) {
-            try {
-                saveToDatabase(lesson);
-                savedCount++;
-            } catch (Exception e) {
-                log.warn("Не удалось сохранить занятие: {}", lesson.getDiscipline());
-                skippedCount++;
-            }
-        }
-
-        log.info("Выход из saveLessons, результат: успешно - {}, пропущено - {}", savedCount, skippedCount);
     }
 
     public void saveToCache(List<LessonEntity> lessons) {
