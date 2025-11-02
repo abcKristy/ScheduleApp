@@ -38,15 +38,6 @@ public class ScheduleService {
         this.writeService = writeService;
         this.mapper = mapper;
     }
-
-    public List<ScheduleDto> getScheduleFromApi(List<String> titleList) {
-        log.info("Вход в getScheduleFromApi с titles: {}", titleList);
-        List<ResponseDto> response = scheduleMapper.mapToResponseDto(titleList, MIREA_API_URL);
-        List<ScheduleDto> result = scheduleMapper.mapToScheduleDto(response);
-        log.info("Выход из getScheduleFromApi, результат: {} элементов", result.size());
-        return result;
-    }
-
     public List<ScheduleResponseDto> getScheduleForGroups(List<String> entityList) {
         log.info("Вход в getScheduleForGroups с entityList: {} элементов", entityList.size());
 
