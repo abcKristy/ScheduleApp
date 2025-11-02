@@ -30,6 +30,10 @@ public class DataGetter {
     public List<LessonEntity> getFromDatabase(EntityType entityType, String entityName) {
         log.debug("Вход в getFromDatabase, тип: {}, имя: {}", entityType, entityName);
 
+        if (entityType == null || entityName == null || entityName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Тип и имя сущности не могут быть пустыми");
+        }
+
         try {
             List<LessonEntity> result;
 
@@ -53,7 +57,7 @@ public class DataGetter {
 
         } catch (Exception e) {
             log.error("Ошибка в getFromDatabase для {} '{}'", entityType, entityName, e);
-            return new ArrayList<>();
+            throw new RuntimeException("Ошибка получения данных из БД", e);
         }
     }
 }

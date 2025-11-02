@@ -39,6 +39,9 @@ public class SaverToMemory {
 
     @Transactional
     public void saveToDatabase(LessonEntity lesson) {
+        if (lesson == null) {
+            throw new IllegalArgumentException("Занятие не может быть null");
+        }
         try {
             if (lesson.getUid() != null) {
                 Optional<LessonEntity> existingLesson = lessonRepository.findByUid(lesson.getUid());

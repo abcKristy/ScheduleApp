@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.web.client.RestClientException;
 
 @Component
 public class ScheduleMapper {
@@ -30,6 +31,10 @@ public class ScheduleMapper {
     public List<ResponseDto> mapToResponseDto(List<String> titleList, String mireaApiUrl) {
         log.info("Вход в mapToResponseDto, titles: {} элементов", titleList.size());
 
+        if (titleList.isEmpty()) {
+            throw new IllegalArgumentException("Список заголовков не может быть пустым");
+        }
+
         List<ResponseDto> result = new ArrayList<>();
 
         for (String title : titleList) {
@@ -38,7 +43,7 @@ public class ScheduleMapper {
                 ResponseEntity<MireaApi> response = restTemplate.getForEntity(apiUrl, MireaApi.class);
                 MireaApi apiResponse = response.getBody();
 
-                if (apiResponse == null || apiResponse.getData() == null || apiResponse.getData().isEmpty()) {
+                if (apiResponse.getData() == null || apiResponse.getData().isEmpty()) {
                     log.warn("Нет данных для title: '{}'", title);
                     continue;
                 }
@@ -52,6 +57,9 @@ public class ScheduleMapper {
                     result.add(responseDto);
                 }
 
+            } catch (RestClientException e) {
+                log.error("Ошибка при обращении к API для title: '{}'", title, e);
+                throw new RestClientException("Ошибка получения данных из API расписания", e);
             } catch (Exception e) {
                 log.error("Ошибка обработки title: '{}'", title, e);
             }

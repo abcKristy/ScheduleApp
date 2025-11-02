@@ -39,8 +39,7 @@ public class CheckDataInMemory {
         log.debug("Вход в checkEntity, строка: {}", entityString);
 
         if (entityString == null || entityString.trim().isEmpty()) {
-            log.warn("Передана пустая строка для определения сущности");
-            return new EntityCheckResult(null, null, false);
+            throw new IllegalArgumentException("Строка сущности не может быть пустой");
         }
 
         String cleanName = entityString.trim();

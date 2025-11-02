@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.schedule.errors.ErrorResponseDto;
+
 
 @Service
 public class ScheduleService {
@@ -45,53 +47,57 @@ public class ScheduleService {
     public List<LessonEntity> getScheduleForGroups(List<String> entityList) {
         log.info("Вход в getScheduleForGroups с entityList: {} элементов", entityList.size());
 
-        List<LessonEntity> finalSchedule = new ArrayList<>();
-        List<String> remainingEntities = new ArrayList<>(entityList);
-
-        for (String entityString : entityList) {
-            CheckDataInMemory.EntityCheckResult checkResult = checkHelper.checkEntity(entityString);
-
-            if (!checkResult.isValid()) {
-                log.warn("Ошибка валидации сущности: '{}', пропускаем", entityString);
-                remainingEntities.remove(entityString);
-                continue;
-            }
-
-            EntityType entityType = checkResult.getEntityType();
-            String entityName = checkResult.getEntityName();
-
-            List<LessonEntity> lessons = new ArrayList<>();
-
-            if (checkHelper.checkCache(entityType, entityName)) {
-                lessons = dataGetter.getFromCache(entityType, entityName);
-                if (!lessons.isEmpty()) {
-                    log.debug("Данные из кэша для {}: {}", entityType, entityName);
-                    finalSchedule.addAll(lessons);
-                    remainingEntities.remove(entityString);
-                    continue;
-                }
-            }
-
-            if (checkResult.isExistsInDatabase()) {
-                lessons = dataGetter.getFromDatabase(entityType, entityName);
-                if (!lessons.isEmpty()) {
-                    log.debug("Данные из БД для {}: {}", entityType, entityName);
-                    saver.saveToCache(lessons);
-                    finalSchedule.addAll(lessons);
-                    remainingEntities.remove(entityString);
-                    continue;
-                }
-            }
+        if (entityList.isEmpty()) {
+            throw new IllegalArgumentException("Список сущностей не может быть пустым");
         }
-
-        if (remainingEntities.isEmpty()) {
-            log.info("Выход из getScheduleForGroups - все данные из кэша/БД, результат: {} занятий", finalSchedule.size());
-            return finalSchedule;
-        }
-
-        log.info("Получение данных из внешнего источника для {} сущностей", remainingEntities.size());
-
         try {
+            List<LessonEntity> finalSchedule = new ArrayList<>();
+            List<String> remainingEntities = new ArrayList<>(entityList);
+
+            for (String entityString : entityList) {
+                CheckDataInMemory.EntityCheckResult checkResult = checkHelper.checkEntity(entityString);
+
+                if (!checkResult.isValid()) {
+                    log.warn("Ошибка валидации сущности: '{}', пропускаем", entityString);
+                    remainingEntities.remove(entityString);
+                    continue;
+                }
+
+                EntityType entityType = checkResult.getEntityType();
+                String entityName = checkResult.getEntityName();
+
+                List<LessonEntity> lessons = new ArrayList<>();
+
+                if (checkHelper.checkCache(entityType, entityName)) {
+                    lessons = dataGetter.getFromCache(entityType, entityName);
+                    if (!lessons.isEmpty()) {
+                        log.debug("Данные из кэша для {}: {}", entityType, entityName);
+                        finalSchedule.addAll(lessons);
+                        remainingEntities.remove(entityString);
+                        continue;
+                    }
+                }
+
+                if (checkResult.isExistsInDatabase()) {
+                    lessons = dataGetter.getFromDatabase(entityType, entityName);
+                    if (!lessons.isEmpty()) {
+                        log.debug("Данные из БД для {}: {}", entityType, entityName);
+                        saver.saveToCache(lessons);
+                        finalSchedule.addAll(lessons);
+                        remainingEntities.remove(entityString);
+                        continue;
+                    }
+                }
+            }
+
+            if (remainingEntities.isEmpty()) {
+                log.info("Выход из getScheduleForGroups - все данные из кэша/БД, результат: {} занятий", finalSchedule.size());
+                return finalSchedule;
+            }
+
+            log.info("Получение данных из внешнего источника для {} сущностей", remainingEntities.size());
+
+
             List<ResponseDto> response = scheduleMapper.mapToResponseDto(remainingEntities, MIREA_API_URL);
             List<ScheduleDto> schedule = scheduleMapper.mapToScheduleDto(response);
             List<LessonEntity> parsedLessons = scheduleMapper.parseStringData(schedule);
@@ -117,8 +123,8 @@ public class ScheduleService {
             log.info("Выход из getScheduleForGroups - данные из внешнего источника, результат: {} занятий", finalSchedule.size());
             return finalSchedule;
         } catch (Exception e) {
-            log.error("Ошибка в getScheduleForGroups при работе с внешним источником", e);
-            throw e;
+            log.error("Критическая ошибка в getScheduleForGroups", e);
+            throw new RuntimeException("Не удалось получить расписание", e);
         }
     }
 }

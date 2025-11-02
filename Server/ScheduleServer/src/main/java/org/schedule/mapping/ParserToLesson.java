@@ -29,8 +29,7 @@ public class ParserToLesson {
         log.info("Вход в parseICalendarToLessons, заголовок: {}", scheduleTitle);
 
         if (data == null || data.trim().isEmpty()) {
-            log.warn("Передана пустая строка для парсинга");
-            return Collections.emptyList();
+            throw new IllegalArgumentException("Данные для парсинга не могут быть пустыми");
         }
 
         List<LessonEntity> lessons = new ArrayList<>();
