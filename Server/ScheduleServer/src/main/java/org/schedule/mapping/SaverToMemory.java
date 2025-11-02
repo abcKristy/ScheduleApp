@@ -5,7 +5,6 @@ import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.forBD.basic.GroupEntity;
 import org.schedule.entity.forBD.basic.RoomEntity;
 import org.schedule.entity.forBD.basic.TeacherEntity;
-import org.schedule.entity.schedule.ScheduleDto;
 import org.schedule.repository.LessonRepository;
 import org.schedule.repository.GroupRepository;
 import org.schedule.repository.RoomRepository;
@@ -38,48 +37,32 @@ public class SaverToMemory {
         this.roomRepository = roomRepository;
     }
 
-    public void saveToCache(LessonEntity schedule) {
-        // TODO: Реализовать сохранение в кэш
-        log.debug("Сохранение занятия в кэш: {} - {}",
-                schedule.getDiscipline(), schedule.getStartTime());
-    }
     @Transactional
     public void saveToDatabase(LessonEntity lesson) {
         try {
-            log.info("Сохранение занятия в БД: {} - {}",
-                    lesson.getDiscipline(), lesson.getStartTime());
-
-            // Обрабатываем группы
-            processGroups(lesson);
-
-            // Обрабатываем преподавателей
-            processTeachers(lesson);
-
-            // Обрабатываем аудитории
-            processRooms(lesson);
-
-            // Проверяем существование занятия по UID
             if (lesson.getUid() != null) {
                 Optional<LessonEntity> existingLesson = lessonRepository.findByUid(lesson.getUid());
                 if (existingLesson.isPresent()) {
-                    log.debug("Занятие с UID {} уже существует, обновляем", lesson.getUid());
                     updateExistingLesson(existingLesson.get(), lesson);
                     return;
                 }
             }
 
-            // Сохраняем новое занятие
+            processGroups(lesson);
+            processTeachers(lesson);
+            processRooms(lesson);
+
             lessonRepository.save(lesson);
-            log.debug("Занятие успешно сохранено в БД");
 
         } catch (Exception e) {
             log.error("Ошибка при сохранении занятия в БД: {}", e.getMessage(), e);
             throw new RuntimeException("Не удалось сохранить занятие в БД", e);
         }
     }
+
     @Transactional
     public void saveAllToDatabase(List<LessonEntity> lessons) {
-        log.info("Сохранение {} занятий в БД", lessons.size());
+        log.info("Вход в saveAllToDatabase, занятий: {}", lessons.size());
 
         int savedCount = 0;
         int skippedCount = 0;
@@ -89,14 +72,12 @@ public class SaverToMemory {
                 saveToDatabase(lesson);
                 savedCount++;
             } catch (Exception e) {
-                log.warn("Не удалось сохранить занятие: {} - {}",
-                        lesson.getDiscipline(), lesson.getStartTime());
+                log.warn("Не удалось сохранить занятие: {}", lesson.getDiscipline());
                 skippedCount++;
             }
         }
 
-        log.info("Сохранение завершено: успешно - {}, пропущено - {}",
-                savedCount, skippedCount);
+        log.info("Выход из saveAllToDatabase, результат: успешно - {}, пропущено - {}", savedCount, skippedCount);
     }
 
     private void processGroups(LessonEntity lesson) {
@@ -108,7 +89,6 @@ public class SaverToMemory {
 
         for (GroupEntity group : lesson.getGroups()) {
             if (group.getGroupName() != null && !group.getGroupName().trim().isEmpty()) {
-                // Ищем существующую группу или создаем новую
                 GroupEntity existingGroup = groupRepository.findByGroupName(group.getGroupName())
                         .orElseGet(() -> {
                             GroupEntity newGroup = new GroupEntity();
@@ -121,6 +101,7 @@ public class SaverToMemory {
 
         lesson.setGroups(processedGroups);
     }
+
     private void processTeachers(LessonEntity lesson) {
         String teacherName = lesson.getTeacher();
         if (teacherName == null || teacherName.trim().isEmpty()) {
@@ -129,7 +110,6 @@ public class SaverToMemory {
 
         List<TeacherEntity> processedTeachers = new ArrayList<>();
 
-        // Разделяем преподавателей, если их несколько (через запятую или \n)
         String[] teacherNames = teacherName.split("[,\n]");
         for (String name : teacherNames) {
             String cleanName = name.trim();
@@ -155,7 +135,6 @@ public class SaverToMemory {
 
         List<RoomEntity> processedRooms = new ArrayList<>();
 
-        // Разделяем аудитории, если их несколько (через запятую)
         String[] roomNames = roomName.split(",");
         for (String name : roomNames) {
             String cleanName = name.trim();
@@ -172,6 +151,7 @@ public class SaverToMemory {
 
         lesson.setRooms(processedRooms);
     }
+
     private void updateExistingLesson(LessonEntity existing, LessonEntity newData) {
         existing.setDiscipline(newData.getDiscipline());
         existing.setLessonType(newData.getLessonType());
@@ -182,19 +162,16 @@ public class SaverToMemory {
         existing.setRecurrence(newData.getRecurrence());
         existing.setExceptions(newData.getExceptions());
 
-        // Обновляем группы
         existing.getGroups().clear();
         if (newData.getGroups() != null) {
             existing.getGroups().addAll(newData.getGroups());
         }
 
-        // Обновляем преподавателей
         existing.getTeachers().clear();
         if (newData.getTeachers() != null) {
             existing.getTeachers().addAll(newData.getTeachers());
         }
 
-        // Обновляем аудитории
         existing.getRooms().clear();
         if (newData.getRooms() != null) {
             existing.getRooms().addAll(newData.getRooms());
@@ -206,9 +183,6 @@ public class SaverToMemory {
     @Transactional
     public void updateIdFromApi(ResponseDto responseDto) {
         try {
-            log.info("Обновление id_from_api для ResponseDto: id={}, target={}, fullTitle='{}'",
-                    responseDto.getId(), responseDto.getTarget(), responseDto.getFullTitle());
-
             Long apiId = responseDto.getId();
             String fullTitle = responseDto.getFullTitle();
             Integer target = responseDto.getTarget();
@@ -219,24 +193,21 @@ public class SaverToMemory {
             }
 
             switch (target) {
-                case 1: // Группы
+                case 1:
                     updateGroupIdFromApi(fullTitle, apiId);
                     break;
-                case 2: // Преподаватели
+                case 2:
                     updateTeacherIdFromApi(fullTitle, apiId);
                     break;
-                case 3: // Аудитории
+                case 3:
                     updateRoomIdFromApi(fullTitle, apiId);
                     break;
                 default:
                     log.warn("Неизвестный target: {}", target);
             }
 
-            log.info("Успешно обновлен id_from_api для target={}, fullTitle='{}'", target, fullTitle);
-
         } catch (Exception e) {
-            log.error("Ошибка при обновлении id_from_api для ResponseDto {}: {}",
-                    responseDto.getId(), e.getMessage(), e);
+            log.error("Ошибка при обновлении id_from_api для ResponseDto {}: {}", responseDto.getId(), e.getMessage(), e);
         }
     }
 
@@ -246,7 +217,6 @@ public class SaverToMemory {
             GroupEntity group = groupOpt.get();
             group.setIdFromApi(apiId);
             groupRepository.save(group);
-            log.debug("Обновлен id_from_api для группы '{}': {}", groupName, apiId);
         } else {
             log.warn("Группа '{}' не найдена в БД для обновления id_from_api", groupName);
         }
@@ -258,7 +228,6 @@ public class SaverToMemory {
             TeacherEntity teacher = teacherOpt.get();
             teacher.setIdFromApi(apiId);
             teacherRepository.save(teacher);
-            log.debug("Обновлен id_from_api для преподавателя '{}': {}", teacherName, apiId);
         } else {
             log.warn("Преподаватель '{}' не найден в БД для обновления id_from_api", teacherName);
         }
@@ -270,7 +239,6 @@ public class SaverToMemory {
             RoomEntity room = roomOpt.get();
             room.setIdFromApi(apiId);
             roomRepository.save(room);
-            log.debug("Обновлен id_from_api для аудитории '{}': {}", roomName, apiId);
         } else {
             log.warn("Аудитория '{}' не найдена в БД для обновления id_from_api", roomName);
         }
@@ -278,7 +246,7 @@ public class SaverToMemory {
 
     @Transactional
     public void updateAllIdsFromApi(List<ResponseDto> responseDtos) {
-        log.info("Обновление id_from_api для {} ResponseDto объектов", responseDtos.size());
+        log.info("Вход в updateAllIdsFromApi, объектов: {}", responseDtos.size());
 
         int updatedCount = 0;
         int skippedCount = 0;
@@ -288,19 +256,17 @@ public class SaverToMemory {
                 updateIdFromApi(dto);
                 updatedCount++;
             } catch (Exception e) {
-                log.warn("Не удалось обновить id_from_api для ResponseDto {}: {}",
-                        dto.getId(), e.getMessage());
+                log.warn("Не удалось обновить id_from_api для ResponseDto {}", dto.getId());
                 skippedCount++;
             }
         }
 
-        log.info("Обновление id_from_api завершено: успешно - {}, пропущено - {}",
-                updatedCount, skippedCount);
+        log.info("Выход из updateAllIdsFromApi, результат: успешно - {}, пропущено - {}", updatedCount, skippedCount);
     }
 
     @Transactional
     public void saveLessons(List<LessonEntity> lessons) {
-        log.info("Сохранение {} занятий", lessons.size());
+        log.info("Вход в saveLessons, занятий: {}", lessons.size());
 
         int savedCount = 0;
         int skippedCount = 0;
@@ -310,20 +276,17 @@ public class SaverToMemory {
                 saveToDatabase(lesson);
                 savedCount++;
             } catch (Exception e) {
-                log.warn("Не удалось сохранить занятие: {} - {}",
-                        lesson.getDiscipline(), lesson.getStartTime());
+                log.warn("Не удалось сохранить занятие: {}", lesson.getDiscipline());
                 skippedCount++;
             }
         }
 
-        log.info("Сохранение завершено: успешно - {}, пропущено - {}", savedCount, skippedCount);
+        log.info("Выход из saveLessons, результат: успешно - {}, пропущено - {}", savedCount, skippedCount);
     }
 
     public void saveToCache(List<LessonEntity> lessons) {
-        log.debug("Сохранение {} занятий в кэш", lessons.size());
+        log.debug("Вход в saveToCache, занятий: {}", lessons.size());
         // TODO: Реализовать сохранение в Redis/Memcached
-        for (LessonEntity lesson : lessons) {
-            log.debug("Сохранение в кэш: {} - {}", lesson.getDiscipline(), lesson.getStartTime());
-        }
+        log.debug("Выход из saveToCache");
     }
 }

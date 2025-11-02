@@ -1,4 +1,10 @@
 package org.schedule.errors;
 
-public class ErrorResponseDto {
+import java.time.LocalDateTime;
+
+public record ErrorResponseDto(
+        String message,
+        String detailedMessage,
+        LocalDateTime errorTime
+) {
 }

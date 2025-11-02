@@ -26,13 +26,17 @@ public class CheckDataInMemory {
         this.groupRepository = groupRepository;
         this.teacherRepository = teacherRepository;
     }
+
     public boolean checkCache(EntityType entityType, String entityName) {
-        log.debug("Проверка кэша для {}: {}", entityType, entityName);
-        // TODO: Реализовать проверку Redis/Memcached
-        return false; // Всегда false для заглушки
+        log.debug("Вход в checkCache, тип: {}, имя: {}", entityType, entityName);
+        // TODO: Реализовать проверку checkCache
+        boolean result = false;
+        log.debug("Выход из checkCache, результат: {}", result);
+        return result;
     }
+
     public EntityCheckResult checkEntity(String entityString) {
-        log.debug("Определение типа сущности для: {}", entityString);
+        log.debug("Вход в checkEntity, строка: {}", entityString);
 
         if (entityString == null || entityString.trim().isEmpty()) {
             log.warn("Передана пустая строка для определения сущности");
@@ -48,28 +52,28 @@ public class CheckDataInMemory {
         }
 
         boolean existsInDb = checkDatabaseExistence(entityType, cleanName);
+        EntityCheckResult result = new EntityCheckResult(entityType, cleanName, existsInDb);
 
-        log.debug("Определен тип сущности: {} -> {} (в БД: {})", cleanName, entityType, existsInDb);
-        return new EntityCheckResult(entityType, cleanName, existsInDb);
+        log.debug("Выход из checkEntity, результат: тип={}, имя={}, вБД={}",
+                entityType, cleanName, existsInDb);
+        return result;
     }
+
     private EntityType determineEntityType(String entityName) {
         if (entityName == null) return null;
 
         String cleanName = entityName.trim();
 
-        // Паттерн для групп: буквы-цифры-дефисы
         if (cleanName.matches("[А-ЯA-Z]{2,10}-[\\d-]+")) {
             return EntityType.GROUP;
         }
 
-        // Паттерн для аудиторий: содержит буквы и цифры
         if (cleanName.matches(".*[А-ЯA-Z].*\\d+.*") ||
                 cleanName.matches(".*\\(.*\\).*") ||
                 cleanName.matches("[А-ЯA-Z]-\\d+.*")) {
             return EntityType.ROOM;
         }
 
-        // Паттерн для преподавателей: ФИО (слова начинаются с заглавных)
         String[] words = cleanName.split("\\s+");
         if (words.length >= 2) {
             boolean allWordsStartWithUpperCase = Arrays.stream(words)
@@ -81,24 +85,32 @@ public class CheckDataInMemory {
 
         return null;
     }
+
     private boolean checkDatabaseExistence(EntityType entityType, String entityName) {
         try {
+            boolean result;
+
             switch (entityType) {
                 case GROUP:
                     Optional<GroupEntity> groupOpt = groupRepository.findByGroupName(entityName);
-                    return groupOpt.isPresent() && groupOpt.get().getIdFromApi() != null;
+                    result = groupOpt.isPresent() && groupOpt.get().getIdFromApi() != null;
+                    break;
                 case TEACHER:
                     Optional<TeacherEntity> teacherOpt = teacherRepository.findByFullName(entityName);
-                    return teacherOpt.isPresent() && teacherOpt.get().getIdFromApi() != null;
+                    result = teacherOpt.isPresent() && teacherOpt.get().getIdFromApi() != null;
+                    break;
                 case ROOM:
                     Optional<RoomEntity> roomOpt = roomRepository.findByRoomName(entityName);
-                    return roomOpt.isPresent() && roomOpt.get().getIdFromApi() != null;
+                    result = roomOpt.isPresent() && roomOpt.get().getIdFromApi() != null;
+                    break;
                 default:
-                    return false;
+                    result = false;
             }
+
+            return result;
+
         } catch (Exception e) {
-            log.error("Ошибка при проверке существования сущности {} '{}' в БД: {}",
-                    entityType, entityName, e.getMessage());
+            log.error("Ошибка при проверке существования сущности {} '{}' в БД", entityType, entityName, e);
             return false;
         }
     }

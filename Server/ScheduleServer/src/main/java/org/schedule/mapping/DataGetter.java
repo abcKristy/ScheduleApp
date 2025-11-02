@@ -20,29 +20,39 @@ public class DataGetter {
     }
 
     public List<LessonEntity> getFromCache(EntityType entityType, String entityName) {
-        log.debug("Получение из кэша для {}: {}", entityType, entityName);
-        // TODO: Реализовать получение из Redis/Memcached
-        return new ArrayList<>(); // Всегда пусто для заглушки
+        log.debug("Вход в getFromCache, тип: {}, имя: {}", entityType, entityName);
+        // TODO: Реализовать получение из getFromCache
+        List<LessonEntity> result = new ArrayList<>();
+        log.debug("Выход из getFromCache, результат: {} элементов", result.size());
+        return result;
     }
 
     public List<LessonEntity> getFromDatabase(EntityType entityType, String entityName) {
-        log.debug("Получение из БД для {}: {}", entityType, entityName);
+        log.debug("Вход в getFromDatabase, тип: {}, имя: {}", entityType, entityName);
 
         try {
+            List<LessonEntity> result;
+
             switch (entityType) {
                 case GROUP:
-                    return lessonRepository.findByGroups_GroupName(entityName);
+                    result = lessonRepository.findByGroups_GroupName(entityName);
+                    break;
                 case TEACHER:
-                    return lessonRepository.findByTeachers_FullName(entityName);
+                    result = lessonRepository.findByTeachers_FullName(entityName);
+                    break;
                 case ROOM:
-                    return lessonRepository.findByRooms_RoomName(entityName);
+                    result = lessonRepository.findByRooms_RoomName(entityName);
+                    break;
                 default:
-                    log.warn("Неизвестный тип сущности для получения данных: {}", entityType);
-                    return new ArrayList<>();
+                    log.warn("Неизвестный тип сущности: {}", entityType);
+                    result = new ArrayList<>();
             }
+
+            log.debug("Выход из getFromDatabase, результат: {} элементов", result.size());
+            return result;
+
         } catch (Exception e) {
-            log.error("Ошибка при получении данных из БД для {} '{}': {}",
-                    entityType, entityName, e.getMessage());
+            log.error("Ошибка в getFromDatabase для {} '{}'", entityType, entityName, e);
             return new ArrayList<>();
         }
     }

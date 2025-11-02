@@ -34,16 +34,16 @@ public class ScheduleService {
     }
 
     public List<ScheduleDto> getScheduleFromApi(List<String> titleList) {
-        log.info("called getScheduleFromApi with titles: {}", titleList);
+        log.info("Вход в getScheduleFromApi с titles: {}", titleList);
         List<ResponseDto> response = scheduleMapper.mapToResponseDto(titleList, MIREA_API_URL);
-        log.info("finish getScheduleFromApi with titles: {}", response);
-
-        return scheduleMapper.mapToScheduleDto(response);
+        List<ScheduleDto> result = scheduleMapper.mapToScheduleDto(response);
+        log.info("Выход из getScheduleFromApi, результат: {} элементов", result.size());
+        return result;
     }
 
     @Transactional
     public List<LessonEntity> getScheduleForGroups(List<String> entityList) {
-        log.info("Получение расписания для сущностей: {}", entityList);
+        log.info("Вход в getScheduleForGroups с entityList: {} элементов", entityList.size());
 
         List<LessonEntity> finalSchedule = new ArrayList<>();
         List<String> remainingEntities = new ArrayList<>(entityList);
@@ -52,7 +52,7 @@ public class ScheduleService {
             CheckDataInMemory.EntityCheckResult checkResult = checkHelper.checkEntity(entityString);
 
             if (!checkResult.isValid()) {
-                log.warn("Невалидная сущность: '{}', пропускаем", entityString);
+                log.warn("Ошибка валидации сущности: '{}', пропускаем", entityString);
                 remainingEntities.remove(entityString);
                 continue;
             }
@@ -65,7 +65,7 @@ public class ScheduleService {
             if (checkHelper.checkCache(entityType, entityName)) {
                 lessons = dataGetter.getFromCache(entityType, entityName);
                 if (!lessons.isEmpty()) {
-                    log.info("Данные найдены в кэше для {}: {}", entityType, entityName);
+                    log.debug("Данные из кэша для {}: {}", entityType, entityName);
                     finalSchedule.addAll(lessons);
                     remainingEntities.remove(entityString);
                     continue;
@@ -75,8 +75,7 @@ public class ScheduleService {
             if (checkResult.isExistsInDatabase()) {
                 lessons = dataGetter.getFromDatabase(entityType, entityName);
                 if (!lessons.isEmpty()) {
-                    log.info("Данные найдены в БД для {}: {}", entityType, entityName);
-                    // Сохраняем в кэш
+                    log.debug("Данные из БД для {}: {}", entityType, entityName);
                     saver.saveToCache(lessons);
                     finalSchedule.addAll(lessons);
                     remainingEntities.remove(entityString);
@@ -86,39 +85,40 @@ public class ScheduleService {
         }
 
         if (remainingEntities.isEmpty()) {
-            log.info("Все данные найдены в кэше/БД. Возвращаем {} занятий", finalSchedule.size());
+            log.info("Выход из getScheduleForGroups - все данные из кэша/БД, результат: {} занятий", finalSchedule.size());
             return finalSchedule;
         }
 
-        log.info("Данные не найдены в кэше и БД, получаем из внешнего источника для: {}", remainingEntities);
+        log.info("Получение данных из внешнего источника для {} сущностей", remainingEntities.size());
 
-        List<ResponseDto> response = scheduleMapper.mapToResponseDto(remainingEntities, MIREA_API_URL);
-        List<ScheduleDto> schedule = scheduleMapper.mapToScheduleDto(response);
-        List<LessonEntity> parsedLessons = scheduleMapper.parseStringData(schedule);
+        try {
+            List<ResponseDto> response = scheduleMapper.mapToResponseDto(remainingEntities, MIREA_API_URL);
+            List<ScheduleDto> schedule = scheduleMapper.mapToScheduleDto(response);
+            List<LessonEntity> parsedLessons = scheduleMapper.parseStringData(schedule);
 
-        saver.saveLessons(parsedLessons);
+            saver.saveLessons(parsedLessons);
+            saver.updateAllIdsFromApi(response);
 
-        saver.updateAllIdsFromApi(response);
-
-        List<LessonEntity> lessonsFromDb = new ArrayList<>();
-        for (String entityString : remainingEntities) {
-            CheckDataInMemory.EntityCheckResult checkResult = checkHelper.checkEntity(entityString);
-            if (checkResult.isValid()) {
-                List<LessonEntity> lessons = dataGetter.getFromDatabase(
-                        checkResult.getEntityType(),
-                        checkResult.getEntityName()
-                );
-                lessonsFromDb.addAll(lessons);
+            List<LessonEntity> lessonsFromDb = new ArrayList<>();
+            for (String entityString : remainingEntities) {
+                CheckDataInMemory.EntityCheckResult checkResult = checkHelper.checkEntity(entityString);
+                if (checkResult.isValid()) {
+                    List<LessonEntity> lessons = dataGetter.getFromDatabase(
+                            checkResult.getEntityType(),
+                            checkResult.getEntityName()
+                    );
+                    lessonsFromDb.addAll(lessons);
+                }
             }
+
+            saver.saveToCache(lessonsFromDb);
+            finalSchedule.addAll(lessonsFromDb);
+
+            log.info("Выход из getScheduleForGroups - данные из внешнего источника, результат: {} занятий", finalSchedule.size());
+            return finalSchedule;
+        } catch (Exception e) {
+            log.error("Ошибка в getScheduleForGroups при работе с внешним источником", e);
+            throw e;
         }
-
-        saver.saveToCache(lessonsFromDb);
-
-        finalSchedule.addAll(lessonsFromDb);
-
-        log.info("Успешно получено и сохранено расписание для {} сущностей, найдено {} занятий",
-                remainingEntities.size(), lessonsFromDb.size());
-
-        return finalSchedule;
     }
 }

@@ -28,23 +28,18 @@ public class ScheduleMapper {
     }
 
     public List<ResponseDto> mapToResponseDto(List<String> titleList, String mireaApiUrl) {
-        log.info("Mapping {} titles", titleList.size());
+        log.info("Вход в mapToResponseDto, titles: {} элементов", titleList.size());
 
         List<ResponseDto> result = new ArrayList<>();
 
         for (String title : titleList) {
             try {
                 String apiUrl = mireaApiUrl + title;
-
-                ResponseEntity<MireaApi> response = restTemplate.getForEntity(
-                        apiUrl,
-                        MireaApi.class
-                );
-
+                ResponseEntity<MireaApi> response = restTemplate.getForEntity(apiUrl, MireaApi.class);
                 MireaApi apiResponse = response.getBody();
 
                 if (apiResponse == null || apiResponse.getData() == null || apiResponse.getData().isEmpty()) {
-                    log.warn("No data for title: '{}'", title);
+                    log.warn("Нет данных для title: '{}'", title);
                     continue;
                 }
 
@@ -55,37 +50,28 @@ public class ScheduleMapper {
                             scheduleData.getScheduleTarget()
                     );
                     result.add(responseDto);
-                    log.info("Created: {}", responseDto);
                 }
 
             } catch (Exception e) {
-                log.error("Error processing title: '{}'", title, e);
+                log.error("Ошибка обработки title: '{}'", title, e);
             }
         }
 
-        log.info("Mapping completed. Created {} objects", result.size());
+        log.info("Выход из mapToResponseDto, результат: {} объектов", result.size());
         return result;
     }
 
     public List<ScheduleDto> mapToScheduleDto(List<ResponseDto> responseDtos) {
-        log.info("Converting {} ResponseDto objects to ScheduleDto", responseDtos.size());
+        log.info("Вход в mapToScheduleDto, ResponseDto: {} элементов", responseDtos.size());
 
         List<ScheduleDto> result = new ArrayList<>();
 
         for (ResponseDto responseDto : responseDtos) {
             try {
-                // Формируем URL: s=target_id
                 String apiUrl = String.format("https://schedule-of.mirea.ru/_next/data/aiSpo0O7vLwD8bZTeuvDJ/index.json?s=%d_%d",
                         responseDto.getTarget(), responseDto.getId());
 
-                log.info("Fetching schedule data from: {}", apiUrl);
-
-                // Делаем запрос к API расписания
-                ResponseEntity<MireaSchedule> response = restTemplate.getForEntity(
-                        apiUrl,
-                        MireaSchedule.class
-                );
-
+                ResponseEntity<MireaSchedule> response = restTemplate.getForEntity(apiUrl, MireaSchedule.class);
                 MireaSchedule mireaSchedule = response.getBody();
 
                 if (mireaSchedule == null ||
@@ -93,15 +79,11 @@ public class ScheduleMapper {
                         mireaSchedule.getPageProps().getScheduleLoadInfo() == null ||
                         mireaSchedule.getPageProps().getScheduleLoadInfo().isEmpty()) {
 
-                    log.warn("No schedule data found for id: {}, target: {}",
-                            responseDto.getId(), responseDto.getTarget());
+                    log.warn("Нет данных расписания для id: {}, target: {}", responseDto.getId(), responseDto.getTarget());
                     continue;
                 }
 
-                // Берем первый элемент из scheduleLoadInfo
                 MireaScheduleData scheduleData = mireaSchedule.getPageProps().getScheduleLoadInfo().get(0);
-
-                // Создаем ScheduleDto
                 ScheduleDto scheduleDto = new ScheduleDto(
                         scheduleData.getId(),
                         scheduleData.getScheduleTarget(),
@@ -109,62 +91,41 @@ public class ScheduleMapper {
                         scheduleData.getICalContent()
                 );
 
-                log.info("Created ScheduleDto: id={}, scheduleTarget={}, title='{}'",
-                        scheduleDto.getId(), scheduleDto.getScheduleTarget(), scheduleDto.getTitle());
-
                 result.add(scheduleDto);
 
             } catch (Exception e) {
-                log.error("Error converting ResponseDto to ScheduleDto for id: {}, target: {}",
+                log.error("Ошибка конвертации ResponseDto в ScheduleDto для id: {}, target: {}",
                         responseDto.getId(), responseDto.getTarget(), e);
             }
         }
 
-        log.info("Successfully converted {} ResponseDto objects to {} ScheduleDto objects",
-                responseDtos.size(), result.size());
+        log.info("Выход из mapToScheduleDto, результат: {} объектов", result.size());
         return result;
     }
 
     public List<LessonEntity> parseStringData(List<ScheduleDto> schedule) {
-        log.info("Начало парсинга {} ScheduleDto объектов", schedule.size());
+        log.info("Вход в parseStringData, ScheduleDto: {} элементов", schedule.size());
 
         List<LessonEntity> lessons = new ArrayList<>();
 
         for (ScheduleDto dto : schedule) {
             String data = dto.getiCalContent();
 
-            if (data == null) {
-                log.warn("Пустые iCal данные (null) для ScheduleDto: {}", dto.getId());
+            if (data == null || data.trim().isEmpty()) {
+                log.warn("Пустые iCal данные для ScheduleDto: {}", dto.getId());
                 continue;
             }
 
-            if (data.trim().isEmpty()) {
-                log.warn("Пустые iCal данные (empty string) для ScheduleDto: {}", dto.getId());
-                continue;
-            }
-
-            log.info("Парсинг ScheduleDto {}: длина iCal данных = {} символов",
-                    dto.getId(), data.length());
-
-            List<LessonEntity> parsedLessons = parser.parseICalendarToLessons(data,dto.getTitle());
+            List<LessonEntity> parsedLessons = parser.parseICalendarToLessons(data, dto.getTitle());
 
             if (parsedLessons != null && !parsedLessons.isEmpty()) {
                 lessons.addAll(parsedLessons);
-                log.info("Добавлено {} занятий из ScheduleDto {}", parsedLessons.size(), dto.getId());
             } else {
-                log.warn("Не удалось распарсить занятия для ScheduleDto {} (0 занятий)", dto.getId());
-
-                // ДИАГНОСТИКА: проверяем содержимое iCalContent
-                if (data.contains("BEGIN:VCALENDAR") && data.contains("BEGIN:VEVENT")) {
-                    log.warn("iCal данные содержат VEVENT, но парсер не нашел занятий");
-                } else {
-                    log.warn("iCal данные не содержат ожидаемую структуру VEVENT/VCALENDAR");
-                }
+                log.warn("Парсер не нашел занятий для ScheduleDto: {}", dto.getId());
             }
         }
 
-        log.info("Парсинг завершен. Всего получено {} занятий из {} ScheduleDto",
-                lessons.size(), schedule.size());
+        log.info("Выход из parseStringData, результат: {} занятий", lessons.size());
         return lessons;
     }
 }

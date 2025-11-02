@@ -26,7 +26,7 @@ public class ParserToLesson {
     private static final Pattern EVENT_PATTERN = Pattern.compile("BEGIN:VEVENT(.*?)END:VEVENT", Pattern.DOTALL);
 
     public List<LessonEntity> parseICalendarToLessons(String data, String scheduleTitle) {
-        log.info("Начало парсинга iCalendar данных. Заголовок: {}", scheduleTitle);
+        log.info("Вход в parseICalendarToLessons, заголовок: {}", scheduleTitle);
 
         if (data == null || data.trim().isEmpty()) {
             log.warn("Передана пустая строка для парсинга");
@@ -50,23 +50,19 @@ public class ParserToLesson {
                     skippedCount++;
                 }
             } catch (Exception e) {
-                log.error("Ошибка при парсинге события {}: {}", eventCount, e.getMessage());
+                log.error("Ошибка при парсинге события {}", eventCount, e);
             }
         }
 
-        log.info("Парсинг завершен. Найдено событий: {}, успешно: {}, пропущено: {}",
-                eventCount, lessons.size(), skippedCount);
-
         Set<LessonEntity> uniqueLessons = new HashSet<>(lessons);
+        log.info("Выход из parseICalendarToLessons, результат: {} уникальных занятий из {} событий",
+                uniqueLessons.size(), eventCount);
+
         return new ArrayList<>(uniqueLessons);
     }
 
     private LessonEntity parseEventBlock(String eventBlock, String scheduleTitle) {
         Map<String, String> properties = extractProperties(eventBlock);
-        log.info("!!!!!!!!!!!!!!see eventBlock = {}", eventBlock);
-        log.info("!!!!!!!!!!!!!!see properties = {}", properties);
-
-        String summary = properties.getOrDefault("SUMMARY", "");
 
         if (isWeekEvent(properties)) {
             return null;
@@ -77,7 +73,7 @@ public class ParserToLesson {
         try {
             lesson.setDiscipline(extractDiscipline(properties));
             lesson.setLessonType(extractLessonType(properties));
-            lesson.setTeacher(extractTeacher(properties, scheduleTitle)); // Передаем scheduleTitle
+            lesson.setTeacher(extractTeacher(properties, scheduleTitle));
             lesson.setRoom(properties.getOrDefault("LOCATION", ""));
             lesson.setUid(properties.getOrDefault("UID", UUID.randomUUID().toString()));
 
@@ -102,7 +98,7 @@ public class ParserToLesson {
             return lesson;
 
         } catch (Exception e) {
-            log.error("Ошибка при обработке события '{}': {}", summary, e.getMessage());
+            log.error("Ошибка при обработке события", e);
             return null;
         }
     }
@@ -129,12 +125,9 @@ public class ParserToLesson {
             } else {
                 if (currentKey != null) {
                     if (line.startsWith(" ")) {
-                        // Убираем начальный пробел и добавляем как продолжение
                         String continuation = line.substring(1);
                         currentValue.append(continuation);
                     } else {
-                        // Если строка не начинается с пробела, это новая property
-                        // Но в iCal такого быть не должно, на всякий случай обработаем
                         if (currentValue.length() > 0 && !endsWithWhitespace(currentValue)) {
                             currentValue.append(" ");
                         }
@@ -150,6 +143,7 @@ public class ParserToLesson {
 
         return properties;
     }
+
     private boolean endsWithWhitespace(StringBuilder sb) {
         if (sb.length() == 0) return false;
         char lastChar = sb.charAt(sb.length() - 1);
@@ -165,26 +159,21 @@ public class ParserToLesson {
 
         return isWeek || isAllDay;
     }
+
     private String extractDiscipline(Map<String, String> properties) {
-        // Пробуем получить из X-META-DISCIPLINE
         String discipline = properties.get("X-META-DISCIPLINE");
         if (discipline != null && !discipline.trim().isEmpty()) {
             return cleanText(discipline);
         }
 
-        // Или из SUMMARY (убираем тип занятия и имя преподавателя в скобках)
         String summary = properties.getOrDefault("SUMMARY", "");
         String cleanSummary = summary;
 
-        // Убираем тип занятия в начале
         if (cleanSummary.startsWith("ЛК ") || cleanSummary.startsWith("ПР ") || cleanSummary.startsWith("ЛАБ ")) {
             cleanSummary = cleanSummary.substring(3);
         }
 
-        // Убираем имя преподавателя в скобках в конце
-        // Формат "Фамилия И.О."
         cleanSummary = cleanSummary.replaceAll("\\([А-ЯЁ][а-яё]+\\s+[А-ЯЁ]\\.\\s*[А-ЯЁ]\\.\\)$", "").trim();
-        // Формат полного ФИО
         cleanSummary = cleanSummary.replaceAll("\\([А-ЯЁ][а-яё]+\\s+[А-ЯЁ][а-яё]+\\s+[А-ЯЁ][а-яё]+\\)$", "").trim();
 
         return cleanText(cleanSummary);
@@ -206,28 +195,23 @@ public class ParserToLesson {
     }
 
     private String extractTeacher(Map<String, String> properties, String scheduleTitle) {
-        // Из X-META-TEACHER (основной источник)
         String teacher = properties.get("X-META-TEACHER");
         if (teacher != null && !teacher.trim().isEmpty()) {
             return cleanText(teacher);
         }
 
-        // Ищем все свойства, начинающиеся с X-META-TEACHER (могут быть с параметрами)
         for (Map.Entry<String, String> entry : properties.entrySet()) {
             String key = entry.getKey();
             if (key.startsWith("X-META-TEACHER") && !entry.getValue().isEmpty()) {
                 String teacherValue = entry.getValue().trim();
                 if (!teacherValue.isEmpty()) {
-                    log.debug("Найден преподаватель в {}: {}", key, teacherValue);
                     return cleanText(teacherValue);
                 }
             }
         }
 
-        // Из SUMMARY - пытаемся извлечь имя преподавателя из названия
         String summary = properties.getOrDefault("SUMMARY", "");
         if (summary.contains("(") && summary.contains(")")) {
-            // Ищем ФИО в скобках в формате "Фамилия И. О."
             Pattern teacherInSummaryPattern = Pattern.compile("\\(([А-ЯЁ][а-яё]+\\s+[А-ЯЁ]\\.\\s*[А-ЯЁ]\\.)\\)");
             Matcher matcher = teacherInSummaryPattern.matcher(summary);
             if (matcher.find()) {
@@ -235,8 +219,6 @@ public class ParserToLesson {
             }
         }
 
-        // Если преподаватель не найден в свойствах, используем заголовок расписания
-        // (если он похож на ФИО преподавателя)
         if (isLikelyTeacherName(scheduleTitle)) {
             return cleanText(scheduleTitle);
         }
@@ -251,58 +233,22 @@ public class ParserToLesson {
 
         String cleanText = text.trim();
 
-        // Проверяем формат "Фамилия И.О."
         if (cleanText.matches("[А-ЯЁ][а-яё]+\\s+[А-ЯЁ]\\.\\s*[А-ЯЁ]\\.")) {
             return true;
         }
 
-        // Проверяем формат полного ФИО (3 слова)
         String[] words = cleanText.split("\\s+");
-        if (words.length >= 2) { // Фамилия и инициалы или полное ФИО
-            // Проверяем, что все слова начинаются с заглавной буквы
+        if (words.length >= 2) {
             return Arrays.stream(words)
                     .allMatch(word -> !word.isEmpty() && Character.isUpperCase(word.charAt(0)));
         }
 
         return false;
     }
+
     private List<GroupEntity> extractGroups(Map<String, String> properties) {
         List<GroupEntity> groups = new ArrayList<>();
 
-//        // Из DESCRIPTION - ищем любые группы в формате "XXXX-XX-XX" или подобном
-//        String description = properties.getOrDefault("DESCRIPTION", "");
-//        if (description.contains("Группы:") || description.contains("Группа:")) {
-//            Pattern groupPattern = Pattern.compile("[А-ЯA-Z]{2,10}-[\\d-]+");
-//            Matcher matcher = groupPattern.matcher(description);
-//            while (matcher.find()) {
-//                String groupName = matcher.group();
-//                GroupEntity group = new GroupEntity();
-//                group.setGroupName(groupName);
-//                groups.add(group);
-//            }
-//        }
-//
-//        // Из SUMMARY - иногда группы указаны в названии события
-//        String summary = properties.getOrDefault("SUMMARY", "");
-//        if (summary.contains("(") && summary.contains(")")) {
-//            // Ищем группы в скобках в SUMMARY (но не ФИО)
-//            Pattern summaryGroupPattern = Pattern.compile("\\(([А-ЯA-Z]{2,10}-[\\d-]+(?:,\\s*[А-ЯA-Z]{2,10}-[\\d-]+)*)\\)");
-//            Matcher matcher = summaryGroupPattern.matcher(summary);
-//            if (matcher.find()) {
-//                String groupsStr = matcher.group(1);
-//                // Проверяем, что это действительно группа, а не ФИО
-//                if (groupsStr.matches("[А-ЯA-Z]{2,10}-[\\d-]+(?:,\\s*[А-ЯA-Z]{2,10}-[\\d-]+)*")) {
-//                    String[] groupNames = groupsStr.split(",\\s*");
-//                    for (String groupName : groupNames) {
-//                        GroupEntity group = new GroupEntity();
-//                        group.setGroupName(groupName.trim());
-//                        groups.add(group);
-//                    }
-//                }
-//            }
-//        }
-
-        // Из X-META-GROUP свойств
         for (Map.Entry<String, String> entry : properties.entrySet()) {
             if (entry.getKey().startsWith("X-META-GROUP") && !entry.getValue().trim().isEmpty()) {
                 String groupName = entry.getValue().trim();
@@ -341,7 +287,7 @@ public class ParserToLesson {
                 return LocalDateTime.parse(cleanStr + "T000000", DATE_TIME_FORMATTER);
             }
         } catch (Exception e) {
-            log.error("Ошибка парсинга даты {}: '{}'", propertyName, dateTimeStr);
+            log.error("Ошибка парсинга даты {}", propertyName);
             return null;
         }
     }
@@ -373,7 +319,7 @@ public class ParserToLesson {
                 return recurrenceRule;
             }
         } catch (Exception e) {
-            log.error("Ошибка парсинга RRULE: {}", rrule);
+            log.error("Ошибка парсинга RRULE");
         }
 
         return null;
@@ -394,7 +340,7 @@ public class ParserToLesson {
                         exceptions.add(dateTime.toLocalDate());
                     }
                 } catch (Exception e) {
-                    log.error("Ошибка парсинга EXDATE: {}", entry.getValue());
+                    log.error("Ошибка парсинга EXDATE");
                 }
             }
         }
@@ -427,7 +373,7 @@ public class ParserToLesson {
                     return LocalDateTime.parse(untilStr + "T235959", DATE_TIME_FORMATTER);
                 }
             } catch (Exception e) {
-                log.warn("Не удалось распарсить UNTIL значение '{}'", untilStr);
+                log.warn("Не удалось распарсить UNTIL значение");
             }
         }
         return null;
