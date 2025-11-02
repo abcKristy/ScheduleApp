@@ -1,8 +1,7 @@
 package org.schedule.mapping;
 
-import org.hibernate.type.EntityType;
+import org.schedule.entity.forBD.EntityType;
 import org.schedule.entity.forBD.basic.GroupEntity;
-import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.forBD.basic.RoomEntity;
 import org.schedule.entity.forBD.basic.TeacherEntity;
 import org.schedule.repository.GroupRepository;
@@ -13,12 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 @Component
 public class CheckDataInMemory {
-    private static final Logger log = LoggerFactory.getLogger(ScheduleMapper.class);
+    private static final Logger log = LoggerFactory.getLogger(CheckDataInMemory.class);
     private final RoomRepository roomRepository;
     private final GroupRepository groupRepository;
     private final TeacherRepository teacherRepository;
@@ -29,73 +27,61 @@ public class CheckDataInMemory {
         this.teacherRepository = teacherRepository;
     }
 
-    public LessonEntity checkCache(String group){
-        //TODO проверка данных по расписанию в кэше последних запросов
-        // Реализовать проверку Redis/Memcached
-        // String cacheKey = generateCacheKey(groupNames);
-        // return (List<Lesson>) redisTemplate.opsForValue().get(cacheKey);
-        log.debug("Проверка кэша для групп: {}", group);
-
-        // Заглушка - всегда возвращаем null (не найдено в кэше)
-        // В реальной реализации здесь будет логика проверки Redis
-        return null;
+    /**
+     * Проверяет кэш для сущности
+     */
+    public boolean checkCache(EntityType entityType, String entityName) {
+        log.debug("Проверка кэша для {}: {}", entityType, entityName);
+        // TODO: Реализовать проверку Redis/Memcached
+        return false; // Всегда false для заглушки
     }
 
-    public LessonEntity checkDatabase(String entityName) {
-        log.debug("Проверка базы данных для: {}", entityName);
+    /**
+     * Определяет тип и название сущности по строке
+     */
+    public EntityCheckResult checkEntity(String entityString) {
+        log.debug("Определение типа сущности для: {}", entityString);
 
-        if (entityName == null || entityName.trim().isEmpty()) {
-            log.warn("Передано пустое название для проверки в БД");
-            return null;
+        if (entityString == null || entityString.trim().isEmpty()) {
+            log.warn("Передана пустая строка для определения сущности");
+            return new EntityCheckResult(null, null, false);
         }
 
-        try {
-            // Определяем тип сущности по маске
-            EntityType entityType = determineEntityType(entityName);
+        String cleanName = entityString.trim();
+        EntityType entityType = determineEntityType(cleanName);
 
-            switch (entityType) {
-                case GROUP:
-                    return checkGroupInDatabase(entityName);
-                case TEACHER:
-                    return checkTeacherInDatabase(entityName);
-                case ROOM:
-                    return checkRoomInDatabase(entityName);
-                case UNKNOWN:
-                    log.warn("Не удалось определить тип сущности для: '{}'", entityName);
-                    return null;
-                default:
-                    log.warn("Неизвестный тип сущности для: '{}'", entityName);
-                    return null;
-            }
-
-        } catch (Exception e) {
-            log.error("Ошибка при проверке сущности '{}' в БД: {}", entityName, e.getMessage());
-            return null;
+        if (entityType == null) {
+            log.warn("Не удалось определить тип сущности для: '{}'", cleanName);
+            return new EntityCheckResult(null, null, false);
         }
+
+        boolean existsInDb = checkDatabaseExistence(entityType, cleanName);
+
+        log.debug("Определен тип сущности: {} -> {} (в БД: {})", cleanName, entityType, existsInDb);
+        return new EntityCheckResult(entityType, cleanName, existsInDb);
     }
+
     /**
      * Определяет тип сущности по названию
      */
     private EntityType determineEntityType(String entityName) {
-        if (entityName == null) return EntityType.UNKNOWN;
+        if (entityName == null) return null;
 
         String cleanName = entityName.trim();
 
-        // Паттерн для групп: буквы-цифры-дефисы (ИКБО-60-23, ИВБО-01-21 и т.д.)
+        // Паттерн для групп: буквы-цифры-дефисы
         if (cleanName.matches("[А-ЯA-Z]{2,10}-[\\d-]+")) {
             return EntityType.GROUP;
         }
 
-        // Паттерн для аудиторий: содержит буквы и цифры, может быть с дефисами/скобками
-        // Примеры: И-204-а, Г-301-в, А-101, (В-78)
+        // Паттерн для аудиторий: содержит буквы и цифры
         if (cleanName.matches(".*[А-ЯA-Z].*\\d+.*") ||
                 cleanName.matches(".*\\(.*\\).*") ||
                 cleanName.matches("[А-ЯA-Z]-\\d+.*")) {
             return EntityType.ROOM;
         }
 
-        // Паттерн для преподавателей: ФИО (3 слова, начинаются с заглавных)
-        // Примеры: Овчинников Михаил Александрович, Иванов И. И.
+        // Паттерн для преподавателей: ФИО (слова начинаются с заглавных)
         String[] words = cleanName.split("\\s+");
         if (words.length >= 2) {
             boolean allWordsStartWithUpperCase = Arrays.stream(words)
@@ -105,114 +91,51 @@ public class CheckDataInMemory {
             }
         }
 
-        return EntityType.UNKNOWN;
+        return null;
     }
 
     /**
-     * Проверяет группу в БД
+     * Проверяет существование сущности в БД
      */
-    private LessonEntity checkGroupInDatabase(String groupName) {
-        Optional<GroupEntity> groupOpt = groupRepository.findByGroupName(groupName);
-
-        if (groupOpt.isPresent()) {
-            GroupEntity group = groupOpt.get();
-            if (group.getIdFromApi() != null) {
-                log.debug("Группа '{}' найдена в БД с id_from_api={}", groupName, group.getIdFromApi());
-                // Возвращаем пример занятия для этой группы (можно доработать)
-                return getSampleLessonForGroup(group);
-            } else {
-                log.debug("Группа '{}' найдена в БД, но id_from_api не установлен", groupName);
-                return null;
+    private boolean checkDatabaseExistence(EntityType entityType, String entityName) {
+        try {
+            switch (entityType) {
+                case GROUP:
+                    Optional<GroupEntity> groupOpt = groupRepository.findByGroupName(entityName);
+                    return groupOpt.isPresent() && groupOpt.get().getIdFromApi() != null;
+                case TEACHER:
+                    Optional<TeacherEntity> teacherOpt = teacherRepository.findByFullName(entityName);
+                    return teacherOpt.isPresent() && teacherOpt.get().getIdFromApi() != null;
+                case ROOM:
+                    Optional<RoomEntity> roomOpt = roomRepository.findByRoomName(entityName);
+                    return roomOpt.isPresent() && roomOpt.get().getIdFromApi() != null;
+                default:
+                    return false;
             }
-        } else {
-            log.debug("Группа '{}' не найдена в БД", groupName);
-            return null;
+        } catch (Exception e) {
+            log.error("Ошибка при проверке существования сущности {} '{}' в БД: {}",
+                    entityType, entityName, e.getMessage());
+            return false;
         }
     }
 
     /**
-     * Проверяет преподавателя в БД
+     * Результат проверки сущности
      */
-    private LessonEntity checkTeacherInDatabase(String teacherName) {
-        Optional<TeacherEntity> teacherOpt = teacherRepository.findByFullName(teacherName);
+    public static class EntityCheckResult {
+        private final EntityType entityType;
+        private final String entityName;
+        private final boolean existsInDatabase;
 
-        if (teacherOpt.isPresent()) {
-            TeacherEntity teacher = teacherOpt.get();
-            if (teacher.getIdFromApi() != null) {
-                log.debug("Преподаватель '{}' найден в БД с id_from_api={}", teacherName, teacher.getIdFromApi());
-                // Возвращаем пример занятия для этого преподавателя
-                return getSampleLessonForTeacher(teacher);
-            } else {
-                log.debug("Преподаватель '{}' найден в БД, но id_from_api не установлен", teacherName);
-                return null;
-            }
-        } else {
-            log.debug("Преподаватель '{}' не найден в БД", teacherName);
-            return null;
+        public EntityCheckResult(EntityType entityType, String entityName, boolean existsInDatabase) {
+            this.entityType = entityType;
+            this.entityName = entityName;
+            this.existsInDatabase = existsInDatabase;
         }
-    }
 
-    /**
-     * Проверяет аудиторию в БД
-     */
-    private LessonEntity checkRoomInDatabase(String roomName) {
-        Optional<RoomEntity> roomOpt = roomRepository.findByRoomName(roomName);
-
-        if (roomOpt.isPresent()) {
-            RoomEntity room = roomOpt.get();
-            if (room.getIdFromApi() != null) {
-                log.debug("Аудитория '{}' найдена в БД с id_from_api={}", roomName, room.getIdFromApi());
-                // Возвращаем пример занятия для этой аудитории
-                return getSampleLessonForRoom(room);
-            } else {
-                log.debug("Аудитория '{}' найдена в БД, но id_from_api не установлен", roomName);
-                return null;
-            }
-        } else {
-            log.debug("Аудитория '{}' не найдена в БД", roomName);
-            return null;
-        }
-    }
-
-    /**
-     * Создает пример занятия для группы (заглушка)
-     */
-    private LessonEntity getSampleLessonForGroup(GroupEntity group) {
-        // TODO: Реализовать получение реального занятия из БД
-        LessonEntity lesson = new LessonEntity();
-        lesson.setDiscipline("Пример занятия для группы " + group.getGroupName());
-        lesson.setGroups(List.of(group));
-        return lesson;
-    }
-
-    /**
-     * Создает пример занятия для преподавателя (заглушка)
-     */
-    private LessonEntity getSampleLessonForTeacher(TeacherEntity teacher) {
-        // TODO: Реализовать получение реального занятия из БД
-        LessonEntity lesson = new LessonEntity();
-        lesson.setDiscipline("Пример занятия преподавателя " + teacher.getFullName());
-        lesson.setTeacher(teacher.getFullName());
-        lesson.setTeachers(List.of(teacher));
-        return lesson;
-    }
-
-    /**
-     * Создает пример занятия для аудитории (заглушка)
-     */
-    private LessonEntity getSampleLessonForRoom(RoomEntity room) {
-        // TODO: Реализовать получение реального занятия из БД
-        LessonEntity lesson = new LessonEntity();
-        lesson.setDiscipline("Пример занятия в аудитории " + room.getRoomName());
-        lesson.setRoom(room.getRoomName());
-        lesson.setRooms(List.of(room));
-        return lesson;
-    }
-
-    /**
-     * Enum для типов сущностей
-     */
-    private enum EntityType {
-        GROUP, TEACHER, ROOM, UNKNOWN
+        public EntityType getEntityType() { return entityType; }
+        public String getEntityName() { return entityName; }
+        public boolean isExistsInDatabase() { return existsInDatabase; }
+        public boolean isValid() { return entityType != null && entityName != null; }
     }
 }

@@ -1,5 +1,6 @@
 package org.schedule.entity.forBD.basic;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.schedule.entity.forBD.LessonType;
@@ -57,9 +58,9 @@ public class LessonEntity {
             inverseJoinColumns = @JoinColumn(name = "group_id")
     )
     @ToString.Exclude
+    @JsonIgnore // Игнорируем при сериализации в JSON
     private List<GroupEntity> groups = new ArrayList<>();
 
-    // Связь Many-to-Many с преподавателями
     @ManyToMany
     @JoinTable(
             name = "lesson_teacher",
@@ -67,9 +68,9 @@ public class LessonEntity {
             inverseJoinColumns = @JoinColumn(name = "teacher_id")
     )
     @ToString.Exclude
+    @JsonIgnore // Игнорируем при сериализации в JSON
     private List<TeacherEntity> teachers = new ArrayList<>();
 
-    // Связь Many-to-Many с аудиториями
     @ManyToMany
     @JoinTable(
             name = "lesson_room",
@@ -77,6 +78,7 @@ public class LessonEntity {
             inverseJoinColumns = @JoinColumn(name = "room_id")
     )
     @ToString.Exclude
+    @JsonIgnore // Игнорируем при сериализации в JSON
     private List<RoomEntity> rooms = new ArrayList<>();
 
     @Embedded

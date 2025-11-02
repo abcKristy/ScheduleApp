@@ -341,4 +341,40 @@ public class SaverToMemory {
         log.info("Обновление id_from_api завершено: успешно - {}, пропущено - {}",
                 updatedCount, skippedCount);
     }
+
+    /**
+     * Сохраняет список занятий (автономная функция)
+     */
+    @Transactional
+    public void saveLessons(List<LessonEntity> lessons) {
+        log.info("Сохранение {} занятий", lessons.size());
+
+        int savedCount = 0;
+        int skippedCount = 0;
+
+        for (LessonEntity lesson : lessons) {
+            try {
+                // Используем существующую логику сохранения
+                saveToDatabase(lesson);
+                savedCount++;
+            } catch (Exception e) {
+                log.warn("Не удалось сохранить занятие: {} - {}",
+                        lesson.getDiscipline(), lesson.getStartTime());
+                skippedCount++;
+            }
+        }
+
+        log.info("Сохранение завершено: успешно - {}, пропущено - {}", savedCount, skippedCount);
+    }
+
+    /**
+     * Сохраняет в кэш (автономная функция)
+     */
+    public void saveToCache(List<LessonEntity> lessons) {
+        log.debug("Сохранение {} занятий в кэш", lessons.size());
+        // TODO: Реализовать сохранение в Redis/Memcached
+        for (LessonEntity lesson : lessons) {
+            log.debug("Сохранение в кэш: {} - {}", lesson.getDiscipline(), lesson.getStartTime());
+        }
+    }
 }
