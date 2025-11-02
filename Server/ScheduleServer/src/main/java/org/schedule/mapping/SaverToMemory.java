@@ -66,26 +66,6 @@ public class SaverToMemory {
         }
     }
 
-    @Transactional
-    public void saveAllToDatabase(List<LessonEntity> lessons) {
-        log.info("Вход в saveAllToDatabase, занятий: {}", lessons.size());
-
-        int savedCount = 0;
-        int skippedCount = 0;
-
-        for (LessonEntity lesson : lessons) {
-            try {
-                saveToDatabase(lesson);
-                savedCount++;
-            } catch (Exception e) {
-                log.warn("Не удалось сохранить занятие: {}", lesson.getDiscipline());
-                skippedCount++;
-            }
-        }
-
-        log.info("Выход из saveAllToDatabase, результат: успешно - {}, пропущено - {}", savedCount, skippedCount);
-    }
-
     private void processGroups(LessonEntity lesson) {
         if (lesson.getGroups() == null || lesson.getGroups().isEmpty()) {
             return;
@@ -278,5 +258,63 @@ public class SaverToMemory {
         log.debug("Вход в saveToCache, занятий: {}", lessons.size());
         // TODO: Реализовать сохранение в saveToCache
         log.debug("Выход из saveToCache");
+    }
+
+    @Transactional
+    public void saveLessonsWithErrorHandling(List<LessonEntity> lessons) {
+        log.info("Пакетное сохранение занятий с обработкой ошибок, занятий: {}", lessons.size());
+
+        if (lessons.isEmpty()) {
+            log.warn("Пустой список занятий для сохранения");
+            return;
+        }
+
+        int savedCount = 0;
+        int errorCount = 0;
+        List<String> errors = new ArrayList<>();
+
+        for (int i = 0; i < lessons.size(); i++) {
+            LessonEntity lesson = lessons.get(i);
+            try {
+                if (lesson == null) {
+                    errors.add("Элемент " + i + ": null объект");
+                    errorCount++;
+                    continue;
+                }
+
+                saveToDatabase(lesson);
+                savedCount++;
+
+            } catch (Exception e) {
+                errorCount++;
+                String errorMsg = String.format("Занятие %d '%s': %s",
+                        i,
+                        lesson != null ? lesson.getDiscipline() : "null",
+                        e.getMessage()
+                );
+                errors.add(errorMsg);
+                log.warn("Не удалось сохранить занятие: {}", errorMsg);
+            }
+        }
+
+        log.info("Пакетное сохранение завершено: успешно - {}, ошибок - {}", savedCount, errorCount);
+
+        if (errorCount > 0) {
+            // Логируем все ошибки для отладки
+            errors.forEach(error -> log.debug("Ошибка сохранения: {}", error));
+
+            // Бросаем исключение только если не сохранено ни одного занятия
+            if (savedCount == 0) {
+                throw new RuntimeException("Не удалось сохранить ни одного занятия: " +
+                        String.join("; ", errors.subList(0, Math.min(5, errors.size()))));
+            }
+
+            // Или если ошибок слишком много (например, больше 50%)
+            if (errorCount > lessons.size() / 2) {
+                throw new RuntimeException("Слишком много ошибок при сохранении: " +
+                        savedCount + "/" + lessons.size() + " успешно. Ошибки: " +
+                        String.join("; ", errors.subList(0, Math.min(3, errors.size()))));
+            }
+        }
     }
 }
