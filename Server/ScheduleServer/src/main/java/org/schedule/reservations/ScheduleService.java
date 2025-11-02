@@ -49,7 +49,6 @@ public class ScheduleService {
         List<String> remainingEntities = new ArrayList<>(entityList);
 
         for (String entityString : entityList) {
-            // 1. Проверяем тип сущности
             CheckDataInMemory.EntityCheckResult checkResult = checkHelper.checkEntity(entityString);
 
             if (!checkResult.isValid()) {
@@ -63,7 +62,6 @@ public class ScheduleService {
 
             List<LessonEntity> lessons = new ArrayList<>();
 
-            // 2. Проверка кэша
             if (checkHelper.checkCache(entityType, entityName)) {
                 lessons = dataGetter.getFromCache(entityType, entityName);
                 if (!lessons.isEmpty()) {
@@ -74,7 +72,6 @@ public class ScheduleService {
                 }
             }
 
-            // 3. Проверка базы данных
             if (checkResult.isExistsInDatabase()) {
                 lessons = dataGetter.getFromDatabase(entityType, entityName);
                 if (!lessons.isEmpty()) {
@@ -95,18 +92,14 @@ public class ScheduleService {
 
         log.info("Данные не найдены в кэше и БД, получаем из внешнего источника для: {}", remainingEntities);
 
-        // 4. Получение из внешнего источника
         List<ResponseDto> response = scheduleMapper.mapToResponseDto(remainingEntities, MIREA_API_URL);
         List<ScheduleDto> schedule = scheduleMapper.mapToScheduleDto(response);
         List<LessonEntity> parsedLessons = scheduleMapper.parseStringData(schedule);
 
-        // 5. Сохраняем в БД
         saver.saveLessons(parsedLessons);
 
-        // 6. Обновляем id_from_api
         saver.updateAllIdsFromApi(response);
 
-        // 7. ПОЛУЧАЕМ ДАННЫЕ ИЗ БД после сохранения
         List<LessonEntity> lessonsFromDb = new ArrayList<>();
         for (String entityString : remainingEntities) {
             CheckDataInMemory.EntityCheckResult checkResult = checkHelper.checkEntity(entityString);
@@ -119,10 +112,8 @@ public class ScheduleService {
             }
         }
 
-        // 8. Сохраняем в кэш
         saver.saveToCache(lessonsFromDb);
 
-        // 9. Добавляем в финальный результат
         finalSchedule.addAll(lessonsFromDb);
 
         log.info("Успешно получено и сохранено расписание для {} сущностей, найдено {} занятий",

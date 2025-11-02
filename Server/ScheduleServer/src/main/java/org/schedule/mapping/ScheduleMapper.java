@@ -52,7 +52,7 @@ public class ScheduleMapper {
                     ResponseDto responseDto = new ResponseDto(
                             scheduleData.getId(),
                             scheduleData.getFullTitle(),
-                            scheduleData.getScheduleTarget()  // scheduleTarget -> target
+                            scheduleData.getScheduleTarget()
                     );
                     result.add(responseDto);
                     log.info("Created: {}", responseDto);

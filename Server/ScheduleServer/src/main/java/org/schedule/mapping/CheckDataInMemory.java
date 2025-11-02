@@ -26,19 +26,11 @@ public class CheckDataInMemory {
         this.groupRepository = groupRepository;
         this.teacherRepository = teacherRepository;
     }
-
-    /**
-     * Проверяет кэш для сущности
-     */
     public boolean checkCache(EntityType entityType, String entityName) {
         log.debug("Проверка кэша для {}: {}", entityType, entityName);
         // TODO: Реализовать проверку Redis/Memcached
         return false; // Всегда false для заглушки
     }
-
-    /**
-     * Определяет тип и название сущности по строке
-     */
     public EntityCheckResult checkEntity(String entityString) {
         log.debug("Определение типа сущности для: {}", entityString);
 
@@ -60,10 +52,6 @@ public class CheckDataInMemory {
         log.debug("Определен тип сущности: {} -> {} (в БД: {})", cleanName, entityType, existsInDb);
         return new EntityCheckResult(entityType, cleanName, existsInDb);
     }
-
-    /**
-     * Определяет тип сущности по названию
-     */
     private EntityType determineEntityType(String entityName) {
         if (entityName == null) return null;
 
@@ -93,10 +81,6 @@ public class CheckDataInMemory {
 
         return null;
     }
-
-    /**
-     * Проверяет существование сущности в БД
-     */
     private boolean checkDatabaseExistence(EntityType entityType, String entityName) {
         try {
             switch (entityType) {
@@ -119,9 +103,6 @@ public class CheckDataInMemory {
         }
     }
 
-    /**
-     * Результат проверки сущности
-     */
     public static class EntityCheckResult {
         private final EntityType entityType;
         private final String entityName;

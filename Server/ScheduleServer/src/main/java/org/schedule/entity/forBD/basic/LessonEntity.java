@@ -41,9 +41,8 @@ public class LessonEntity {
     @Column(name = "teacher")
     private String teacher;
 
-    // Удалено поле summary, добавлено поле для хранения групп в виде строки
     @Column(name = "groups_summary")
-    private String groupsSummary; // Строка с названиями групп для быстрого доступа
+    private String groupsSummary;
 
     @Column(name = "description")
     private String description;
@@ -58,7 +57,7 @@ public class LessonEntity {
             inverseJoinColumns = @JoinColumn(name = "group_id")
     )
     @ToString.Exclude
-    @JsonIgnore // Игнорируем при сериализации в JSON
+    @JsonIgnore
     private List<GroupEntity> groups = new ArrayList<>();
 
     @ManyToMany
@@ -68,7 +67,7 @@ public class LessonEntity {
             inverseJoinColumns = @JoinColumn(name = "teacher_id")
     )
     @ToString.Exclude
-    @JsonIgnore // Игнорируем при сериализации в JSON
+    @JsonIgnore
     private List<TeacherEntity> teachers = new ArrayList<>();
 
     @ManyToMany
@@ -78,7 +77,7 @@ public class LessonEntity {
             inverseJoinColumns = @JoinColumn(name = "room_id")
     )
     @ToString.Exclude
-    @JsonIgnore // Игнорируем при сериализации в JSON
+    @JsonIgnore
     private List<RoomEntity> rooms = new ArrayList<>();
 
     @Embedded
@@ -113,7 +112,6 @@ public class LessonEntity {
 
     public void setGroups(List<GroupEntity> groups) {
         this.groups = groups;
-        // Автоматически обновляем groupsSummary при установке групп
         if (groups != null && !groups.isEmpty()) {
             this.groupsSummary = groups.stream()
                     .map(GroupEntity::getGroupName)

@@ -19,18 +19,12 @@ public class DataGetter {
         this.lessonRepository = lessonRepository;
     }
 
-    /**
-     * Получает занятия из кэша
-     */
     public List<LessonEntity> getFromCache(EntityType entityType, String entityName) {
         log.debug("Получение из кэша для {}: {}", entityType, entityName);
         // TODO: Реализовать получение из Redis/Memcached
         return new ArrayList<>(); // Всегда пусто для заглушки
     }
 
-    /**
-     * Получает занятия из базы данных
-     */
     public List<LessonEntity> getFromDatabase(EntityType entityType, String entityName) {
         log.debug("Получение из БД для {}: {}", entityType, entityName);
 

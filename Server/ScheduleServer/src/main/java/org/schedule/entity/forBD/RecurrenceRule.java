@@ -17,7 +17,6 @@ public class RecurrenceRule {
     @Column(name = "recurrence_until")
     private LocalDateTime until;
 
-    // Геттеры и сеттеры
     public String getFrequency() { return frequency; }
     public void setFrequency(String frequency) { this.frequency = frequency; }
 

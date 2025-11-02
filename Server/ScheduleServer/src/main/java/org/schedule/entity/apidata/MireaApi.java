@@ -5,8 +5,6 @@ import java.util.List;
 public class MireaApi {
     private List<MireaApiData> data;
     private String nextPageToken;
-
-    // constructors, getters, setters
     public MireaApi() {}
 
     public MireaApi(List<MireaApiData> data, String nextPageToken) {

@@ -21,8 +21,6 @@ public class TeacherEntity {
 
     @Column(name = "id_from_api")
     private Long idFromApi;
-
-    // Связь Many-to-Many с уроками
     @ManyToMany(mappedBy = "teachers")
     @ToString.Exclude
     private List<LessonEntity> lessons = new ArrayList<>();

@@ -38,21 +38,11 @@ public class SaverToMemory {
         this.roomRepository = roomRepository;
     }
 
-    /**
-     * Сохраняет одно занятие в кэш (заглушка для будущей реализации)
-     */
     public void saveToCache(LessonEntity schedule) {
         // TODO: Реализовать сохранение в кэш
         log.debug("Сохранение занятия в кэш: {} - {}",
                 schedule.getDiscipline(), schedule.getStartTime());
     }
-
-    /**
-     * Сохраняет одно занятие в базу данных с обработкой связей
-     */
-    /**
-     * Сохраняет одно занятие в базу данных с обработкой связей
-     */
     @Transactional
     public void saveToDatabase(LessonEntity lesson) {
         try {
@@ -87,10 +77,6 @@ public class SaverToMemory {
             throw new RuntimeException("Не удалось сохранить занятие в БД", e);
         }
     }
-
-    /**
-     * Сохраняет список занятий в базу данных
-     */
     @Transactional
     public void saveAllToDatabase(List<LessonEntity> lessons) {
         log.info("Сохранение {} занятий в БД", lessons.size());
@@ -113,10 +99,6 @@ public class SaverToMemory {
                 savedCount, skippedCount);
     }
 
-
-    /**
-     * Обрабатывает группы занятия: проверяет существование и устанавливает связи
-     */
     private void processGroups(LessonEntity lesson) {
         if (lesson.getGroups() == null || lesson.getGroups().isEmpty()) {
             return;
@@ -139,10 +121,6 @@ public class SaverToMemory {
 
         lesson.setGroups(processedGroups);
     }
-
-    /**
-     * Обрабатывает преподавателей занятия
-     */
     private void processTeachers(LessonEntity lesson) {
         String teacherName = lesson.getTeacher();
         if (teacherName == null || teacherName.trim().isEmpty()) {
@@ -169,9 +147,6 @@ public class SaverToMemory {
         lesson.setTeachers(processedTeachers);
     }
 
-    /**
-     * Обрабатывает аудитории занятия
-     */
     private void processRooms(LessonEntity lesson) {
         String roomName = lesson.getRoom();
         if (roomName == null || roomName.trim().isEmpty()) {
@@ -197,20 +172,13 @@ public class SaverToMemory {
 
         lesson.setRooms(processedRooms);
     }
-
-    /**
-     * Обновляет существующее занятие новыми данными
-     */
-    /**
-     * Обновляет существующее занятие новыми данными
-     */
     private void updateExistingLesson(LessonEntity existing, LessonEntity newData) {
         existing.setDiscipline(newData.getDiscipline());
         existing.setLessonType(newData.getLessonType());
         existing.setStartTime(newData.getStartTime());
         existing.setEndTime(newData.getEndTime());
-        existing.setRoom(newData.getRoom()); // Сохраняем для обратной совместимости
-        existing.setTeacher(newData.getTeacher()); // Сохраняем для обратной совместимости
+        existing.setRoom(newData.getRoom());
+        existing.setTeacher(newData.getTeacher());
         existing.setRecurrence(newData.getRecurrence());
         existing.setExceptions(newData.getExceptions());
 
@@ -272,9 +240,6 @@ public class SaverToMemory {
         }
     }
 
-    /**
-     * Обновляет id_from_api для группы
-     */
     private void updateGroupIdFromApi(String groupName, Long apiId) {
         Optional<GroupEntity> groupOpt = groupRepository.findByGroupName(groupName);
         if (groupOpt.isPresent()) {
@@ -287,9 +252,6 @@ public class SaverToMemory {
         }
     }
 
-    /**
-     * Обновляет id_from_api для преподавателя
-     */
     private void updateTeacherIdFromApi(String teacherName, Long apiId) {
         Optional<TeacherEntity> teacherOpt = teacherRepository.findByFullName(teacherName);
         if (teacherOpt.isPresent()) {
@@ -302,9 +264,6 @@ public class SaverToMemory {
         }
     }
 
-    /**
-     * Обновляет id_from_api для аудитории
-     */
     private void updateRoomIdFromApi(String roomName, Long apiId) {
         Optional<RoomEntity> roomOpt = roomRepository.findByRoomName(roomName);
         if (roomOpt.isPresent()) {
@@ -317,9 +276,6 @@ public class SaverToMemory {
         }
     }
 
-    /**
-     * Обновляет id_from_api для списка ScheduleDto
-     */
     @Transactional
     public void updateAllIdsFromApi(List<ResponseDto> responseDtos) {
         log.info("Обновление id_from_api для {} ResponseDto объектов", responseDtos.size());
@@ -342,9 +298,6 @@ public class SaverToMemory {
                 updatedCount, skippedCount);
     }
 
-    /**
-     * Сохраняет список занятий (автономная функция)
-     */
     @Transactional
     public void saveLessons(List<LessonEntity> lessons) {
         log.info("Сохранение {} занятий", lessons.size());
@@ -354,7 +307,6 @@ public class SaverToMemory {
 
         for (LessonEntity lesson : lessons) {
             try {
-                // Используем существующую логику сохранения
                 saveToDatabase(lesson);
                 savedCount++;
             } catch (Exception e) {
@@ -367,9 +319,6 @@ public class SaverToMemory {
         log.info("Сохранение завершено: успешно - {}, пропущено - {}", savedCount, skippedCount);
     }
 
-    /**
-     * Сохраняет в кэш (автономная функция)
-     */
     public void saveToCache(List<LessonEntity> lessons) {
         log.debug("Сохранение {} занятий в кэш", lessons.size());
         // TODO: Реализовать сохранение в Redis/Memcached

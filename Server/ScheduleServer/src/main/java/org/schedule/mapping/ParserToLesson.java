@@ -61,10 +61,6 @@ public class ParserToLesson {
         return new ArrayList<>(uniqueLessons);
     }
 
-    /**
-     * Парсит отдельный блок VEVENT
-     * @param scheduleTitle заголовок расписания для случаев, когда преподаватель не указан в событии
-     */
     private LessonEntity parseEventBlock(String eventBlock, String scheduleTitle) {
         Map<String, String> properties = extractProperties(eventBlock);
         log.info("!!!!!!!!!!!!!!see eventBlock = {}", eventBlock);
@@ -154,10 +150,6 @@ public class ParserToLesson {
 
         return properties;
     }
-
-    /**
-     * Проверяет, заканчивается ли StringBuilder на пробельный символ
-     */
     private boolean endsWithWhitespace(StringBuilder sb) {
         if (sb.length() == 0) return false;
         char lastChar = sb.charAt(sb.length() - 1);
@@ -173,9 +165,6 @@ public class ParserToLesson {
 
         return isWeek || isAllDay;
     }
-    /**
-     * Извлекает название дисциплины
-     */
     private String extractDiscipline(Map<String, String> properties) {
         // Пробуем получить из X-META-DISCIPLINE
         String discipline = properties.get("X-META-DISCIPLINE");
@@ -216,10 +205,6 @@ public class ParserToLesson {
         return LessonType.LK;
     }
 
-    /**
-     * Извлекает преподавателя
-     * @param scheduleTitle заголовок расписания (используется как fallback)
-     */
     private String extractTeacher(Map<String, String> properties, String scheduleTitle) {
         // Из X-META-TEACHER (основной источник)
         String teacher = properties.get("X-META-TEACHER");
@@ -259,9 +244,6 @@ public class ParserToLesson {
         return "";
     }
 
-    /**
-     * Проверяет, похожа ли строка на ФИО преподавателя
-     */
     private boolean isLikelyTeacherName(String text) {
         if (text == null || text.trim().isEmpty()) {
             return false;
@@ -284,9 +266,6 @@ public class ParserToLesson {
 
         return false;
     }
-    /**
-     * Извлекает группы из свойств события
-     */
     private List<GroupEntity> extractGroups(Map<String, String> properties) {
         List<GroupEntity> groups = new ArrayList<>();
 
