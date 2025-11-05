@@ -13,24 +13,3 @@ fun ScreenSearch() {
         modifier = Modifier.fillMaxSize().wrapContentHeight(),
         textAlign = TextAlign.Center)
 }
-
-@Composable
-fun ScreenProfile() {
-    Text(text = "Profile",
-        modifier = Modifier.fillMaxSize().wrapContentHeight(),
-        textAlign = TextAlign.Center)
-}
-
-@Composable
-fun ScreenList() {
-    Text(text = "List",
-        modifier = Modifier.fillMaxSize().wrapContentHeight(),
-        textAlign = TextAlign.Center)
-}
-
-@Composable
-fun ScreenPrevious() {
-    Text(text = "Previous",
-        modifier = Modifier.fillMaxSize().wrapContentHeight(),
-        textAlign = TextAlign.Center)
-}

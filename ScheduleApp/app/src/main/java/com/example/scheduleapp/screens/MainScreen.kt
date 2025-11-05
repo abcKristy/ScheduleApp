@@ -1,15 +1,14 @@
-package com.example.scheduleapp
+package com.example.scheduleapp.screens
 
 import android.annotation.SuppressLint
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
+import com.example.scheduleapp.MainNavGraph
 import com.example.scheduleapp.bottom_navigation.BottomNav
-import com.example.scheduleapp.bottom_navigation.NavGraph
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-
 @Preview
 @Composable
 fun MainScreen() {
@@ -17,7 +16,12 @@ fun MainScreen() {
     Scaffold(
         bottomBar = {BottomNav(navController)}
     ) {
-        NavGraph(navController)
-
+        MainNavGraph(navController)
     }
+}
+
+@Preview
+@Composable
+fun MainScreenPreview() {
+    MainScreen()
 }

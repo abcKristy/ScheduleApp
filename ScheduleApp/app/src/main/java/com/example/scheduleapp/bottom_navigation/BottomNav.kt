@@ -1,8 +1,6 @@
 package com.example.scheduleapp.bottom_navigation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -17,19 +15,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.scheduleapp.*
+import com.example.scheduleapp.R
 
 @Composable
 fun BottomNav(
     navController: NavController
 ) {
-    val list = listOf(
-        BottomItem.Search,
-        BottomItem.Previous,
-        BottomItem.List,
-        BottomItem.Profile
-    )
-
     NavigationBar(
         containerColor = colorResource(id = R.color.darkBlue),
         modifier = Modifier.height(115.dp)
@@ -37,11 +28,20 @@ fun BottomNav(
         val backStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = backStackEntry?.destination?.route
 
-        list.forEach { item ->
+        BottomItem.items.forEach { item ->
             NavigationBarItem(
                 selected = currentRoute == item.route,
                 onClick = {
-                    navController.navigate(item.route)
+                    // Навигация через переданный navController
+                    navController.navigate(item.route) {
+                        // Очищаем back stack до текущего элемента
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        // Восстанавливаем состояние при повторном нажатии
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 },
                 icon = {
                     Icon(
