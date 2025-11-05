@@ -30,7 +30,6 @@ fun MainNavGraph(navController: NavHostController) {
         navController = navController,
         startDestination = startDestination
     ) {
-        // Auth Flow
         composable(NavigationRoute.Welcome.route) {
             WelcomeScreen(
                 onNavigateToMain = {
@@ -40,8 +39,6 @@ fun MainNavGraph(navController: NavHostController) {
                 }
             )
         }
-
-        // Nested navigation for bottom tabs
 
         composable(NavigationRoute.Profile.route) {
             ScreenProfile()

@@ -19,7 +19,7 @@ fun WelcomeScreen(
     onNavigateToMain: () -> Unit
 ) {
     LaunchedEffect(Unit) {
-        delay(5000)
+        delay(3000)
         onNavigateToMain()
     }
     Box(
