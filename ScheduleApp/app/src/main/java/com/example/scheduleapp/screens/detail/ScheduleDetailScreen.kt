@@ -1,4 +1,4 @@
-package com.example.scheduleapp.bottom_navigation
+package com.example.scheduleapp.screens.detail
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -8,8 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 
 @Composable
-fun ScreenPrevious() {
-    Text(text = "Previous",
+fun ScheduleDetailScreen(onNavigateBack: () -> Boolean) {
+    Text(text = "ScheduleDetailScreen",
         modifier = Modifier.fillMaxSize().wrapContentHeight(),
         textAlign = TextAlign.Center)
 }

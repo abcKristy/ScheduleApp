@@ -1,23 +1,22 @@
 package com.example.scheduleapp
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.scheduleapp.bottom_navigation.*
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.screens.profile.LoginScreen
 import com.example.scheduleapp.screens.profile.RegisterScreen
-import com.example.scheduleapp.screens.profile.UserDetailScreen
-import com.example.scheduleapp.screens.MainScreen
-import com.example.scheduleapp.screens.master.ScheduleDetailScreen
+import com.example.scheduleapp.screens.detail.UserDetailScreen
+import com.example.scheduleapp.screens.detail.ScheduleDetailScreen
+import com.example.scheduleapp.screens.master.ScreenList
+import com.example.scheduleapp.screens.master.ScreenPrevious
+import com.example.scheduleapp.screens.master.ScreenProfile
+import com.example.scheduleapp.screens.master.ScreenSearch
 import com.example.scheduleapp.screens.master.WelcomeScreen
 
 @Composable

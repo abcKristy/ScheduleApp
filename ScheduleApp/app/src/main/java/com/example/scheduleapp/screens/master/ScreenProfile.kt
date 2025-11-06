@@ -1,8 +1,12 @@
-package com.example.scheduleapp.bottom_navigation
+package com.example.scheduleapp.screens.master
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +24,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,17 +33,18 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scheduleapp.R
-import com.example.scheduleapp.ui.theme.darkGray
 import com.example.scheduleapp.ui.theme.deepGreen
+import com.example.scheduleapp.ui.theme.gray
 import com.example.scheduleapp.ui.theme.lightGreen
+import androidx.core.net.toUri
 
 @Composable
 fun ScreenProfile() {
@@ -68,7 +72,7 @@ fun ScreenProfile() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(70.dp))
             Box(
                 modifier = Modifier
                     .shadow(
@@ -85,6 +89,11 @@ fun ScreenProfile() {
                     modifier = Modifier
                         .size(100.dp)
                         .clip(CircleShape)
+                        .border(
+                            width = 5.dp,
+                            color = lightGreen,
+                            shape = CircleShape
+                        )
                 )
             }
             Text(
@@ -92,18 +101,20 @@ fun ScreenProfile() {
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
                 color = colorResource(id = R.color.lightGreen),
-                modifier = Modifier.padding(bottom = 20.dp)
+                modifier = Modifier.padding(bottom = 20.dp).padding(top = 10.dp)
 
             )
             Card(
                 modifier = Modifier.fillMaxWidth()
-                    .padding(bottom = 15.dp),
+                    .padding(bottom = 15.dp)
+                    .border(
+                        width = 2.dp,
+                        color = deepGreen,
+                        shape = RoundedCornerShape(20.dp)
+                    ),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = deepGreen
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 0.dp
+                    containerColor = gray
                 )
             ) {
                 Row(modifier = Modifier.padding(10.dp),
@@ -112,26 +123,28 @@ fun ScreenProfile() {
                         text = "Major Group: ",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = colorResource(id = R.color.darkGray)
+                        color = deepGreen
                     )
                     Text(
                         text = "IKBO_60-23",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = colorResource(id = R.color.darkGray)
+                        color = deepGreen
                     )
                 }
             }
 
             Card(
                 modifier = Modifier.fillMaxWidth()
-                    .padding(bottom = 15.dp),
+                    .padding(bottom = 15.dp)
+                    .border(
+                        width = 2.dp,
+                        color = deepGreen,
+                        shape = RoundedCornerShape(20.dp)
+                    ),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = deepGreen
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 0.dp
+                    containerColor = gray
                 )
             ) {
                 Row(modifier = Modifier.padding(10.dp),
@@ -140,25 +153,27 @@ fun ScreenProfile() {
                         text = "Email: ",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = colorResource(id = R.color.darkGray)
+                        color = deepGreen
                     )
                     Text(
                         text = "ilicheva.k.o@edu.ru",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = colorResource(id = R.color.darkGray)
+                        color = deepGreen
                     )
                 }
             }
             Card(
                 modifier = Modifier.fillMaxWidth()
-                    .padding(bottom = 15.dp),
+                    .padding(bottom = 15.dp)
+                    .border(
+                        width = 2.dp,
+                        color = deepGreen,
+                        shape = RoundedCornerShape(20.dp)
+                    ),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = deepGreen
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 0.dp
+                    containerColor = gray
                 )
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically){
@@ -169,20 +184,20 @@ fun ScreenProfile() {
                             text = "Theme: ",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            color = colorResource(id = R.color.darkGray)
+                            color = deepGreen
                         )
                         Text(
-                            text = "Light",
+                            text = "Dark",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = colorResource(id = R.color.darkGray)
+                            color = deepGreen
                         )
                     }
 
                     Icon(
                         painter = painterResource(R.drawable.ic_dark_mode),
                         contentDescription = "mode",
-                        tint = darkGray,
+                        tint = deepGreen,
                         modifier = Modifier
                             .size(30.dp)
                     )
@@ -190,13 +205,58 @@ fun ScreenProfile() {
             }
             Card(
                 modifier = Modifier.fillMaxWidth()
-                    .padding(bottom = 15.dp),
+                    .padding(bottom = 15.dp)
+                    .border(
+                        width = 2.dp,
+                        color = deepGreen,
+                        shape = RoundedCornerShape(20.dp)
+                    ),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = deepGreen
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 0.dp
+                    containerColor = gray
+                )
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically){
+                    Row(modifier = Modifier.padding(10.dp)
+                        .fillMaxWidth(0.9f),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        val context = LocalContext.current
+                        Text(
+                            text = "Go to site sdo",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = deepGreen,
+                            modifier = Modifier.clickable {
+                                val intent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    "https://online-edu.mirea.ru/login/index.php".toUri()
+                                )
+                                context.startActivity(intent)
+                            }
+                        )
+                    }
+
+                    Icon(
+                        painter = painterResource(R.drawable.ic_goto),
+                        contentDescription = "mode",
+                        tint = deepGreen,
+                        modifier = Modifier
+                            .size(25.dp)
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth()
+                    .padding(bottom = 15.dp)
+                    .border(
+                        width = 2.dp,
+                        color = deepGreen,
+                        shape = RoundedCornerShape(20.dp)
+                    ),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = gray
                 )
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically){
@@ -204,23 +264,17 @@ fun ScreenProfile() {
                         .fillMaxWidth(0.9f),
                         verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "CDO: ",
+                            text = "Settings",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            color = colorResource(id = R.color.darkGray)
-                        )
-                        Text(
-                            text = "active url",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colorResource(id = R.color.darkGray)
+                            color = deepGreen
                         )
                     }
 
                     Icon(
-                        painter = painterResource(R.drawable.ic_copy),
+                        painter = painterResource(R.drawable.ic_settings),
                         contentDescription = "mode",
-                        tint = darkGray,
+                        tint = deepGreen,
                         modifier = Modifier
                             .size(25.dp)
                     )
@@ -235,7 +289,7 @@ fun ScreenProfile() {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Preview
 @Composable
-fun testProfile(){
+fun TestProfile(){
     Scaffold(
         containerColor = colorResource(id = R.color.gray))
     {

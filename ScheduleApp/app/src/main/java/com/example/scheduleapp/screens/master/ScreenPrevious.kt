@@ -8,8 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 
 @Composable
-fun ScheduleDetailScreen(onNavigateBack: () -> Boolean) {
-    Text(text = "ScheduleDetailScreen",
+fun ScreenPrevious() {
+    Text(text = "Previous",
         modifier = Modifier.fillMaxSize().wrapContentHeight(),
         textAlign = TextAlign.Center)
 }

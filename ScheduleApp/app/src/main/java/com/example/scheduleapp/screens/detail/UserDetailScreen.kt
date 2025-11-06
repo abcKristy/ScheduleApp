@@ -1,4 +1,4 @@
-package com.example.scheduleapp.screens.profile
+package com.example.scheduleapp.screens.detail
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentHeight
