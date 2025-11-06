@@ -19,8 +19,8 @@ import java.util.Objects;
 @ToString
 public class LessonEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String  id;
 
     @Column(name = "discipline", nullable = false)
     private String discipline;
@@ -46,9 +46,6 @@ public class LessonEntity {
 
     @Column(name = "description")
     private String description;
-
-    @Column(name = "uid", unique = true)
-    private String uid;
 
     @ManyToMany
     @JoinTable(
@@ -138,11 +135,11 @@ public class LessonEntity {
         this.exceptions = exceptions;
     }
 
-    public Long getId() {
+    public String  getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String  id) {
         this.id = id;
     }
 
@@ -208,14 +205,6 @@ public class LessonEntity {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public String getUid() {
-        return uid;
-    }
-
-    public void setUid(String uid) {
-        this.uid = uid;
     }
 
     public List<TeacherEntity> getTeachers() {

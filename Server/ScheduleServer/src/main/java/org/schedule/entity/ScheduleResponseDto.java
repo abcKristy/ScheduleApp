@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class ScheduleResponseDto {
-    private Long id;
+    private String id;
     private String discipline;
     private LessonType lessonType;
 
@@ -26,7 +26,7 @@ public class ScheduleResponseDto {
     // Конструкторы
     public ScheduleResponseDto() {}
 
-    public ScheduleResponseDto(Long id, String discipline, LessonType lessonType,
+    public ScheduleResponseDto(String id, String discipline, LessonType lessonType,
                                LocalDateTime startTime, LocalDateTime endTime,
                                String room, String teacher, List<String> groups,
                                String groupsSummary, String description) {
@@ -43,8 +43,8 @@ public class ScheduleResponseDto {
     }
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getDiscipline() { return discipline; }
     public void setDiscipline(String discipline) { this.discipline = discipline; }

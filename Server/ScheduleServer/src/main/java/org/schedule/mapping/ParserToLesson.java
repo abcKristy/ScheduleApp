@@ -74,7 +74,6 @@ public class ParserToLesson {
             lesson.setLessonType(extractLessonType(properties));
             lesson.setTeacher(extractTeacher(properties, scheduleTitle));
             lesson.setRoom(properties.getOrDefault("LOCATION", ""));
-            lesson.setUid(properties.getOrDefault("UID", UUID.randomUUID().toString()));
 
             LocalDateTime startTime = parseDateTime(properties, "DTSTART");
             LocalDateTime endTime = parseDateTime(properties, "DTEND");

@@ -49,8 +49,8 @@ public class SaverToMemory {
             processRooms(lesson);
 
             // Теперь проверяем существование занятия
-            if (lesson.getUid() != null) {
-                Optional<LessonEntity> existingLesson = lessonRepository.findByUid(lesson.getUid());
+            if (lesson.getId() != null) {
+                Optional<LessonEntity> existingLesson = lessonRepository.findById(lesson.getId());
                 if (existingLesson.isPresent()) {
                     updateExistingLesson(existingLesson.get(), lesson);
                     return;
