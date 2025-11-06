@@ -101,11 +101,14 @@ fun ScreenProfile() {
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
                 color = colorResource(id = R.color.lightGreen),
-                modifier = Modifier.padding(bottom = 20.dp).padding(top = 10.dp)
+                modifier = Modifier
+                    .padding(bottom = 20.dp)
+                    .padding(top = 10.dp)
 
             )
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(bottom = 15.dp)
                     .border(
                         width = 2.dp,
@@ -117,8 +120,10 @@ fun ScreenProfile() {
                     containerColor = gray
                 )
             ) {
-                Row(modifier = Modifier.padding(10.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = "Major Group: ",
                         fontSize = 15.sp,
@@ -135,7 +140,8 @@ fun ScreenProfile() {
             }
 
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(bottom = 15.dp)
                     .border(
                         width = 2.dp,
@@ -147,8 +153,10 @@ fun ScreenProfile() {
                     containerColor = gray
                 )
             ) {
-                Row(modifier = Modifier.padding(10.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = "Email: ",
                         fontSize = 15.sp,
@@ -164,7 +172,8 @@ fun ScreenProfile() {
                 }
             }
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(bottom = 15.dp)
                     .border(
                         width = 2.dp,
@@ -176,10 +185,13 @@ fun ScreenProfile() {
                     containerColor = gray
                 )
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically){
-                    Row(modifier = Modifier.padding(10.dp)
-                        .fillMaxWidth(0.9f),
-                        verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .fillMaxWidth(0.9f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             text = "Theme: ",
                             fontSize = 15.sp,
@@ -204,7 +216,8 @@ fun ScreenProfile() {
                 }
             }
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(bottom = 15.dp)
                     .border(
                         width = 2.dp,
@@ -216,10 +229,13 @@ fun ScreenProfile() {
                     containerColor = gray
                 )
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically){
-                    Row(modifier = Modifier.padding(10.dp)
-                        .fillMaxWidth(0.9f),
-                        verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .fillMaxWidth(0.9f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         val context = LocalContext.current
                         Text(
                             text = "Go to site sdo",
@@ -247,7 +263,8 @@ fun ScreenProfile() {
             }
 
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(bottom = 15.dp)
                     .border(
                         width = 2.dp,
@@ -259,10 +276,13 @@ fun ScreenProfile() {
                     containerColor = gray
                 )
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically){
-                    Row(modifier = Modifier.padding(10.dp)
-                        .fillMaxWidth(0.9f),
-                        verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier
+                            .padding(10.dp)
+                            .fillMaxWidth(0.9f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             text = "Settings",
                             fontSize = 15.sp,
@@ -281,17 +301,16 @@ fun ScreenProfile() {
                 }
             }
         }
-
-
     }
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Preview
 @Composable
-fun TestProfile(){
+fun TestProfile() {
     Scaffold(
-        containerColor = colorResource(id = R.color.gray))
+        containerColor = colorResource(id = R.color.gray)
+    )
     {
         ScreenProfile()
     }
