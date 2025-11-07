@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,25 +14,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.scheduleapp.R
-import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.darkBlue
 import com.example.scheduleapp.ui.theme.deepGreen
 
@@ -79,7 +69,6 @@ fun BottomNav(
                         .padding(2.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Круглый фон для выделенного элемента
                     if (isSelected) {
                         Box(
                             modifier = Modifier
@@ -96,16 +85,9 @@ fun BottomNav(
                     ) {
                         Icon(
                             painter = painterResource(item.iconId),
-                            contentDescription = item.title,
+                            contentDescription = "button "+item.route,
                             modifier = Modifier.size(18.dp),
                             tint = if (isSelected) deepGreen else darkBlue
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = item.title,
-                            fontSize = 7.sp,
-                            color = if (isSelected) deepGreen else deepGreen,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                         )
                     }
                 }
