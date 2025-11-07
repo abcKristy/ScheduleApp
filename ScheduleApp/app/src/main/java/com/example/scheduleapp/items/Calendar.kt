@@ -90,7 +90,8 @@ fun Calendar() {
                     text = "${date.format(DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale("ru")))}",
                     color = deepGreen,
                     fontSize = 25.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 20.dp)
                 )
                 Divider(modifier = Modifier.padding(vertical = 16.dp), color = deepGreen)
             }
@@ -201,7 +202,7 @@ fun CalendarHeader(
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         OutlinedButton(
             onClick = onToday,

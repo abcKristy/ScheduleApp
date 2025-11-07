@@ -51,14 +51,13 @@ fun ScreenProfile() {
     Box(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
-                .padding(bottom = 110.dp)
                 .fillMaxHeight(0.5f)
                 .fillMaxWidth()
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            colorResource(id = R.color.darkBlue)
+                            colorResource(id = R.color.deepGreen)
                         )
                     )
                 )

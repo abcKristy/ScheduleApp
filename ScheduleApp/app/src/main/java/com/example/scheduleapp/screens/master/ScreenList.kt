@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -22,7 +20,6 @@ import com.example.scheduleapp.R
 import com.example.scheduleapp.items.Calendar
 import com.example.scheduleapp.items.ScheduleListItem
 import com.example.scheduleapp.items.getTestScheduleItems
-import com.example.scheduleapp.ui.theme.deepGreen
 
 @Composable
 fun ScreenList() {
@@ -47,8 +44,6 @@ fun ScreenList() {
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(110.dp))
         }
     }
 }
