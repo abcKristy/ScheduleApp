@@ -46,6 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scheduleapp.R
+import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.ui.theme.darkBlue
 import com.example.scheduleapp.ui.theme.deepGreen
 import com.example.scheduleapp.ui.theme.gray
@@ -58,26 +59,12 @@ enum class CalendarView {
     MONTH, WEEK
 }
 
-// Объект для хранения состояния календаря
-object CalendarState {
-    private var _selectedDate by mutableStateOf<LocalDate?>(LocalDate.now())
-
-    val selectedDate: LocalDate?
-        get() = _selectedDate
-
-    fun setSelectedDate(date: LocalDate?) {
-        _selectedDate = date
-    }
-}
-
-// Функция для получения выбранной даты
 fun getSelectedDayValue(): LocalDate? {
-    return CalendarState.selectedDate
+    return AppState.selectedDate
 }
 
-// Функция для установки выбранной даты извне
 fun setSelectedDayValue(date: LocalDate?) {
-    CalendarState.setSelectedDate(date)
+    AppState.setSelectedDate(date)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,18 +74,16 @@ fun Calendar() {
     var swipeInProgress by remember { mutableStateOf(false) }
     var calendarView by remember { mutableStateOf(CalendarView.MONTH) }
 
-    // Используем глобальное состояние
-    val selectedDate = CalendarState.selectedDate
+    val selectedDate = AppState.selectedDate
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp)
     ) {
         Column(
             modifier = Modifier
                 .background(gray)
-                .padding(16.dp)
+                .padding(4.dp)
         ) {
             selectedDate?.let { date ->
                 Text(
@@ -118,8 +103,8 @@ fun Calendar() {
                     when (calendarView) {
                         CalendarView.MONTH -> currentMonth = currentMonth.minusMonths(1)
                         CalendarView.WEEK -> {
-                            CalendarState.setSelectedDate(selectedDate?.minusWeeks(1))
-                            currentMonth = YearMonth.from(CalendarState.selectedDate ?: currentMonth.atDay(1))
+                            AppState.setSelectedDate(selectedDate?.minusWeeks(1))
+                            currentMonth = YearMonth.from(AppState.selectedDate ?: currentMonth.atDay(1))
                         }
                     }
                 },
@@ -127,14 +112,14 @@ fun Calendar() {
                     when (calendarView) {
                         CalendarView.MONTH -> currentMonth = currentMonth.plusMonths(1)
                         CalendarView.WEEK -> {
-                            CalendarState.setSelectedDate(selectedDate?.plusWeeks(1))
-                            currentMonth = YearMonth.from(CalendarState.selectedDate ?: currentMonth.atDay(1))
+                            AppState.setSelectedDate(selectedDate?.plusWeeks(1))
+                            currentMonth = YearMonth.from(AppState.selectedDate ?: currentMonth.atDay(1))
                         }
                     }
                 },
                 onToday = {
                     currentMonth = YearMonth.now()
-                    CalendarState.setSelectedDate(LocalDate.now())
+                    AppState.setSelectedDate(LocalDate.now())
                 },
                 onViewToggle = {
                     calendarView = when (calendarView) {
@@ -155,7 +140,7 @@ fun Calendar() {
                     SwipeableCalendarGrid(
                         currentMonth = currentMonth,
                         onDateSelected = { date ->
-                            CalendarState.setSelectedDate(date)
+                            AppState.setSelectedDate(date)
                         },
                         onSwipeLeft = {
                             if (!swipeInProgress) {
@@ -177,27 +162,28 @@ fun Calendar() {
                     SwipeableWeekView(
                         currentMonth = currentMonth,
                         onDateSelected = { date ->
-                            CalendarState.setSelectedDate(date)
+                            AppState.setSelectedDate(date)
                         },
                         onSwipeLeft = {
                             if (!swipeInProgress) {
                                 swipeInProgress = true
-                                CalendarState.setSelectedDate(CalendarState.selectedDate?.plusWeeks(1))
-                                currentMonth = YearMonth.from(CalendarState.selectedDate ?: currentMonth.atDay(1))
+                                AppState.setSelectedDate(AppState.selectedDate?.plusWeeks(1))
+                                currentMonth = YearMonth.from(AppState.selectedDate ?: currentMonth.atDay(1))
                                 swipeInProgress = false
                             }
                         },
                         onSwipeRight = {
                             if (!swipeInProgress) {
                                 swipeInProgress = true
-                                CalendarState.setSelectedDate(CalendarState.selectedDate?.minusWeeks(1))
-                                currentMonth = YearMonth.from(CalendarState.selectedDate ?: currentMonth.atDay(1))
+                                AppState.setSelectedDate(AppState.selectedDate?.minusWeeks(1))
+                                currentMonth = YearMonth.from(AppState.selectedDate ?: currentMonth.atDay(1))
                                 swipeInProgress = false
                             }
                         }
                     )
                 }
             }
+            Divider(modifier = Modifier.padding(vertical = 1.dp), color = deepGreen)
         }
     }
 }
@@ -343,6 +329,7 @@ fun SwipeableCalendarContainer(
                                     onSwipeRight()
                                     swipeHandled = true
                                 }
+
                                 dragAmount < 0 -> {
                                     onSwipeLeft()
                                     swipeHandled = true
@@ -412,7 +399,7 @@ fun CalendarGridContent(
             val calendarDay = calendarDays[index]
             CalendarDay(
                 day = calendarDay.date.dayOfMonth,
-                isSelected = CalendarState.selectedDate == calendarDay.date,
+                isSelected = AppState.selectedDate == calendarDay.date,
                 isToday = calendarDay.date == LocalDate.now(),
                 isOtherMonth = calendarDay.isOtherMonth,
                 onClick = {
@@ -428,7 +415,7 @@ fun WeekViewContent(
     currentMonth: YearMonth,
     onDateSelected: (LocalDate) -> Unit
 ) {
-    val weekDays = getWeekDays(CalendarState.selectedDate ?: currentMonth.atDay(1))
+    val weekDays = getWeekDays(AppState.selectedDate ?: currentMonth.atDay(1))
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(7),
@@ -438,7 +425,7 @@ fun WeekViewContent(
             val date = weekDays[index]
             CalendarDay(
                 day = date.dayOfMonth,
-                isSelected = CalendarState.selectedDate == date,
+                isSelected = AppState.selectedDate == date,
                 isToday = date == LocalDate.now(),
                 isOtherMonth = date.month != currentMonth.month,
                 onClick = {
