@@ -1,6 +1,8 @@
 package com.example.scheduleapp.logic
 
 import android.content.Context
+import android.util.Log
+import com.android.volley.AuthFailureError
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -61,23 +63,38 @@ fun getScheduleItems(
     onSuccess: (List<ScheduleItem>) -> Unit,
     onError: (String) -> Unit
 ) {
-    val url = "https://10.248.65.211:8080/schedule/final/$group"
+    val url = "http://10.248.65.211:8080/schedule/final/$group"
     val requestQueue = Volley.newRequestQueue(context)
 
-    val stringRequest = StringRequest(
+    val stringRequest = object : StringRequest(
         Request.Method.GET, url,
         { response ->
             try {
+                android.util.Log.d("API_DEBUG", "Raw response: $response")
                 val scheduleItems = parseScheduleFromJson(response)
+                android.util.Log.d("API_DEBUG", "Parsed ${scheduleItems.size} items")
                 onSuccess(scheduleItems)
             } catch (e: Exception) {
+                android.util.Log.e("API_ERROR", "Parse error: ${e.message}", e)
                 onError("Ошибка парсинга: ${e.message}")
             }
         },
         { error ->
-            onError("Ошибка сети: ${error.message}")
+            android.util.Log.e("API_ERROR", "Network error: ${error.networkResponse?.statusCode ?: 0} - ${error.toString()}")
+            onError("Ошибка сети: ${error.toString()}")
         }
-    )
+    ) {
+        override fun getHeaders(): MutableMap<String, String> {
+            val headers = HashMap<String, String>()
+            headers["Content-Type"] = "application/json; charset=utf-8"
+            headers["Accept"] = "application/json; charset=utf-8"
+            return headers
+        }
+
+        override fun getBodyContentType(): String {
+            return "application/json; charset=utf-8"
+        }
+    }
 
     requestQueue.add(stringRequest)
 }

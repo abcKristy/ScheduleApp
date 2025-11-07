@@ -61,7 +61,7 @@ fun ScreenList() {
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(40.dp))
             Calendar()
 
             if (isLoading) {
@@ -100,8 +100,6 @@ fun ScreenList() {
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(110.dp))
         }
     }
 }
