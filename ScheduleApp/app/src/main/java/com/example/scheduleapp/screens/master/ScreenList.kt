@@ -1,47 +1,112 @@
 package com.example.scheduleapp.screens.master
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.scheduleapp.R
+import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.items.Calendar
 import com.example.scheduleapp.items.ScheduleListItem
-import com.example.scheduleapp.items.getTestScheduleItems
+import com.example.scheduleapp.items.TestSchedule
+import com.example.scheduleapp.logic.getScheduleItems
 
 @Composable
 fun ScreenList() {
-    val scheduleItems = remember { getTestScheduleItems() }
+    val context = LocalContext.current
+    val scheduleItems = AppState.scheduleItems
+    val isLoading = AppState.isLoading
+    val errorMessage = AppState.errorMessage
+    val currentGroup = AppState.currentGroup
 
-    Box {
-        Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+    // Загружаем данные при старте приложения
+    LaunchedEffect(currentGroup) {
+        AppState.setLoading(true)
+        AppState.setErrorMessage(null)
+
+        getScheduleItems(
+            context = context,
+            group = currentGroup,
+            onSuccess = { items ->
+                AppState.setScheduleItems(items)
+                AppState.setLoading(false)
+            },
+            onError = { error ->
+                AppState.setErrorMessage(error)
+                AppState.setLoading(false)
+                // При ошибке используем тестовые данные
+                AppState.setScheduleItems(TestSchedule())
+            }
+        )
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column {
             Spacer(modifier = Modifier.height(40.dp))
             Calendar()
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(scheduleItems) { scheduleItem ->
-                    ScheduleListItem(
-                        scheduleItem = scheduleItem,
-                        onOptionsClick = {
-                            // Здесь будет переход на экран деталей
-                        }
-                    )
+
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (errorMessage != null) {
+
+                // Всегда показываем либо реальные данные, либо тестовые
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentPadding = PaddingValues(bottom = 120.dp)
+                ) {
+                    items(scheduleItems.ifEmpty { TestSchedule() }) { scheduleItem ->
+                        ScheduleListItem(
+                            scheduleItem = scheduleItem,
+                            onOptionsClick = {
+                                // Обработка клика
+                            }
+                        )
+                    }
+                }
+            } else {
+                // При успешной загрузке показываем реальные данные
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentPadding = PaddingValues(bottom = 120.dp)
+                ) {
+                    items(scheduleItems.ifEmpty { TestSchedule() }) { scheduleItem ->
+                        ScheduleListItem(
+                            scheduleItem = scheduleItem,
+                            onOptionsClick = {
+                                // Обработка клика
+                            }
+                        )
+                    }
                 }
             }
         }

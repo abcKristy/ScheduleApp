@@ -37,6 +37,7 @@ import com.example.scheduleapp.R
 import com.example.scheduleapp.data.ScheduleItem
 import com.example.scheduleapp.ui.theme.deepGreen
 import com.example.scheduleapp.ui.theme.gray
+import java.time.LocalDateTime
 
 @Composable
 fun ScheduleListItem(
@@ -65,7 +66,7 @@ fun ScheduleListItem(
             )
             {
                 Text(
-                    text = scheduleItem.startTime,
+                    text = scheduleItem.formattedStartTime,
                     fontWeight = FontWeight.Bold,
                     color = deepGreen
                 )
@@ -74,7 +75,7 @@ fun ScheduleListItem(
                     color = deepGreen
                 )
                 Text(
-                    text = scheduleItem.endTime,
+                    text = scheduleItem.formattedEndTime,
                     fontWeight = FontWeight.Bold,
                     color = deepGreen
                 )
@@ -119,7 +120,7 @@ fun ScheduleListItem(
                     verticalAlignment = Alignment.CenterVertically
                 ){
                     Text(
-                        text = scheduleItem.lessonName,
+                        text = scheduleItem.discipline,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f),
                         color = deepGreen
@@ -137,7 +138,7 @@ fun ScheduleListItem(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = scheduleItem.groups,
+                    text = scheduleItem.groupsSummary,
                     color = deepGreen
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -152,55 +153,7 @@ fun ScheduleListItem(
 
 
 
-fun getTestScheduleItems(): List<ScheduleItem> {
-    return listOf(
-        ScheduleItem(
-            id = 1,
-            startTime = "09:00",
-            duration = "1ч 30мин",
-            endTime = "10:30",
-            lessonName = "Математика",
-            groups = "Группа А, Группа Б",
-            teacher = "Иванов И.И."
-        ),
-        ScheduleItem(
-            id = 2,
-            startTime = "10:45",
-            duration = "1ч 30мин",
-            endTime = "12:15",
-            lessonName = "Физика",
-            groups = "Группа В",
-            teacher = "Петров П.П."
-        ),
-        ScheduleItem(
-            id = 3,
-            startTime = "13:00",
-            duration = "2ч 00мин",
-            endTime = "15:00",
-            lessonName = "Программирование",
-            groups = "Группа А, Группа В",
-            teacher = "Сидоров С.С."
-        ),
-        ScheduleItem(
-            id = 4,
-            startTime = "15:30",
-            duration = "1ч 30мин",
-            endTime = "17:00",
-            lessonName = "Английский язык",
-            groups = "Группа Б",
-            teacher = "Кузнецова Е.В."
-        ),
-        ScheduleItem(
-            id = 5,
-            startTime = "17:15",
-            duration = "1ч 30мин",
-            endTime = "18:45",
-            lessonName = "История",
-            groups = "Группа А, Группа Б, Группа В",
-            teacher = "Николаева О.П."
-        )
-    )
-}
+
 
 @Preview(showBackground = true)
 @Composable
@@ -208,15 +161,95 @@ fun ScheduleItemPreview() {
     MaterialTheme {
         ScheduleListItem(
             scheduleItem = ScheduleItem(
-                id = 1,
-                startTime = "09:00",
-                duration = "1ч 30мин",
-                endTime = "10:30",
-                lessonName = "Математика",
-                groups = "Группа А, Группа Б",
-                teacher = "Иванов И.И."
+                id = "296a15c0-f67b-4fe5-a70a-2f0232fcb7c5",
+                discipline = "Бэкенд-разработка",
+                lessonType = "LK",
+                startTime = LocalDateTime.of(2025, 9, 6, 9, 0),
+                endTime = LocalDateTime.of(2025, 9, 6, 10, 30),
+                room = "А-18 (В-78)",
+                teacher = "Волков Михаил Юрьевич",
+                groups = listOf("ИКБО-10-23", "ИКБО-13-23", "ИКБО-12-23", "ИКБО-11-23", "ИКБО-14-23", "ИКБО-15-23"),
+                groupsSummary = "ИКБО-10-23, ИКБО-13-23, ИКБО-12-23, ИКБО-11-23, ИКБО-14-23, ИКБО-15-23",
+                description = null
             ),
             onOptionsClick = {}
         )
     }
+}
+
+fun TestSchedule(): List<ScheduleItem> {
+    return listOf(
+        ScheduleItem(
+            id = "1",
+            discipline = "Бэкенд-разработка на Java",
+            lessonType = "LK",
+            startTime = LocalDateTime.of(2025, 9, 6, 9, 0),
+            endTime = LocalDateTime.of(2025, 9, 6, 10, 30),
+            room = "А-18",
+            teacher = "Волков М.Ю.",
+            groups = listOf("ИКБО-10-23", "ИКБО-11-23"),
+            groupsSummary = "ИКБО-10-23, ИКБО-11-23",
+            description = "Введение в Spring Framework"
+        ),
+        ScheduleItem(
+            id = "2",
+            discipline = "Веб-технологии",
+            lessonType = "PR",
+            startTime = LocalDateTime.of(2025, 9, 6, 10, 45),
+            endTime = LocalDateTime.of(2025, 9, 6, 12, 15),
+            room = "Б-22",
+            teacher = "Смирнова О.Л.",
+            groups = listOf("ИКБО-12-23"),
+            groupsSummary = "ИКБО-12-23",
+            description = "Разработка адаптивного дизайна"
+        ),
+        ScheduleItem(
+            id = "3",
+            discipline = "Мобильная разработка",
+            lessonType = "LAB",
+            startTime = LocalDateTime.of(2025, 9, 6, 13, 0),
+            endTime = LocalDateTime.of(2025, 9, 6, 14, 30),
+            room = "Комп. класс №3",
+            teacher = "Козлов Д.В.",
+            groups = listOf("ИКБО-13-23", "ИКБО-14-23"),
+            groupsSummary = "ИКБО-13-23, ИКБО-14-23",
+            description = "Создание первого Android-приложения"
+        ),
+        ScheduleItem(
+            id = "4",
+            discipline = "Базы данных",
+            lessonType = "LK",
+            startTime = LocalDateTime.of(2025, 9, 6, 14, 45),
+            endTime = LocalDateTime.of(2025, 9, 6, 16, 15),
+            room = "В-101",
+            teacher = "Петрова Е.С.",
+            groups = listOf("ИКБО-10-23", "ИКБО-11-23", "ИКБО-12-23"),
+            groupsSummary = "ИКБО-10-23, ИКБО-11-23, ИКБО-12-23",
+            description = "Нормализация баз данных. НФБК"
+        ),
+        ScheduleItem(
+            id = "5",
+            discipline = "Алгоритмы и структуры данных",
+            lessonType = "PR",
+            startTime = LocalDateTime.of(2025, 9, 6, 16, 30),
+            endTime = LocalDateTime.of(2025, 9, 6, 18, 0),
+            room = "Г-205",
+            teacher = "Николаев А.В.",
+            groups = listOf("ИКБО-13-23", "ИКБО-14-23", "ИКБО-15-23"),
+            groupsSummary = "ИКБО-13-23, ИКБО-14-23, ИКБО-15-23",
+            description = "Решение задач на графы и деревья"
+        ),
+        ScheduleItem(
+            id = "6",
+            discipline = "Иностранный язык",
+            lessonType = "PR",
+            startTime = LocalDateTime.of(2025, 9, 6, 18, 15),
+            endTime = LocalDateTime.of(2025, 9, 6, 19, 45),
+            room = "А-305",
+            teacher = "Иванова Т.К.",
+            groups = listOf("ИКБО-10-23"),
+            groupsSummary = "ИКБО-10-23",
+            description = "Технический английский для IT-специалистов"
+        )
+    )
 }

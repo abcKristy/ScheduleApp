@@ -72,7 +72,7 @@ fun setSelectedDayValue(date: LocalDate?) {
 fun Calendar() {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
     var swipeInProgress by remember { mutableStateOf(false) }
-    var calendarView by remember { mutableStateOf(CalendarView.MONTH) }
+    var calendarView by remember { mutableStateOf(CalendarView.WEEK) }
 
     val selectedDate = AppState.selectedDate
 
