@@ -47,21 +47,21 @@ fun ScreenList() {
             context = context,
             group = currentGroup,
             onSuccess = { items ->
-                AppState.setScheduleItems(items)
+                AppState.setScheduleItems(items) // ← ВАЖНО: сохраняем реальные данные
                 AppState.setLoading(false)
             },
             onError = { error ->
                 AppState.setErrorMessage(error)
-                AppState.setLoading(false)
-                // При ошибке используем тестовые данные
+                // ТОЛЬКО при ошибке используем тестовые данные
                 AppState.setScheduleItems(TestSchedule())
+                AppState.setLoading(false)
             }
         )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             Calendar()
 
             if (isLoading) {
@@ -73,16 +73,15 @@ fun ScreenList() {
                 ) {
                     CircularProgressIndicator()
                 }
-            } else if (errorMessage != null) {
-
-                // Всегда показываем либо реальные данные, либо тестовые
+            } else {
+                // Всегда показываем scheduleItems (реальные ИЛИ тестовые при ошибке)
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    contentPadding = PaddingValues(bottom = 120.dp)
+                    contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
-                    items(scheduleItems.ifEmpty { TestSchedule() }) { scheduleItem ->
+                    items(scheduleItems) { scheduleItem -> // ← используем scheduleItems, а не TestSchedule()
                         ScheduleListItem(
                             scheduleItem = scheduleItem,
                             onOptionsClick = {
@@ -91,24 +90,18 @@ fun ScreenList() {
                         )
                     }
                 }
-            } else {
-                // При успешной загрузке показываем реальные данные
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(bottom = 120.dp)
-                ) {
-                    items(scheduleItems.ifEmpty { TestSchedule() }) { scheduleItem ->
-                        ScheduleListItem(
-                            scheduleItem = scheduleItem,
-                            onOptionsClick = {
-                                // Обработка клика
-                            }
-                        )
-                    }
+
+                // Показываем сообщение об ошибке если есть
+                if (errorMessage != null) {
+                    Text(
+                        text = "Используются тестовые данные: $errorMessage",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
             }
+
+            Spacer(modifier = Modifier.height(110.dp))
         }
     }
 }
