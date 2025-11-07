@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
@@ -23,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,8 +36,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,29 +45,49 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scheduleapp.R
-import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.darkBlue
 import com.example.scheduleapp.ui.theme.deepGreen
 import com.example.scheduleapp.ui.theme.gray
-import com.example.scheduleapp.ui.theme.lightGreen
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-// Перечисление для режимов отображения
 enum class CalendarView {
     MONTH, WEEK
 }
 
-@Preview
+// Объект для хранения состояния календаря
+object CalendarState {
+    private var _selectedDate by mutableStateOf<LocalDate?>(LocalDate.now())
+
+    val selectedDate: LocalDate?
+        get() = _selectedDate
+
+    fun setSelectedDate(date: LocalDate?) {
+        _selectedDate = date
+    }
+}
+
+// Функция для получения выбранной даты
+fun getSelectedDayValue(): LocalDate? {
+    return CalendarState.selectedDate
+}
+
+// Функция для установки выбранной даты извне
+fun setSelectedDayValue(date: LocalDate?) {
+    CalendarState.setSelectedDate(date)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Calendar() {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
-    var selectedDate by remember { mutableStateOf<LocalDate?>(LocalDate.now()) }
     var swipeInProgress by remember { mutableStateOf(false) }
     var calendarView by remember { mutableStateOf(CalendarView.MONTH) }
+
+    // Используем глобальное состояние
+    val selectedDate = CalendarState.selectedDate
 
     Card(
         modifier = Modifier
@@ -99,8 +117,8 @@ fun Calendar() {
                     when (calendarView) {
                         CalendarView.MONTH -> currentMonth = currentMonth.minusMonths(1)
                         CalendarView.WEEK -> {
-                            selectedDate = selectedDate?.minusWeeks(1)
-                            currentMonth = YearMonth.from(selectedDate ?: currentMonth.atDay(1))
+                            CalendarState.setSelectedDate(selectedDate?.minusWeeks(1))
+                            currentMonth = YearMonth.from(CalendarState.selectedDate ?: currentMonth.atDay(1))
                         }
                     }
                 },
@@ -108,14 +126,14 @@ fun Calendar() {
                     when (calendarView) {
                         CalendarView.MONTH -> currentMonth = currentMonth.plusMonths(1)
                         CalendarView.WEEK -> {
-                            selectedDate = selectedDate?.plusWeeks(1)
-                            currentMonth = YearMonth.from(selectedDate ?: currentMonth.atDay(1))
+                            CalendarState.setSelectedDate(selectedDate?.plusWeeks(1))
+                            currentMonth = YearMonth.from(CalendarState.selectedDate ?: currentMonth.atDay(1))
                         }
                     }
                 },
                 onToday = {
                     currentMonth = YearMonth.now()
-                    selectedDate = LocalDate.now()
+                    CalendarState.setSelectedDate(LocalDate.now())
                 },
                 onViewToggle = {
                     calendarView = when (calendarView) {
@@ -131,14 +149,12 @@ fun Calendar() {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Отображаем либо месяц, либо неделю в зависимости от выбранного режима
             when (calendarView) {
                 CalendarView.MONTH -> {
                     SwipeableCalendarGrid(
                         currentMonth = currentMonth,
-                        selectedDate = selectedDate,
                         onDateSelected = { date ->
-                            selectedDate = date
+                            CalendarState.setSelectedDate(date)
                         },
                         onSwipeLeft = {
                             if (!swipeInProgress) {
@@ -159,23 +175,22 @@ fun Calendar() {
                 CalendarView.WEEK -> {
                     SwipeableWeekView(
                         currentMonth = currentMonth,
-                        selectedDate = selectedDate,
                         onDateSelected = { date ->
-                            selectedDate = date
+                            CalendarState.setSelectedDate(date)
                         },
                         onSwipeLeft = {
                             if (!swipeInProgress) {
                                 swipeInProgress = true
-                                selectedDate = selectedDate?.plusWeeks(1)
-                                currentMonth = YearMonth.from(selectedDate ?: currentMonth.atDay(1))
+                                CalendarState.setSelectedDate(CalendarState.selectedDate?.plusWeeks(1))
+                                currentMonth = YearMonth.from(CalendarState.selectedDate ?: currentMonth.atDay(1))
                                 swipeInProgress = false
                             }
                         },
                         onSwipeRight = {
                             if (!swipeInProgress) {
                                 swipeInProgress = true
-                                selectedDate = selectedDate?.minusWeeks(1)
-                                currentMonth = YearMonth.from(selectedDate ?: currentMonth.atDay(1))
+                                CalendarState.setSelectedDate(CalendarState.selectedDate?.minusWeeks(1))
+                                currentMonth = YearMonth.from(CalendarState.selectedDate ?: currentMonth.atDay(1))
                                 swipeInProgress = false
                             }
                         }
@@ -208,18 +223,17 @@ fun CalendarHeader(
                 color = deepGreen
             ),
             shape = CircleShape,
-            modifier = Modifier.size(50.dp), // Задаем размер кнопки
-            contentPadding = PaddingValues(0.dp) // Убираем внутренние отступы
+            modifier = Modifier.size(50.dp),
+            contentPadding = PaddingValues(0.dp)
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_cal),
                 contentDescription = "Сегодня",
                 tint = deepGreen,
-                modifier = Modifier.size(24.dp) // Опционально: задаем размер иконки
+                modifier = Modifier.size(24.dp)
             )
         }
 
-        // Центральная часть: навигация и отображение периода
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -231,13 +245,12 @@ fun CalendarHeader(
                 )
             }
 
-            // Отображаем либо месяц, либо неделю в зависимости от режима
             Text(
                 text = when (calendarView) {
-                    CalendarView.MONTH -> currentMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy"))
+                    CalendarView.MONTH -> currentMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale("ru")))
                     CalendarView.WEEK -> getWeekDisplayText(selectedDate ?: currentMonth.atDay(1))
                 },
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = 8.dp),
                 color = deepGreen,
                 fontWeight = FontWeight.Bold
             )
@@ -251,7 +264,6 @@ fun CalendarHeader(
             }
         }
 
-        // Правая часть: кнопка переключения вида с кастомными иконками
         IconButton(
             onClick = onViewToggle,
             modifier = Modifier.background(
@@ -262,8 +274,8 @@ fun CalendarHeader(
             Icon(
                 painter = painterResource(
                     id = when (calendarView) {
-                        CalendarView.MONTH -> R.drawable.ic_up  // Стрелка вверх - свернуть к неделе
-                        CalendarView.WEEK -> R.drawable.ic_down // Стрелка вниз - развернуть к месяцу
+                        CalendarView.MONTH -> R.drawable.ic_up
+                        CalendarView.WEEK -> R.drawable.ic_down
                     }
                 ),
                 contentDescription = when (calendarView) {
@@ -276,16 +288,13 @@ fun CalendarHeader(
     }
 }
 
-// Функция для получения текста отображения недели (без года)
 private fun getWeekDisplayText(startDate: LocalDate): String {
     val startOfWeek = startDate.with(java.time.DayOfWeek.MONDAY)
     val endOfWeek = startOfWeek.plusDays(6)
 
     return if (startOfWeek.month == endOfWeek.month) {
-        // Неделя в пределах одного месяца: "8-10 ноября"
         "${startOfWeek.dayOfMonth} - ${endOfWeek.dayOfMonth} ${startOfWeek.format(DateTimeFormatter.ofPattern("MMMM", Locale("ru")))}"
     } else {
-        // Неделя пересекает два месяца: "28 февраля - 6 марта"
         "${startOfWeek.dayOfMonth} ${startOfWeek.format(DateTimeFormatter.ofPattern("MMMM", Locale("ru")))} - " +
                 "${endOfWeek.dayOfMonth} ${endOfWeek.format(DateTimeFormatter.ofPattern("MMMM", Locale("ru")))}"
     }
@@ -311,12 +320,10 @@ fun WeekDaysHeader() {
 }
 
 @Composable
-fun SwipeableCalendarGrid(
-    currentMonth: YearMonth,
-    selectedDate: LocalDate?,
-    onDateSelected: (LocalDate) -> Unit,
+fun SwipeableCalendarContainer(
     onSwipeLeft: () -> Unit,
-    onSwipeRight: () -> Unit
+    onSwipeRight: () -> Unit,
+    content: @Composable () -> Unit
 ) {
     var swipeHandled by remember { mutableStateOf(false) }
 
@@ -326,34 +333,46 @@ fun SwipeableCalendarGrid(
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onDragStart = {
-                        swipeHandled = false // Сбрасываем при начале нового свайпа
+                        swipeHandled = false
                     },
                     onHorizontalDrag = { change, dragAmount ->
                         if (!swipeHandled) {
-                            // Любое движение влево или вправо активирует смену месяца
                             when {
-                                dragAmount > 0 -> { // Движение вправо
+                                dragAmount > 0 -> {
                                     onSwipeRight()
                                     swipeHandled = true
                                 }
-                                dragAmount < 0 -> { // Движение влево
+                                dragAmount < 0 -> {
                                     onSwipeLeft()
                                     swipeHandled = true
                                 }
                             }
                         }
-                        change.consume() // Помечаем событие как обработанное
+                        change.consume()
                     },
                     onDragEnd = {
-                        // Сбрасываем флаг при окончании жеста
                         swipeHandled = false
                     }
                 )
             }
     ) {
+        content()
+    }
+}
+
+@Composable
+fun SwipeableCalendarGrid(
+    currentMonth: YearMonth,
+    onDateSelected: (LocalDate) -> Unit,
+    onSwipeLeft: () -> Unit,
+    onSwipeRight: () -> Unit
+) {
+    SwipeableCalendarContainer(
+        onSwipeLeft = onSwipeLeft,
+        onSwipeRight = onSwipeRight
+    ) {
         CalendarGridContent(
             currentMonth = currentMonth,
-            selectedDate = selectedDate,
             onDateSelected = onDateSelected
         )
     }
@@ -362,47 +381,16 @@ fun SwipeableCalendarGrid(
 @Composable
 fun SwipeableWeekView(
     currentMonth: YearMonth,
-    selectedDate: LocalDate?,
     onDateSelected: (LocalDate) -> Unit,
     onSwipeLeft: () -> Unit,
     onSwipeRight: () -> Unit
 ) {
-    var swipeHandled by remember { mutableStateOf(false) }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragStart = {
-                        swipeHandled = false // Сбрасываем при начале нового свайпа
-                    },
-                    onHorizontalDrag = { change, dragAmount ->
-                        if (!swipeHandled) {
-                            // Любое движение влево или вправо активирует смену недели
-                            when {
-                                dragAmount > 0 -> { // Движение вправо - предыдущая неделя
-                                    onSwipeRight()
-                                    swipeHandled = true
-                                }
-                                dragAmount < 0 -> { // Движение влево - следующая неделя
-                                    onSwipeLeft()
-                                    swipeHandled = true
-                                }
-                            }
-                        }
-                        change.consume() // Помечаем событие как обработанное
-                    },
-                    onDragEnd = {
-                        // Сбрасываем флаг при окончании жеста
-                        swipeHandled = false
-                    }
-                )
-            }
+    SwipeableCalendarContainer(
+        onSwipeLeft = onSwipeLeft,
+        onSwipeRight = onSwipeRight
     ) {
         WeekViewContent(
             currentMonth = currentMonth,
-            selectedDate = selectedDate,
             onDateSelected = onDateSelected
         )
     }
@@ -411,10 +399,8 @@ fun SwipeableWeekView(
 @Composable
 fun CalendarGridContent(
     currentMonth: YearMonth,
-    selectedDate: LocalDate?,
     onDateSelected: (LocalDate) -> Unit
 ) {
-    // Получаем все дни для отображения (дни предыдущего месяца, текущего и следующего)
     val calendarDays = getCalendarDays(currentMonth)
 
     LazyVerticalGrid(
@@ -425,7 +411,7 @@ fun CalendarGridContent(
             val calendarDay = calendarDays[index]
             CalendarDay(
                 day = calendarDay.date.dayOfMonth,
-                isSelected = selectedDate == calendarDay.date,
+                isSelected = CalendarState.selectedDate == calendarDay.date,
                 isToday = calendarDay.date == LocalDate.now(),
                 isOtherMonth = calendarDay.isOtherMonth,
                 onClick = {
@@ -436,14 +422,12 @@ fun CalendarGridContent(
     }
 }
 
-// Режим недели - показываем только одну неделю
 @Composable
 fun WeekViewContent(
     currentMonth: YearMonth,
-    selectedDate: LocalDate?,
     onDateSelected: (LocalDate) -> Unit
 ) {
-    val weekDays = getWeekDays(selectedDate ?: currentMonth.atDay(1))
+    val weekDays = getWeekDays(CalendarState.selectedDate ?: currentMonth.atDay(1))
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(7),
@@ -453,7 +437,7 @@ fun WeekViewContent(
             val date = weekDays[index]
             CalendarDay(
                 day = date.dayOfMonth,
-                isSelected = selectedDate == date,
+                isSelected = CalendarState.selectedDate == date,
                 isToday = date == LocalDate.now(),
                 isOtherMonth = date.month != currentMonth.month,
                 onClick = {
@@ -464,19 +448,16 @@ fun WeekViewContent(
     }
 }
 
-// Функция для получения дней недели
 private fun getWeekDays(startDate: LocalDate): List<LocalDate> {
     val startOfWeek = startDate.with(java.time.DayOfWeek.MONDAY)
     return (0..6).map { startOfWeek.plusDays(it.toLong()) }
 }
 
-// Модель для дня календаря
 data class CalendarDay(
     val date: LocalDate,
-    val isOtherMonth: Boolean // true если день принадлежит предыдущему или следующему месяцу
+    val isOtherMonth: Boolean
 )
 
-// Функция для получения всех дней календаря (включая дни соседних месяцев)
 fun getCalendarDays(currentMonth: YearMonth): List<CalendarDay> {
     val days = mutableListOf<CalendarDay>()
 
@@ -535,7 +516,7 @@ fun CalendarDay(
     val textColor = when {
         isSelected -> deepGreen
         isToday -> darkBlue
-        isOtherMonth -> deepGreen.copy(alpha = 0.3f) // Полупрозрачный для дней других месяцев
+        isOtherMonth -> deepGreen.copy(alpha = 0.3f)
         else -> deepGreen
     }
 
@@ -559,30 +540,8 @@ fun CalendarDay(
     }
 }
 
-// Старая функция для обратной совместимости
+@Preview
 @Composable
-fun CalendarGrid(
-    currentMonth: YearMonth,
-    selectedDate: LocalDate?,
-    onDateSelected: (LocalDate) -> Unit
-) {
-    CalendarGridContent(
-        currentMonth = currentMonth,
-        selectedDate = selectedDate,
-        onDateSelected = onDateSelected
-    )
-}
-
-// Старая функция для обратной совместимости
-@Composable
-fun WeekView(
-    currentMonth: YearMonth,
-    selectedDate: LocalDate?,
-    onDateSelected: (LocalDate) -> Unit
-) {
-    WeekViewContent(
-        currentMonth = currentMonth,
-        selectedDate = selectedDate,
-        onDateSelected = onDateSelected
-    )
+fun CalendarPreview() {
+    Calendar()
 }
