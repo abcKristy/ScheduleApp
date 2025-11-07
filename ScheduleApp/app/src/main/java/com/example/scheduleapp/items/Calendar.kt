@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -89,7 +90,7 @@ fun Calendar() {
     // Используем глобальное состояние
     val selectedDate = CalendarState.selectedDate
 
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 16.dp)
