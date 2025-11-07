@@ -79,7 +79,7 @@ fun ScreenList() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    contentPadding = PaddingValues(bottom = 100.dp)
+                    contentPadding = PaddingValues(bottom = 120.dp)
                 ) {
                     items(scheduleItems) { scheduleItem -> // ← используем scheduleItems, а не TestSchedule()
                         ScheduleListItem(
