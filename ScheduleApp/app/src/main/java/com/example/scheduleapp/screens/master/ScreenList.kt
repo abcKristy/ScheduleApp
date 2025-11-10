@@ -47,12 +47,11 @@ fun ScreenList() {
             context = context,
             group = currentGroup,
             onSuccess = { items ->
-                AppState.setScheduleItems(items) // ← ВАЖНО: сохраняем реальные данные
+                AppState.setScheduleItems(items)
                 AppState.setLoading(false)
             },
             onError = { error ->
                 AppState.setErrorMessage(error)
-                // ТОЛЬКО при ошибке используем тестовые данные
                 AppState.setScheduleItems(TestSchedule())
                 AppState.setLoading(false)
             }
