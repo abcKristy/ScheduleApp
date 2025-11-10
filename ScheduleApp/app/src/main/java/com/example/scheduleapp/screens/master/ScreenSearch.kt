@@ -86,9 +86,9 @@ fun ScreenSearch() {
                 IconButton(
                     onClick = {
                         if (searchQuery.isNotBlank()) {
-                            AppState.setCurrentGroup(searchQuery)
-                            SearchHistoryManager.addToHistory(searchQuery)
-                            loadScheduleData(context, searchQuery)
+                            val trimmedQuery = searchQuery.trimEnd()
+                            AppState.setCurrentGroup(trimmedQuery)
+                            loadScheduleData(context, trimmedQuery)
                             searchQuery = ""
                         }
                     },
@@ -107,7 +107,6 @@ fun ScreenSearch() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Отображаем текущую выбранную группу
         if (AppState.currentGroup.isNotBlank()) {
             Text(
                 text = "Текущая группа: ${AppState.currentGroup}",
@@ -196,14 +195,30 @@ private fun loadScheduleData(context: android.content.Context, group: String) {
         context = context,
         group = group,
         onSuccess = { items ->
-            AppState.setScheduleItems(items)
             AppState.setLoading(false)
+            if (items.isNotEmpty()) {
+                // Группа найдена - сохраняем данные и добавляем в историю
+                AppState.setScheduleItems(items)
+                SearchHistoryManager.addToHistory(group)
+            } else {
+                // Группа не найдена - показываем тост и НЕ добавляем в историю
+                showToast(context, "Группа '$group' не найдена")
+                // Можно также очистить текущую группу если нужно
+                // AppState.setCurrentGroup("")
+            }
         },
         onError = { error ->
-            AppState.setErrorMessage(error)
             AppState.setLoading(false)
+            AppState.setErrorMessage(error)
+            // При ошибке тоже не добавляем в историю
+            showToast(context, "Ошибка поиска: $error")
         }
     )
+}
+
+// Функция для показа тоста
+private fun showToast(context: android.content.Context, message: String) {
+    android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
 }
 
 @Composable
