@@ -187,6 +187,7 @@ fun HistoryItem(query: String, onClick: () -> Unit) {
     }
 }
 
+// В функции loadScheduleData обновите вызов:
 private fun loadScheduleData(context: android.content.Context, group: String) {
     AppState.setLoading(true)
     AppState.setErrorMessage(null)
@@ -199,18 +200,16 @@ private fun loadScheduleData(context: android.content.Context, group: String) {
             if (items.isNotEmpty()) {
                 // Группа найдена - сохраняем данные и добавляем в историю
                 AppState.setScheduleItems(items)
-                SearchHistoryManager.addToHistory(group)
+                SearchHistoryManager.addToHistory(context, group) // ← передаем context
             } else {
                 // Группа не найдена - показываем тост и НЕ добавляем в историю
                 showToast(context, "Группа '$group' не найдена")
-                // Можно также очистить текущую группу если нужно
-                // AppState.setCurrentGroup("")
+                AppState.setCurrentGroup("")
             }
         },
         onError = { error ->
             AppState.setLoading(false)
             AppState.setErrorMessage(error)
-            // При ошибке тоже не добавляем в историю
             showToast(context, "Ошибка поиска: $error")
         }
     )

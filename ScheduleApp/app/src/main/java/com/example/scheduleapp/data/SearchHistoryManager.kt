@@ -1,5 +1,7 @@
+// SearchHistoryManager.kt
 package com.example.scheduleapp.data
 
+import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 
 object SearchHistoryManager {
@@ -7,7 +9,12 @@ object SearchHistoryManager {
     private val _historyList = mutableStateListOf<String>()
     val historyList: List<String> get() = _historyList
 
-    fun addToHistory(query: String) {
+    fun initialize(history: List<String>) {
+        _historyList.clear()
+        _historyList.addAll(history)
+    }
+
+    fun addToHistory(context: Context, query: String) {
         // Удаляем если уже есть (для обновления позиции)
         _historyList.remove(query)
         // Добавляем в начало
@@ -17,9 +24,13 @@ object SearchHistoryManager {
         if (_historyList.size > MAX_HISTORY_SIZE) {
             _historyList.removeAt(_historyList.size - 1)
         }
+
+        // Сохраняем в SharedPreferences
+        PreferencesManager.saveSearchHistory(context, _historyList)
     }
 
-    fun clearHistory() {
+    fun clearHistory(context: Context) {
         _historyList.clear()
+        PreferencesManager.saveSearchHistory(context, emptyList())
     }
 }
