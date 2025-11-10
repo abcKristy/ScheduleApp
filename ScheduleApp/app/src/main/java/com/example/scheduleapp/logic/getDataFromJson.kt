@@ -63,7 +63,7 @@ fun getScheduleItems(
     onSuccess: (List<ScheduleItem>) -> Unit,
     onError: (String) -> Unit
 ) {
-    val url = "http://10.192.3.6:8080/schedule/final/$group"
+    val url = "http://10.248.65.211:8080/schedule/final/$group"
     val requestQueue = Volley.newRequestQueue(context)
 
     val stringRequest = object : StringRequest(
