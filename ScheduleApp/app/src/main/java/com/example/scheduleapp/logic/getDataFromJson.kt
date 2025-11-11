@@ -56,7 +56,6 @@ fun parseGroups(groupsArray: JSONArray): List<String> {
     return groups
 }
 
-// Функция с использованием корутин (рекомендуется)
 fun getScheduleItems(
     context: Context,
     group: String,
@@ -95,6 +94,5 @@ fun getScheduleItems(
             return "application/json; charset=utf-8"
         }
     }
-
     requestQueue.add(stringRequest)
 }
