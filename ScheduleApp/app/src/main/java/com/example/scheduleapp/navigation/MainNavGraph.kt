@@ -54,9 +54,6 @@ fun MainNavGraph(navController: NavHostController) {
             ScreenSearch()
         }
 
-        composable(NavigationRoute.Previous.route) {
-            ScreenPrevious()
-        }
         ////////////////////////////////////////////////
 
         // Detail screens

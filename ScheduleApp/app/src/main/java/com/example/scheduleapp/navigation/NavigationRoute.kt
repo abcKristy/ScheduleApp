@@ -7,7 +7,6 @@ sealed class NavigationRoute(val route: String){
     object Profile: NavigationRoute("profile")
     object ScheduleList: NavigationRoute("schedule_list")
     object Search: NavigationRoute("search")
-    object Previous: NavigationRoute("previous")
     object UserDetail: NavigationRoute("user_detail")
     object ScheduleDetail: NavigationRoute("schedule_detail")
 
@@ -20,7 +19,6 @@ sealed class NavigationRoute(val route: String){
                 "profile" -> Profile
                 "schedule_list" -> ScheduleList
                 "search" -> Search
-                "previous" -> Previous
                 "user_detail" -> UserDetail
                 "schedule_detail" -> ScheduleDetail
                 null -> Profile

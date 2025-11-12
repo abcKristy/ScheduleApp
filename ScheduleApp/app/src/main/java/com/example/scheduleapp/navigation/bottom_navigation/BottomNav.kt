@@ -1,4 +1,4 @@
-package com.example.scheduleapp.bottom_navigation
+package com.example.scheduleapp.navigation.bottom_navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,7 +39,7 @@ fun BottomNav(
     ) {
         Row(
             modifier = Modifier
-                .width(250.dp)
+                .width(200.dp)
                 .height(60.dp)
                 .clip(CircleShape)
                 .background(deepGreen)

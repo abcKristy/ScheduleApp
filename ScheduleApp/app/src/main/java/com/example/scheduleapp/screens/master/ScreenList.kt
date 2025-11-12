@@ -25,9 +25,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.scheduleapp.R
 import com.example.scheduleapp.data.AppState
+import com.example.scheduleapp.data.TestSchedule
 import com.example.scheduleapp.items.Calendar
 import com.example.scheduleapp.items.ScheduleListItem
-import com.example.scheduleapp.items.TestSchedule
 import com.example.scheduleapp.logic.getScheduleItems
 
 @Composable
@@ -84,13 +84,11 @@ fun ScreenList() {
                         ScheduleListItem(
                             scheduleItem = scheduleItem,
                             onOptionsClick = {
-                                // Обработка клика
                             }
                         )
                     }
                 }
 
-                // Показываем сообщение об ошибке если есть
                 if (errorMessage != null) {
                     Text(
                         text = "Используются тестовые данные: $errorMessage",
