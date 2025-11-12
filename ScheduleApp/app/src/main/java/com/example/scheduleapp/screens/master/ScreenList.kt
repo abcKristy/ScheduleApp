@@ -1,3 +1,4 @@
+// ScreenList.kt (обновленная версия)
 package com.example.scheduleapp.screens.master
 
 import android.annotation.SuppressLint
@@ -16,6 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,6 +30,7 @@ import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.data.TestSchedule
 import com.example.scheduleapp.items.Calendar
 import com.example.scheduleapp.items.ScheduleListItem
+import com.example.scheduleapp.logic.filterScheduleByDate
 import com.example.scheduleapp.logic.getScheduleItems
 
 @Composable
@@ -37,8 +40,8 @@ fun ScreenList() {
     val isLoading = AppState.isLoading
     val errorMessage = AppState.errorMessage
     val currentGroup = AppState.currentGroup
+    val selectedDate = AppState.selectedDate
 
-    // Загружаем данные при старте приложения
     LaunchedEffect(currentGroup) {
         AppState.setLoading(true)
         AppState.setErrorMessage(null)
@@ -58,6 +61,10 @@ fun ScreenList() {
         )
     }
 
+    val filteredSchedule = remember(scheduleItems, selectedDate) {
+        filterScheduleByDate(scheduleItems, selectedDate)
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
             Spacer(modifier = Modifier.height(40.dp))
@@ -73,25 +80,43 @@ fun ScreenList() {
                     CircularProgressIndicator()
                 }
             } else {
-                // Всегда показываем scheduleItems (реальные ИЛИ тестовые при ошибке)
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(bottom = 120.dp)
-                ) {
-                    items(scheduleItems) { scheduleItem -> // ← используем scheduleItems, а не TestSchedule()
-                        ScheduleListItem(
-                            scheduleItem = scheduleItem,
-                            onOptionsClick = {
-                            }
+                if (filteredSchedule.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentPadding = PaddingValues(bottom = 120.dp)
+                    ) {
+                        items(filteredSchedule) { scheduleItem ->
+                            ScheduleListItem(
+                                scheduleItem = scheduleItem,
+                                onOptionsClick = {
+                                    // Обработка нажатия на кнопку меню
+                                }
+                            )
+                        }
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (selectedDate != null) {
+                                "Сегодня занятий нет!"
+                            } else {
+                                "Выберите дату"
+                            },
+                            color = Color.Gray
                         )
                     }
                 }
 
                 if (errorMessage != null) {
                     Text(
-                        text = "Используются тестовые данные: $errorMessage",
+                        text = "Используются тестовые данные ИКБО-10-23: $errorMessage",
                         color = Color.Red,
                         modifier = Modifier.padding(16.dp)
                     )
@@ -101,15 +126,13 @@ fun ScreenList() {
     }
 }
 
-
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 @Preview
 fun TestList() {
     Scaffold(
         containerColor = colorResource(id = R.color.gray)
-    )
-    {
+    ) {
         ScreenList()
     }
 }
