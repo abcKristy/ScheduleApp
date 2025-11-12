@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,12 +47,14 @@ import com.example.scheduleapp.ui.theme.deepGreen
 import com.example.scheduleapp.ui.theme.gray
 import com.example.scheduleapp.ui.theme.lightGray
 import com.example.scheduleapp.ui.theme.lightGreen
+import kotlinx.coroutines.launch
 
 @Composable
 fun ScreenSearch() {
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     val searchHistory = SearchHistoryManager.historyList
+    val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -88,7 +91,9 @@ fun ScreenSearch() {
                         if (searchQuery.isNotBlank()) {
                             val trimmedQuery = searchQuery.trimEnd()
                             AppState.setCurrentGroup(trimmedQuery)
-                            loadScheduleData(context, trimmedQuery)
+                            coroutineScope.launch {
+                                loadScheduleData(context, trimmedQuery)
+                            }
                             searchQuery = ""
                         }
                     },
@@ -131,7 +136,9 @@ fun ScreenSearch() {
                         query = historyItem,
                         onClick = {
                             AppState.setCurrentGroup(historyItem)
-                            loadScheduleData(context, historyItem)
+                            coroutineScope.launch {
+                                loadScheduleData(context, historyItem)
+                            }
                         }
                     )
                 }
@@ -188,12 +195,11 @@ fun HistoryItem(query: String, onClick: () -> Unit) {
 }
 
 // В функции loadScheduleData обновите вызов:
-private fun loadScheduleData(context: android.content.Context, group: String) {
+private suspend fun loadScheduleData(context: android.content.Context, group: String) {
     AppState.setLoading(true)
     AppState.setErrorMessage(null)
 
     getScheduleItems(
-        context = context,
         group = group,
         onSuccess = { items ->
             AppState.setLoading(false)

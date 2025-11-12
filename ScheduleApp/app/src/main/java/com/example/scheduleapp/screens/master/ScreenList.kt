@@ -47,7 +47,6 @@ fun ScreenList() {
         AppState.setErrorMessage(null)
 
         getScheduleItems(
-            context = context,
             group = currentGroup,
             onSuccess = { items ->
                 AppState.setScheduleItems(items)

@@ -1,98 +1,96 @@
 package com.example.scheduleapp.logic
 
-import android.content.Context
 import android.util.Log
-import com.android.volley.AuthFailureError
-import com.android.volley.Request
-import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
-import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.data.ScheduleItem
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONArray
 import org.json.JSONObject
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Headers
+import retrofit2.http.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.coroutines.resumeWithException
 
 private val dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
-fun parseScheduleFromJson(jsonString: String): List<ScheduleItem> {
-    val scheduleItems = mutableListOf<ScheduleItem>()
+// Data classes для парсинга JSON
+data class ScheduleItemResponse(
+    val id: String,
+    val discipline: String,
+    val lessonType: String,
+    val startTime: String,
+    val endTime: String,
+    val room: String,
+    val teacher: String,
+    val groups: List<String>,
+    val groupsSummary: String,
+    val description: String?
+)
 
-    try {
-        val jsonArray = JSONArray(jsonString)
+data class GroupsResponse(
+    val groups: List<String>
+)
 
-        for (i in 0 until jsonArray.length()) {
-            val jsonObject = jsonArray.getJSONObject(i)
-            val scheduleItem = parseScheduleItem(jsonObject)
-            scheduleItems.add(scheduleItem)
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-    return scheduleItems
+// Retrofit интерфейс для API
+interface ScheduleApiService {
+    @GET("schedule/final/{group}")
+    @Headers(
+        "Content-Type: application/json; charset=utf-8",
+        "Accept: application/json; charset=utf-8"
+    )
+    suspend fun getSchedule(@Path("group") group: String): List<ScheduleItemResponse>
 }
 
-fun parseScheduleItem(jsonObject: JSONObject): ScheduleItem {
+// Создание Retrofit клиента
+private fun createApiService(): ScheduleApiService {
+    val retrofit = Retrofit.Builder()
+        .baseUrl("http://10.248.65.211:8080/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    return retrofit.create(ScheduleApiService::class.java)
+}
+
+// Функции преобразования из Response в Domain модель
+fun parseScheduleFromResponse(response: List<ScheduleItemResponse>): List<ScheduleItem> {
+    return response.map { parseScheduleItem(it) }
+}
+
+fun parseScheduleItem(response: ScheduleItemResponse): ScheduleItem {
     return ScheduleItem(
-        id = jsonObject.getString("id"),
-        discipline = jsonObject.getString("discipline"),
-        lessonType = jsonObject.getString("lessonType"),
-        startTime = LocalDateTime.parse(jsonObject.getString("startTime"),dateTimeFormatter),
-        endTime = LocalDateTime.parse(jsonObject.getString("endTime"),dateTimeFormatter),
-        room = jsonObject.getString("room"),
-        teacher = jsonObject.getString("teacher"),
-        groups = parseGroups(jsonObject.getJSONArray("groups")),
-        groupsSummary = jsonObject.getString("groupsSummary"),
-        description = jsonObject.optString("description").takeIf { it != "null" && it.isNotEmpty()}
+        id = response.id,
+        discipline = response.discipline,
+        lessonType = response.lessonType,
+        startTime = LocalDateTime.parse(response.startTime, dateTimeFormatter),
+        endTime = LocalDateTime.parse(response.endTime, dateTimeFormatter),
+        room = response.room,
+        teacher = response.teacher,
+        groups = response.groups,
+        groupsSummary = response.groupsSummary,
+        description = response.description?.takeIf { it != "null" && it.isNotEmpty() }
     )
 }
 
-fun parseGroups(groupsArray: JSONArray): List<String> {
-    val groups = mutableListOf<String>()
-    for(i in 0 until groupsArray.length())
-        groups.add(groupsArray.getString(i))
-    return groups
-}
-
-fun getScheduleItems(
-    context: Context,
+// Основная функция с использованием Retrofit
+suspend fun getScheduleItems(
     group: String,
     onSuccess: (List<ScheduleItem>) -> Unit,
     onError: (String) -> Unit
 ) {
-    val url = "http://10.248.65.211:8080/schedule/final/$group"
-    val requestQueue = Volley.newRequestQueue(context)
+    try {
+        Log.d("API_DEBUG", "Fetching schedule for group: $group")
+        val apiService = createApiService()
+        val response = apiService.getSchedule(group)
 
-    val stringRequest = object : StringRequest(
-        Request.Method.GET, url,
-        { response ->
-            try {
-                android.util.Log.d("API_DEBUG", "Raw response: $response")
-                val scheduleItems = parseScheduleFromJson(response)
-                android.util.Log.d("API_DEBUG", "Parsed ${scheduleItems.size} items")
-                onSuccess(scheduleItems)
-            } catch (e: Exception) {
-                android.util.Log.e("API_ERROR", "Parse error: ${e.message}", e)
-                onError("Ошибка парсинга: ${e.message}")
-            }
-        },
-        { error ->
-            android.util.Log.e("API_ERROR", "Network error: ${error.networkResponse?.statusCode ?: 0} - ${error.toString()}")
-            onError("Ошибка сети: ${error.toString()}")
-        }
-    ) {
-        override fun getHeaders(): MutableMap<String, String> {
-            val headers = HashMap<String, String>()
-            headers["Content-Type"] = "application/json; charset=utf-8"
-            headers["Accept"] = "application/json; charset=utf-8"
-            return headers
-        }
+        Log.d("API_DEBUG", "Received ${response.size} items")
+        val scheduleItems = parseScheduleFromResponse(response)
+        Log.d("API_DEBUG", "Parsed ${scheduleItems.size} items")
+        onSuccess(scheduleItems)
 
-        override fun getBodyContentType(): String {
-            return "application/json; charset=utf-8"
-        }
+    } catch (e: Exception) {
+        Log.e("API_ERROR", "Error: ${e.message}", e)
+        onError("Ошибка: ${e.message}")
     }
-    requestQueue.add(stringRequest)
 }
