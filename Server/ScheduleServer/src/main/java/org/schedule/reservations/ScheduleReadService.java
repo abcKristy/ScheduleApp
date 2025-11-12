@@ -71,15 +71,6 @@ public class ScheduleReadService {
                                                    CheckDataInMemory.EntityCheckResult checkResult) {
         List<LessonEntity> lessons = new ArrayList<>();
 
-        // Пробуем получить из кэша
-        if (checkHelper.checkCache(entityType, entityName)) {
-            lessons = dataGetter.getFromCache(entityType, entityName);
-            if (!lessons.isEmpty()) {
-                log.debug("Данные из кэша для {}: {}", entityType, entityName);
-                return lessons;
-            }
-        }
-
         // Пробуем получить из БД
         if (checkResult.isExistsInDatabase()) {
             lessons = dataGetter.getFromDatabase(entityType, entityName);

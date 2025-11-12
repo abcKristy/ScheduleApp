@@ -38,7 +38,7 @@ public class SaverToMemory {
     }
 
     /**
-     * ПОЛНОЕ ПАКЕТНОЕ СОХРАНЕНИЕ УРОКОВ
+     * ПОЛНОЕ ПАКЕТНОЕ СОХРАНЕНИЕ УРОКОВ С ОПТИМИЗАЦИЕЙ N+1
      */
     @Transactional
     public BatchSaveResult saveLessonsBatch(List<LessonEntity> lessons) {
@@ -52,17 +52,19 @@ public class SaverToMemory {
         long startTime = System.currentTimeMillis();
 
         try {
-            // 1. ПОДГОТОВКА ВСЕХ СПРАВОЧНИКОВ
-            log.debug("Этап 1: Подготовка справочников");
-            ReferenceData referenceData = prepareAllReferences(lessons);
+            // ОПТИМИЗАЦИЯ N+1: обрабатываем ВСЕ справочники для ВСЕХ уроков пакетно
+            log.debug("Этап 1: Пакетная обработка справочников");
+            processAllReferencesBatch(lessons);
 
-            // 2. ОБРАБОТКА И СВЯЗЫВАНИЕ УРОКОВ
-            log.debug("Этап 2: Обработка уроков");
-            ProcessedLessons processedLessons = processAndLinkLessons(lessons, referenceData);
+            // Сохраняем уроки
+            log.debug("Этап 2: Пакетное сохранение уроков");
+            List<LessonEntity> savedLessons = lessonRepository.saveAll(lessons);
 
-            // 3. ПАКЕТНОЕ СОХРАНЕНИЕ
-            log.debug("Этап 3: Пакетное сохранение");
-            return saveAllInBatch(processedLessons, startTime);
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("Пакетное сохранение завершено за {} мс: успешно={}",
+                    duration, savedLessons.size());
+
+            return new BatchSaveResult(savedLessons.size(), 0, lessons.size(), Collections.emptyList());
 
         } catch (Exception e) {
             log.error("Критическая ошибка при пакетном сохранении: {}", e.getMessage(), e);
@@ -71,252 +73,183 @@ public class SaverToMemory {
     }
 
     /**
-     * 1. ПОДГОТОВКА ВСЕХ СПРАВОЧНИКОВ - ГРУППЫ, ПРЕПОДАВАТЕЛИ, АУДИТОРИИ
+     * ОПТИМИЗАЦИЯ N+1: обработка всех справочников пакетно
      */
-    private ReferenceData prepareAllReferences(List<LessonEntity> lessons) {
-        ReferenceData data = new ReferenceData();
+    private void processAllReferencesBatch(List<LessonEntity> lessons) {
+        log.debug("Пакетная обработка справочников для {} уроков", lessons.size());
 
-        // Извлекаем все уникальные имена из всех уроков
-        extractAllUniqueNames(lessons, data);
-
-        // Загружаем существующие и создаем новые сущности
-        loadAndCreateAllReferences(data);
-
-        return data;
+        processGroupsBatch(lessons);
+        processTeachersBatch(lessons);
+        processRoomsBatch(lessons);
     }
 
     /**
-     * Извлечение всех уникальных имен из уроков
+     * ОПТИМИЗИРОВАННЫЙ метод обработки групп (N+1 решение)
      */
-    private void extractAllUniqueNames(List<LessonEntity> lessons, ReferenceData data) {
-        for (LessonEntity lesson : lessons) {
-            if (lesson == null) continue;
+    private void processGroupsBatch(List<LessonEntity> lessons) {
+        // 1. Собираем ВСЕ уникальные имена групп из ВСЕХ уроков
+        Set<String> allGroupNames = lessons.stream()
+                .filter(lesson -> lesson.getGroups() != null)
+                .flatMap(lesson -> lesson.getGroups().stream())
+                .map(GroupEntity::getGroupName)
+                .filter(name -> name != null && !name.trim().isEmpty())
+                .collect(Collectors.toSet());
 
-            // Группы
+        if (allGroupNames.isEmpty()) {
+            log.debug("Нет групп для обработки");
+            return;
+        }
+
+        log.debug("Обработка {} уникальных групп", allGroupNames.size());
+
+        // 2. ОДИН запрос для получения всех существующих групп
+        Map<String, GroupEntity> existingGroupsMap = groupRepository
+                .findByGroupNameIn(new ArrayList<>(allGroupNames))
+                .stream()
+                .collect(Collectors.toMap(GroupEntity::getGroupName, Function.identity()));
+
+        // 3. Определяем какие группы нужно создать
+        List<GroupEntity> groupsToCreate = allGroupNames.stream()
+                .filter(groupName -> !existingGroupsMap.containsKey(groupName))
+                .map(groupName -> {
+                    GroupEntity newGroup = new GroupEntity();
+                    newGroup.setGroupName(groupName);
+                    return newGroup;
+                })
+                .collect(Collectors.toList());
+
+        // 4. ОДИН запрос для сохранения всех новых групп
+        if (!groupsToCreate.isEmpty()) {
+            log.debug("Создание {} новых групп", groupsToCreate.size());
+            List<GroupEntity> savedGroups = groupRepository.saveAll(groupsToCreate);
+            savedGroups.forEach(group -> existingGroupsMap.put(group.getGroupName(), group));
+        }
+
+        // 5. Сопоставляем группы с уроками (в памяти, без запросов)
+        for (LessonEntity lesson : lessons) {
             if (lesson.getGroups() != null) {
-                lesson.getGroups().stream()
-                        .filter(group -> group != null && group.getGroupName() != null)
-                        .map(GroupEntity::getGroupName)
-                        .map(String::trim)
-                        .filter(name -> !name.isEmpty())
-                        .forEach(data.allGroupNames::add);
-            }
-
-            // Преподаватели
-            if (lesson.getTeacher() != null) {
-                Arrays.stream(lesson.getTeacher().split("[,\n]"))
-                        .map(String::trim)
-                        .filter(name -> !name.isEmpty())
-                        .forEach(data.allTeacherNames::add);
-            }
-
-            // Аудитории
-            if (lesson.getRoom() != null) {
-                Arrays.stream(lesson.getRoom().split(","))
-                        .map(String::trim)
-                        .filter(name -> !name.isEmpty())
-                        .forEach(data.allRoomNames::add);
-            }
-        }
-
-        log.debug("Извлечено уникальных имен: групп={}, преподавателей={}, аудиторий={}",
-                data.allGroupNames.size(), data.allTeacherNames.size(), data.allRoomNames.size());
-    }
-
-    /**
-     * Загрузка существующих и создание новых справочников
-     */
-    private void loadAndCreateAllReferences(ReferenceData data) {
-        // ГРУППЫ
-        if (!data.allGroupNames.isEmpty()) {
-            // Загружаем существующие группы
-            List<GroupEntity> existingGroups = groupRepository.findByGroupNameIn(
-                    new ArrayList<>(data.allGroupNames));
-            data.existingGroups = existingGroups.stream()
-                    .collect(Collectors.toMap(GroupEntity::getGroupName, Function.identity()));
-
-            // Создаем новые группы
-            List<GroupEntity> newGroups = data.allGroupNames.stream()
-                    .filter(name -> !data.existingGroups.containsKey(name))
-                    .map(name -> {
-                        GroupEntity group = new GroupEntity();
-                        group.setGroupName(name);
-                        return group;
-                    })
-                    .collect(Collectors.toList());
-
-            // Сохраняем новые группы ПАКЕТОМ
-            if (!newGroups.isEmpty()) {
-                List<GroupEntity> savedGroups = groupRepository.saveAll(newGroups);
-                savedGroups.forEach(group -> data.existingGroups.put(group.getGroupName(), group));
-                log.debug("Создано новых групп: {}", newGroups.size());
-            }
-        }
-
-        // ПРЕПОДАВАТЕЛИ
-        if (!data.allTeacherNames.isEmpty()) {
-            List<TeacherEntity> existingTeachers = teacherRepository.findByFullNamesIn(
-                    new ArrayList<>(data.allTeacherNames));
-            data.existingTeachers = existingTeachers.stream()
-                    .collect(Collectors.toMap(TeacherEntity::getFullName, Function.identity()));
-
-            List<TeacherEntity> newTeachers = data.allTeacherNames.stream()
-                    .filter(name -> !data.existingTeachers.containsKey(name))
-                    .map(name -> {
-                        TeacherEntity teacher = new TeacherEntity();
-                        teacher.setFullName(name);
-                        return teacher;
-                    })
-                    .collect(Collectors.toList());
-
-            if (!newTeachers.isEmpty()) {
-                List<TeacherEntity> savedTeachers = teacherRepository.saveAll(newTeachers);
-                savedTeachers.forEach(teacher -> data.existingTeachers.put(teacher.getFullName(), teacher));
-                log.debug("Создано новых преподавателей: {}", newTeachers.size());
-            }
-        }
-
-        // АУДИТОРИИ
-        if (!data.allRoomNames.isEmpty()) {
-            List<RoomEntity> existingRooms = roomRepository.findByRoomNamesIn(
-                    new ArrayList<>(data.allRoomNames));
-            data.existingRooms = existingRooms.stream()
-                    .collect(Collectors.toMap(RoomEntity::getRoomName, Function.identity()));
-
-            List<RoomEntity> newRooms = data.allRoomNames.stream()
-                    .filter(name -> !data.existingRooms.containsKey(name))
-                    .map(name -> {
-                        RoomEntity room = new RoomEntity();
-                        room.setRoomName(name);
-                        return room;
-                    })
-                    .collect(Collectors.toList());
-
-            if (!newRooms.isEmpty()) {
-                List<RoomEntity> savedRooms = roomRepository.saveAll(newRooms);
-                savedRooms.forEach(room -> data.existingRooms.put(room.getRoomName(), room));
-                log.debug("Создано новых аудиторий: {}", newRooms.size());
+                List<GroupEntity> processedGroups = lesson.getGroups().stream()
+                        .map(group -> existingGroupsMap.get(group.getGroupName()))
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+                lesson.setGroups(processedGroups);
             }
         }
     }
 
     /**
-     * 2. ОБРАБОТКА И СВЯЗЫВАНИЕ УРОКОВ СО СПРАВОЧНИКАМИ
+     * ОПТИМИЗИРОВАННЫЙ метод обработки преподавателей (N+1 решение)
      */
-    private ProcessedLessons processAndLinkLessons(List<LessonEntity> lessons, ReferenceData referenceData) {
-        ProcessedLessons result = new ProcessedLessons();
+    private void processTeachersBatch(List<LessonEntity> lessons) {
+        // 1. Собираем ВСЕ уникальные имена преподавателей из ВСЕХ уроков
+        Set<String> allTeacherNames = lessons.stream()
+                .filter(lesson -> lesson.getTeacher() != null)
+                .flatMap(lesson -> Arrays.stream(lesson.getTeacher().split("[,\n]")))
+                .map(String::trim)
+                .filter(name -> !name.isEmpty())
+                .collect(Collectors.toSet());
 
+        if (allTeacherNames.isEmpty()) {
+            log.debug("Нет преподавателей для обработки");
+            return;
+        }
+
+        log.debug("Обработка {} уникальных преподавателей", allTeacherNames.size());
+
+        // 2. ОДИН запрос для получения всех существующих преподавателей
+        Map<String, TeacherEntity> existingTeachersMap = teacherRepository
+                .findByFullNameIn(new ArrayList<>(allTeacherNames))
+                .stream()
+                .collect(Collectors.toMap(TeacherEntity::getFullName, Function.identity()));
+
+        // 3. Создаем новых преподавателей
+        List<TeacherEntity> teachersToCreate = allTeacherNames.stream()
+                .filter(teacherName -> !existingTeachersMap.containsKey(teacherName))
+                .map(teacherName -> {
+                    TeacherEntity newTeacher = new TeacherEntity();
+                    newTeacher.setFullName(teacherName);
+                    return newTeacher;
+                })
+                .collect(Collectors.toList());
+
+        // 4. ОДИН запрос для сохранения всех новых преподавателей
+        if (!teachersToCreate.isEmpty()) {
+            log.debug("Создание {} новых преподавателей", teachersToCreate.size());
+            List<TeacherEntity> savedTeachers = teacherRepository.saveAll(teachersToCreate);
+            savedTeachers.forEach(teacher -> existingTeachersMap.put(teacher.getFullName(), teacher));
+        }
+
+        // 5. Сопоставляем преподавателей с уроками
         for (LessonEntity lesson : lessons) {
-            if (lesson == null) {
-                result.skippedLessons.add("null объект урока");
-                continue;
-            }
-
-            try {
-                // Обрабатываем группы
-                if (lesson.getGroups() != null) {
-                    List<GroupEntity> processedGroups = lesson.getGroups().stream()
-                            .filter(group -> group != null && group.getGroupName() != null)
-                            .map(group -> referenceData.existingGroups.get(group.getGroupName().trim()))
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toList());
-                    lesson.setGroups(processedGroups);
-                }
-
-                // Обрабатываем преподавателей
-                if (lesson.getTeacher() != null) {
-                    List<TeacherEntity> processedTeachers = Arrays.stream(lesson.getTeacher().split("[,\n]"))
-                            .map(String::trim)
-                            .filter(name -> !name.isEmpty())
-                            .map(referenceData.existingTeachers::get)
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toList());
-                    lesson.setTeachers(processedTeachers);
-                }
-
-                // Обрабатываем аудитории
-                if (lesson.getRoom() != null) {
-                    List<RoomEntity> processedRooms = Arrays.stream(lesson.getRoom().split(","))
-                            .map(String::trim)
-                            .filter(name -> !name.isEmpty())
-                            .map(referenceData.existingRooms::get)
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toList());
-                    lesson.setRooms(processedRooms);
-                }
-
-                result.validLessons.add(lesson);
-
-            } catch (Exception e) {
-                String errorMsg = String.format("Урок '%s': %s",
-                        lesson.getDiscipline() != null ? lesson.getDiscipline() : "без названия",
-                        e.getMessage());
-                result.skippedLessons.add(errorMsg);
-                log.warn("Не удалось обработать урок: {}", errorMsg);
+            if (lesson.getTeacher() != null) {
+                List<TeacherEntity> processedTeachers = Arrays.stream(lesson.getTeacher().split("[,\n]"))
+                        .map(String::trim)
+                        .filter(name -> !name.isEmpty())
+                        .map(existingTeachersMap::get)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+                lesson.setTeachers(processedTeachers);
             }
         }
-
-        return result;
     }
 
     /**
-     * 3. ФИНАЛЬНОЕ ПАКЕТНОЕ СОХРАНЕНИЕ
+     * ОПТИМИЗИРОВАННЫЙ метод обработки аудиторий (N+1 решение)
      */
-    private BatchSaveResult saveAllInBatch(ProcessedLessons processedLessons, long startTime) {
-        int totalLessons = processedLessons.validLessons.size() + processedLessons.skippedLessons.size();
-        int savedCount = 0;
-        int errorCount = processedLessons.skippedLessons.size();
+    private void processRoomsBatch(List<LessonEntity> lessons) {
+        // 1. Собираем ВСЕ уникальные имена аудиторий из ВСЕХ уроков
+        Set<String> allRoomNames = lessons.stream()
+                .filter(lesson -> lesson.getRoom() != null)
+                .flatMap(lesson -> Arrays.stream(lesson.getRoom().split(",")))
+                .map(String::trim)
+                .filter(name -> !name.isEmpty())
+                .collect(Collectors.toSet());
 
-        if (!processedLessons.validLessons.isEmpty()) {
-            try {
-                // ЕДИНСТВЕННЫЙ вызов saveAll для всех уроков
-                List<LessonEntity> savedLessons = lessonRepository.saveAll(processedLessons.validLessons);
-                savedCount = savedLessons.size();
+        if (allRoomNames.isEmpty()) {
+            log.debug("Нет аудиторий для обработки");
+            return;
+        }
 
-            } catch (Exception e) {
-                log.error("Ошибка при пакетном сохранении уроков: {}", e.getMessage(), e);
-                errorCount += processedLessons.validLessons.size();
-                processedLessons.skippedLessons.add("Пакетное сохранение: " + e.getMessage());
+        log.debug("Обработка {} уникальных аудиторий", allRoomNames.size());
+
+        // 2. ОДИН запрос для получения всех существующих аудиторий
+        Map<String, RoomEntity> existingRoomsMap = roomRepository
+                .findByRoomNamesIn(new ArrayList<>(allRoomNames))
+                .stream()
+                .collect(Collectors.toMap(RoomEntity::getRoomName, Function.identity()));
+
+        // 3. Создаем новых аудиторий
+        List<RoomEntity> roomsToCreate = allRoomNames.stream()
+                .filter(roomName -> !existingRoomsMap.containsKey(roomName))
+                .map(roomName -> {
+                    RoomEntity newRoom = new RoomEntity();
+                    newRoom.setRoomName(roomName);
+                    return newRoom;
+                })
+                .collect(Collectors.toList());
+
+        // 4. ОДИН запрос для сохранения всех новых аудиторий
+        if (!roomsToCreate.isEmpty()) {
+            log.debug("Создание {} новых аудиторий", roomsToCreate.size());
+            List<RoomEntity> savedRooms = roomRepository.saveAll(roomsToCreate);
+            savedRooms.forEach(room -> existingRoomsMap.put(room.getRoomName(), room));
+        }
+
+        // 5. Сопоставляем аудитории с уроками
+        for (LessonEntity lesson : lessons) {
+            if (lesson.getRoom() != null) {
+                List<RoomEntity> processedRooms = Arrays.stream(lesson.getRoom().split(","))
+                        .map(String::trim)
+                        .filter(name -> !name.isEmpty())
+                        .map(existingRoomsMap::get)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+                lesson.setRooms(processedRooms);
             }
         }
-
-        long endTime = System.currentTimeMillis();
-        long duration = endTime - startTime;
-
-        log.info("Пакетное сохранение завершено за {} мс: успешно={}, ошибок={}, всего={}",
-                duration, savedCount, errorCount, totalLessons);
-
-        // Логируем ошибки если есть
-        if (!processedLessons.skippedLessons.isEmpty()) {
-            log.warn("Пропущенные уроки ({}/{}):", errorCount, totalLessons);
-            processedLessons.skippedLessons.forEach(error -> log.debug(" - {}", error));
-        }
-
-        return new BatchSaveResult(savedCount, errorCount, totalLessons, processedLessons.skippedLessons);
     }
 
-    // ВСПОМОГАТЕЛЬНЫЕ КЛАССЫ ДЛЯ ОРГАНИЗАЦИИ ДАННЫХ
-
-    /**
-     * Данные всех справочников
-     */
-    private static class ReferenceData {
-        Set<String> allGroupNames = new HashSet<>();
-        Set<String> allTeacherNames = new HashSet<>();
-        Set<String> allRoomNames = new HashSet<>();
-
-        Map<String, GroupEntity> existingGroups = new HashMap<>();
-        Map<String, TeacherEntity> existingTeachers = new HashMap<>();
-        Map<String, RoomEntity> existingRooms = new HashMap<>();
-    }
-
-    /**
-     * Обработанные уроки
-     */
-    private static class ProcessedLessons {
-        List<LessonEntity> validLessons = new ArrayList<>();
-        List<String> skippedLessons = new ArrayList<>();
-    }
+    // ВСПОМОГАТЕЛЬНЫЕ КЛАССЫ
 
     /**
      * Результат пакетного сохранения
@@ -345,7 +278,7 @@ public class SaverToMemory {
         }
     }
 
-    // СУЩЕСТВУЮЩИЕ МЕТОДЫ (оставляем для обратной совместимости)
+    // СУЩЕСТВУЮЩИЕ МЕТОДЫ ДЛЯ ОБРАТНОЙ СОВМЕСТИМОСТИ
 
     @Transactional
     public void saveToDatabase(LessonEntity lesson) {
@@ -376,82 +309,7 @@ public class SaverToMemory {
         }
     }
 
-
-    private void processGroups(LessonEntity lesson) {
-        if (lesson.getGroups() == null || lesson.getGroups().isEmpty()) {
-            return;
-        }
-
-        List<GroupEntity> processedGroups = new ArrayList<>();
-
-        for (GroupEntity group : lesson.getGroups()) {
-            if (group.getGroupName() != null && !group.getGroupName().trim().isEmpty()) {
-                // Ищем существующую группу или создаем новую
-                GroupEntity existingGroup = groupRepository.findByGroupName(group.getGroupName())
-                        .orElseGet(() -> {
-                            GroupEntity newGroup = new GroupEntity();
-                            newGroup.setGroupName(group.getGroupName());
-                            // ЯВНО сохраняем новую группу перед использованием
-                            return groupRepository.save(newGroup);
-                        });
-                processedGroups.add(existingGroup);
-            }
-        }
-
-        lesson.setGroups(processedGroups);
-    }
-
-    private void processTeachers(LessonEntity lesson) {
-        String teacherName = lesson.getTeacher();
-        if (teacherName == null || teacherName.trim().isEmpty()) {
-            return;
-        }
-
-        List<TeacherEntity> processedTeachers = new ArrayList<>();
-
-        String[] teacherNames = teacherName.split("[,\n]");
-        for (String name : teacherNames) {
-            String cleanName = name.trim();
-            if (!cleanName.isEmpty()) {
-                TeacherEntity existingTeacher = teacherRepository.findByFullName(cleanName)
-                        .orElseGet(() -> {
-                            TeacherEntity newTeacher = new TeacherEntity();
-                            newTeacher.setFullName(cleanName);
-                            // ЯВНО сохраняем нового преподавателя
-                            return teacherRepository.save(newTeacher);
-                        });
-                processedTeachers.add(existingTeacher);
-            }
-        }
-
-        lesson.setTeachers(processedTeachers);
-    }
-
-    private void processRooms(LessonEntity lesson) {
-        String roomName = lesson.getRoom();
-        if (roomName == null || roomName.trim().isEmpty()) {
-            return;
-        }
-
-        List<RoomEntity> processedRooms = new ArrayList<>();
-
-        String[] roomNames = roomName.split(",");
-        for (String name : roomNames) {
-            String cleanName = name.trim();
-            if (!cleanName.isEmpty()) {
-                RoomEntity existingRoom = roomRepository.findByRoomName(cleanName)
-                        .orElseGet(() -> {
-                            RoomEntity newRoom = new RoomEntity();
-                            newRoom.setRoomName(cleanName);
-                            // ЯВНО сохраняем новую аудиторию
-                            return roomRepository.save(newRoom);
-                        });
-                processedRooms.add(existingRoom);
-            }
-        }
-
-        lesson.setRooms(processedRooms);
-    }
+    // СУЩЕСТВУЮЩИЕ МЕТОДЫ ОБНОВЛЕНИЯ ID (без изменений)
 
     private void updateExistingLesson(LessonEntity existing, LessonEntity newData) {
         existing.setDiscipline(newData.getDiscipline());
@@ -563,11 +421,5 @@ public class SaverToMemory {
         }
 
         log.info("Выход из updateAllIdsFromApi, результат: успешно - {}, пропущено - {}", updatedCount, skippedCount);
-    }
-
-    public void saveToCache(List<LessonEntity> lessons) {
-        log.debug("Вход в saveToCache, занятий: {}", lessons.size());
-        // TODO: Реализовать сохранение в saveToCache
-        log.debug("Выход из saveToCache");
     }
 }

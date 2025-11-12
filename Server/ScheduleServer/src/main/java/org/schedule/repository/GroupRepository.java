@@ -1,6 +1,5 @@
 package org.schedule.repository;
 
-import jakarta.transaction.Transactional;
 import org.schedule.entity.forBD.basic.GroupEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

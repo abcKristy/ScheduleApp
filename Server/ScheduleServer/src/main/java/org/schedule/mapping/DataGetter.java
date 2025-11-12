@@ -19,14 +19,6 @@ public class DataGetter {
         this.lessonRepository = lessonRepository;
     }
 
-    public List<LessonEntity> getFromCache(EntityType entityType, String entityName) {
-        log.debug("Вход в getFromCache, тип: {}, имя: {}", entityType, entityName);
-        // TODO: Реализовать получение из getFromCache
-        List<LessonEntity> result = new ArrayList<>();
-        log.debug("Выход из getFromCache, результат: {} элементов", result.size());
-        return result;
-    }
-
     public List<LessonEntity> getFromDatabase(EntityType entityType, String entityName) {
         log.debug("Вход в getFromDatabase, тип: {}, имя: {}", entityType, entityName);
 

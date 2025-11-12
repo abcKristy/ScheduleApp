@@ -69,9 +69,6 @@ public class ScheduleService {
             // Шаг 4: Получаем сохраненные данные из БД (чтение)
             List<LessonEntity> newLessonsFromDb = readService.getLessonsFromDatabase(remainingEntities);
 
-            // Шаг 5: Сохраняем в кэш (неблокирующая операция)
-            writeService.saveToCache(newLessonsFromDb);
-
             // Объединяем все занятия и преобразуем в DTO
             List<LessonEntity> allLessons = new ArrayList<>(lessonsFromDb);
             allLessons.addAll(newLessonsFromDb);

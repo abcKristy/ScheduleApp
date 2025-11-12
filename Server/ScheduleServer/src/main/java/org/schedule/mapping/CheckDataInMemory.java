@@ -27,14 +27,6 @@ public class CheckDataInMemory {
         this.teacherRepository = teacherRepository;
     }
 
-    public boolean checkCache(EntityType entityType, String entityName) {
-        log.debug("Вход в checkCache, тип: {}, имя: {}", entityType, entityName);
-        // TODO: Реализовать проверку checkCache
-        boolean result = false;
-        log.debug("Выход из checkCache, результат: {}", result);
-        return result;
-    }
-
     public EntityCheckResult checkEntity(String entityString) {
         log.debug("Вход в checkEntity, строка: {}", entityString);
 

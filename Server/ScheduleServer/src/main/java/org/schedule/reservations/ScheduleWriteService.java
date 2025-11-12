@@ -34,15 +34,4 @@ public class ScheduleWriteService {
             throw new RuntimeException("Не удалось сохранить данные", e);
         }
     }
-
-    @Transactional
-    public void saveToCache(List<LessonEntity> lessons) {
-        log.debug("Сохранение в кэш, занятий: {}", lessons.size());
-        try {
-            saver.saveToCache(lessons);
-        } catch (Exception e) {
-            log.warn("Ошибка при сохранении в кэш", e);
-            // Не бросаем исключение, т.к. кэш не критичен
-        }
-    }
 }
