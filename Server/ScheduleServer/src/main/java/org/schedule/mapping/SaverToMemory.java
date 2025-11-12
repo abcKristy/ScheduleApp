@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 public class SaverToMemory {
@@ -37,34 +37,345 @@ public class SaverToMemory {
         this.roomRepository = roomRepository;
     }
 
+    /**
+     * ПОЛНОЕ ПАКЕТНОЕ СОХРАНЕНИЕ УРОКОВ
+     */
     @Transactional
-    public void saveToDatabase(LessonEntity lesson) {
-        if (lesson == null) {
-            throw new IllegalArgumentException("Занятие не может быть null");
+    public BatchSaveResult saveLessonsBatch(List<LessonEntity> lessons) {
+        log.info("Начало пакетного сохранения {} уроков", lessons.size());
+
+        if (lessons == null || lessons.isEmpty()) {
+            log.warn("Пустой список уроков для пакетного сохранения");
+            return new BatchSaveResult(0, 0, 0, Collections.emptyList());
         }
+
+        long startTime = System.currentTimeMillis();
+
         try {
-            // Сначала сохраняем связанные сущности
-            processGroups(lesson);
-            processTeachers(lesson);
-            processRooms(lesson);
+            // 1. ПОДГОТОВКА ВСЕХ СПРАВОЧНИКОВ
+            log.debug("Этап 1: Подготовка справочников");
+            ReferenceData referenceData = prepareAllReferences(lessons);
 
-            // Теперь проверяем существование занятия
-            if (lesson.getId() != null) {
-                Optional<LessonEntity> existingLesson = lessonRepository.findById(lesson.getId());
-                if (existingLesson.isPresent()) {
-                    updateExistingLesson(existingLesson.get(), lesson);
-                    return;
-                }
-            }
+            // 2. ОБРАБОТКА И СВЯЗЫВАНИЕ УРОКОВ
+            log.debug("Этап 2: Обработка уроков");
+            ProcessedLessons processedLessons = processAndLinkLessons(lessons, referenceData);
 
-            // Сохраняем занятие
-            lessonRepository.save(lesson);
+            // 3. ПАКЕТНОЕ СОХРАНЕНИЕ
+            log.debug("Этап 3: Пакетное сохранение");
+            return saveAllInBatch(processedLessons, startTime);
 
         } catch (Exception e) {
-            log.error("Ошибка при сохранении занятия в БД: {}", e.getMessage(), e);
-            throw new RuntimeException("Не удалось сохранить занятие в БД", e);
+            log.error("Критическая ошибка при пакетном сохранении: {}", e.getMessage(), e);
+            throw new RuntimeException("Не удалось выполнить пакетное сохранение уроков", e);
         }
     }
+
+    /**
+     * 1. ПОДГОТОВКА ВСЕХ СПРАВОЧНИКОВ - ГРУППЫ, ПРЕПОДАВАТЕЛИ, АУДИТОРИИ
+     */
+    private ReferenceData prepareAllReferences(List<LessonEntity> lessons) {
+        ReferenceData data = new ReferenceData();
+
+        // Извлекаем все уникальные имена из всех уроков
+        extractAllUniqueNames(lessons, data);
+
+        // Загружаем существующие и создаем новые сущности
+        loadAndCreateAllReferences(data);
+
+        return data;
+    }
+
+    /**
+     * Извлечение всех уникальных имен из уроков
+     */
+    private void extractAllUniqueNames(List<LessonEntity> lessons, ReferenceData data) {
+        for (LessonEntity lesson : lessons) {
+            if (lesson == null) continue;
+
+            // Группы
+            if (lesson.getGroups() != null) {
+                lesson.getGroups().stream()
+                        .filter(group -> group != null && group.getGroupName() != null)
+                        .map(GroupEntity::getGroupName)
+                        .map(String::trim)
+                        .filter(name -> !name.isEmpty())
+                        .forEach(data.allGroupNames::add);
+            }
+
+            // Преподаватели
+            if (lesson.getTeacher() != null) {
+                Arrays.stream(lesson.getTeacher().split("[,\n]"))
+                        .map(String::trim)
+                        .filter(name -> !name.isEmpty())
+                        .forEach(data.allTeacherNames::add);
+            }
+
+            // Аудитории
+            if (lesson.getRoom() != null) {
+                Arrays.stream(lesson.getRoom().split(","))
+                        .map(String::trim)
+                        .filter(name -> !name.isEmpty())
+                        .forEach(data.allRoomNames::add);
+            }
+        }
+
+        log.debug("Извлечено уникальных имен: групп={}, преподавателей={}, аудиторий={}",
+                data.allGroupNames.size(), data.allTeacherNames.size(), data.allRoomNames.size());
+    }
+
+    /**
+     * Загрузка существующих и создание новых справочников
+     */
+    private void loadAndCreateAllReferences(ReferenceData data) {
+        // ГРУППЫ
+        if (!data.allGroupNames.isEmpty()) {
+            // Загружаем существующие группы
+            List<GroupEntity> existingGroups = groupRepository.findByGroupNameIn(
+                    new ArrayList<>(data.allGroupNames));
+            data.existingGroups = existingGroups.stream()
+                    .collect(Collectors.toMap(GroupEntity::getGroupName, Function.identity()));
+
+            // Создаем новые группы
+            List<GroupEntity> newGroups = data.allGroupNames.stream()
+                    .filter(name -> !data.existingGroups.containsKey(name))
+                    .map(name -> {
+                        GroupEntity group = new GroupEntity();
+                        group.setGroupName(name);
+                        return group;
+                    })
+                    .collect(Collectors.toList());
+
+            // Сохраняем новые группы ПАКЕТОМ
+            if (!newGroups.isEmpty()) {
+                List<GroupEntity> savedGroups = groupRepository.saveAll(newGroups);
+                savedGroups.forEach(group -> data.existingGroups.put(group.getGroupName(), group));
+                log.debug("Создано новых групп: {}", newGroups.size());
+            }
+        }
+
+        // ПРЕПОДАВАТЕЛИ
+        if (!data.allTeacherNames.isEmpty()) {
+            List<TeacherEntity> existingTeachers = teacherRepository.findByFullNamesIn(
+                    new ArrayList<>(data.allTeacherNames));
+            data.existingTeachers = existingTeachers.stream()
+                    .collect(Collectors.toMap(TeacherEntity::getFullName, Function.identity()));
+
+            List<TeacherEntity> newTeachers = data.allTeacherNames.stream()
+                    .filter(name -> !data.existingTeachers.containsKey(name))
+                    .map(name -> {
+                        TeacherEntity teacher = new TeacherEntity();
+                        teacher.setFullName(name);
+                        return teacher;
+                    })
+                    .collect(Collectors.toList());
+
+            if (!newTeachers.isEmpty()) {
+                List<TeacherEntity> savedTeachers = teacherRepository.saveAll(newTeachers);
+                savedTeachers.forEach(teacher -> data.existingTeachers.put(teacher.getFullName(), teacher));
+                log.debug("Создано новых преподавателей: {}", newTeachers.size());
+            }
+        }
+
+        // АУДИТОРИИ
+        if (!data.allRoomNames.isEmpty()) {
+            List<RoomEntity> existingRooms = roomRepository.findByRoomNamesIn(
+                    new ArrayList<>(data.allRoomNames));
+            data.existingRooms = existingRooms.stream()
+                    .collect(Collectors.toMap(RoomEntity::getRoomName, Function.identity()));
+
+            List<RoomEntity> newRooms = data.allRoomNames.stream()
+                    .filter(name -> !data.existingRooms.containsKey(name))
+                    .map(name -> {
+                        RoomEntity room = new RoomEntity();
+                        room.setRoomName(name);
+                        return room;
+                    })
+                    .collect(Collectors.toList());
+
+            if (!newRooms.isEmpty()) {
+                List<RoomEntity> savedRooms = roomRepository.saveAll(newRooms);
+                savedRooms.forEach(room -> data.existingRooms.put(room.getRoomName(), room));
+                log.debug("Создано новых аудиторий: {}", newRooms.size());
+            }
+        }
+    }
+
+    /**
+     * 2. ОБРАБОТКА И СВЯЗЫВАНИЕ УРОКОВ СО СПРАВОЧНИКАМИ
+     */
+    private ProcessedLessons processAndLinkLessons(List<LessonEntity> lessons, ReferenceData referenceData) {
+        ProcessedLessons result = new ProcessedLessons();
+
+        for (LessonEntity lesson : lessons) {
+            if (lesson == null) {
+                result.skippedLessons.add("null объект урока");
+                continue;
+            }
+
+            try {
+                // Обрабатываем группы
+                if (lesson.getGroups() != null) {
+                    List<GroupEntity> processedGroups = lesson.getGroups().stream()
+                            .filter(group -> group != null && group.getGroupName() != null)
+                            .map(group -> referenceData.existingGroups.get(group.getGroupName().trim()))
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList());
+                    lesson.setGroups(processedGroups);
+                }
+
+                // Обрабатываем преподавателей
+                if (lesson.getTeacher() != null) {
+                    List<TeacherEntity> processedTeachers = Arrays.stream(lesson.getTeacher().split("[,\n]"))
+                            .map(String::trim)
+                            .filter(name -> !name.isEmpty())
+                            .map(referenceData.existingTeachers::get)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList());
+                    lesson.setTeachers(processedTeachers);
+                }
+
+                // Обрабатываем аудитории
+                if (lesson.getRoom() != null) {
+                    List<RoomEntity> processedRooms = Arrays.stream(lesson.getRoom().split(","))
+                            .map(String::trim)
+                            .filter(name -> !name.isEmpty())
+                            .map(referenceData.existingRooms::get)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList());
+                    lesson.setRooms(processedRooms);
+                }
+
+                result.validLessons.add(lesson);
+
+            } catch (Exception e) {
+                String errorMsg = String.format("Урок '%s': %s",
+                        lesson.getDiscipline() != null ? lesson.getDiscipline() : "без названия",
+                        e.getMessage());
+                result.skippedLessons.add(errorMsg);
+                log.warn("Не удалось обработать урок: {}", errorMsg);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * 3. ФИНАЛЬНОЕ ПАКЕТНОЕ СОХРАНЕНИЕ
+     */
+    private BatchSaveResult saveAllInBatch(ProcessedLessons processedLessons, long startTime) {
+        int totalLessons = processedLessons.validLessons.size() + processedLessons.skippedLessons.size();
+        int savedCount = 0;
+        int errorCount = processedLessons.skippedLessons.size();
+
+        if (!processedLessons.validLessons.isEmpty()) {
+            try {
+                // ЕДИНСТВЕННЫЙ вызов saveAll для всех уроков
+                List<LessonEntity> savedLessons = lessonRepository.saveAll(processedLessons.validLessons);
+                savedCount = savedLessons.size();
+
+            } catch (Exception e) {
+                log.error("Ошибка при пакетном сохранении уроков: {}", e.getMessage(), e);
+                errorCount += processedLessons.validLessons.size();
+                processedLessons.skippedLessons.add("Пакетное сохранение: " + e.getMessage());
+            }
+        }
+
+        long endTime = System.currentTimeMillis();
+        long duration = endTime - startTime;
+
+        log.info("Пакетное сохранение завершено за {} мс: успешно={}, ошибок={}, всего={}",
+                duration, savedCount, errorCount, totalLessons);
+
+        // Логируем ошибки если есть
+        if (!processedLessons.skippedLessons.isEmpty()) {
+            log.warn("Пропущенные уроки ({}/{}):", errorCount, totalLessons);
+            processedLessons.skippedLessons.forEach(error -> log.debug(" - {}", error));
+        }
+
+        return new BatchSaveResult(savedCount, errorCount, totalLessons, processedLessons.skippedLessons);
+    }
+
+    // ВСПОМОГАТЕЛЬНЫЕ КЛАССЫ ДЛЯ ОРГАНИЗАЦИИ ДАННЫХ
+
+    /**
+     * Данные всех справочников
+     */
+    private static class ReferenceData {
+        Set<String> allGroupNames = new HashSet<>();
+        Set<String> allTeacherNames = new HashSet<>();
+        Set<String> allRoomNames = new HashSet<>();
+
+        Map<String, GroupEntity> existingGroups = new HashMap<>();
+        Map<String, TeacherEntity> existingTeachers = new HashMap<>();
+        Map<String, RoomEntity> existingRooms = new HashMap<>();
+    }
+
+    /**
+     * Обработанные уроки
+     */
+    private static class ProcessedLessons {
+        List<LessonEntity> validLessons = new ArrayList<>();
+        List<String> skippedLessons = new ArrayList<>();
+    }
+
+    /**
+     * Результат пакетного сохранения
+     */
+    public static class BatchSaveResult {
+        private final int savedCount;
+        private final int errorCount;
+        private final int totalCount;
+        private final List<String> errors;
+
+        public BatchSaveResult(int savedCount, int errorCount, int totalCount, List<String> errors) {
+            this.savedCount = savedCount;
+            this.errorCount = errorCount;
+            this.totalCount = totalCount;
+            this.errors = errors != null ? new ArrayList<>(errors) : new ArrayList<>();
+        }
+
+        // Геттеры
+        public int getSavedCount() { return savedCount; }
+        public int getErrorCount() { return errorCount; }
+        public int getTotalCount() { return totalCount; }
+        public List<String> getErrors() { return new ArrayList<>(errors); }
+        public boolean isSuccess() { return errorCount == 0; }
+        public double getSuccessRate() {
+            return totalCount > 0 ? (double) savedCount / totalCount * 100 : 0;
+        }
+    }
+
+    // СУЩЕСТВУЮЩИЕ МЕТОДЫ (оставляем для обратной совместимости)
+
+    @Transactional
+    public void saveToDatabase(LessonEntity lesson) {
+        // Для обратной совместимости - используем пакетный метод для одного урока
+        BatchSaveResult result = saveLessonsBatch(Collections.singletonList(lesson));
+        if (result.getErrorCount() > 0) {
+            throw new RuntimeException("Не удалось сохранить урок: " + String.join(", ", result.getErrors()));
+        }
+    }
+
+    @Transactional
+    public void saveLessonsWithErrorHandling(List<LessonEntity> lessons) {
+        // Заменяем старую реализацию на новую пакетную
+        BatchSaveResult result = saveLessonsBatch(lessons);
+
+        if (result.getErrorCount() > 0) {
+            // Сохраняем логику обработки ошибок из старого метода
+            if (result.getSavedCount() == 0) {
+                throw new RuntimeException("Не удалось сохранить ни одного занятия: " +
+                        String.join("; ", result.getErrors().subList(0, Math.min(5, result.getErrors().size()))));
+            }
+
+            if (result.getErrorCount() > lessons.size() / 2) {
+                throw new RuntimeException("Слишком много ошибок при сохранении: " +
+                        result.getSavedCount() + "/" + lessons.size() + " успешно. Ошибки: " +
+                        String.join("; ", result.getErrors().subList(0, Math.min(3, result.getErrors().size()))));
+            }
+        }
+    }
+
 
     private void processGroups(LessonEntity lesson) {
         if (lesson.getGroups() == null || lesson.getGroups().isEmpty()) {
@@ -258,63 +569,5 @@ public class SaverToMemory {
         log.debug("Вход в saveToCache, занятий: {}", lessons.size());
         // TODO: Реализовать сохранение в saveToCache
         log.debug("Выход из saveToCache");
-    }
-
-    @Transactional
-    public void saveLessonsWithErrorHandling(List<LessonEntity> lessons) {
-        log.info("Пакетное сохранение занятий с обработкой ошибок, занятий: {}", lessons.size());
-
-        if (lessons.isEmpty()) {
-            log.warn("Пустой список занятий для сохранения");
-            return;
-        }
-
-        int savedCount = 0;
-        int errorCount = 0;
-        List<String> errors = new ArrayList<>();
-
-        for (int i = 0; i < lessons.size(); i++) {
-            LessonEntity lesson = lessons.get(i);
-            try {
-                if (lesson == null) {
-                    errors.add("Элемент " + i + ": null объект");
-                    errorCount++;
-                    continue;
-                }
-
-                saveToDatabase(lesson);
-                savedCount++;
-
-            } catch (Exception e) {
-                errorCount++;
-                String errorMsg = String.format("Занятие %d '%s': %s",
-                        i,
-                        lesson != null ? lesson.getDiscipline() : "null",
-                        e.getMessage()
-                );
-                errors.add(errorMsg);
-                log.warn("Не удалось сохранить занятие: {}", errorMsg);
-            }
-        }
-
-        log.info("Пакетное сохранение завершено: успешно - {}, ошибок - {}", savedCount, errorCount);
-
-        if (errorCount > 0) {
-            // Логируем все ошибки для отладки
-            errors.forEach(error -> log.debug("Ошибка сохранения: {}", error));
-
-            // Бросаем исключение только если не сохранено ни одного занятия
-            if (savedCount == 0) {
-                throw new RuntimeException("Не удалось сохранить ни одного занятия: " +
-                        String.join("; ", errors.subList(0, Math.min(5, errors.size()))));
-            }
-
-            // Или если ошибок слишком много (например, больше 50%)
-            if (errorCount > lessons.size() / 2) {
-                throw new RuntimeException("Слишком много ошибок при сохранении: " +
-                        savedCount + "/" + lessons.size() + " успешно. Ошибки: " +
-                        String.join("; ", errors.subList(0, Math.min(3, errors.size()))));
-            }
-        }
     }
 }
