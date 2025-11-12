@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -54,7 +55,13 @@ public class SaverToMemory {
         try {
             // ОПТИМИЗАЦИЯ N+1: обрабатываем ВСЕ справочники для ВСЕХ уроков пакетно
             log.debug("Этап 1: Пакетная обработка справочников");
-            processAllReferencesBatch(lessons);
+            if (shouldUseParallelProcessing(lessons)) {
+                log.debug("Используется параллельная обработка");
+                processAllReferencesParallel(lessons); // или processAllReferencesParallelWithTimeout
+            } else {
+                log.debug("Используется последовательная обработка");
+                processAllReferencesBatch(lessons);
+            }
 
             // Сохраняем уроки
             log.debug("Этап 2: Пакетное сохранение уроков");
@@ -72,6 +79,29 @@ public class SaverToMemory {
         }
     }
 
+    private boolean shouldUseParallelProcessing(List<LessonEntity> lessons) {
+        // Используем параллельную обработку для больших объемов данных
+        int threshold = 100; // Настройка порога
+
+        if (lessons.size() < threshold) {
+            return false; // Маленькие объемы - последовательно (меньше накладных расходов)
+        }
+
+        // Проверяем сложность данных
+        long totalReferences = lessons.stream()
+                .filter(Objects::nonNull)
+                .mapToLong(lesson -> {
+                    long count = 0;
+                    if (lesson.getGroups() != null) count += lesson.getGroups().size();
+                    if (lesson.getTeacher() != null) count += lesson.getTeacher().split("[,\n]").length;
+                    if (lesson.getRoom() != null) count += lesson.getRoom().split(",").length;
+                    return count;
+                })
+                .sum();
+
+        return totalReferences > 500; // Много справочников - используем параллелизм
+    }
+
     /**
      * ОПТИМИЗАЦИЯ N+1: обработка всех справочников пакетно
      */
@@ -81,6 +111,44 @@ public class SaverToMemory {
         processGroupsBatch(lessons);
         processTeachersBatch(lessons);
         processRoomsBatch(lessons);
+    }
+
+    /**
+     * ПАРАЛЛЕЛЬНАЯ обработка справочников
+     */
+    private void processAllReferencesParallel(List<LessonEntity> lessons) {
+        log.debug("Параллельная обработка справочников для {} уроков", lessons.size());
+
+        // Создаем задачи для параллельного выполнения
+        CompletableFuture<Void> groupsFuture = CompletableFuture
+                .runAsync(() -> processGroupsBatch(lessons))
+                .exceptionally(ex -> {
+                    log.error("Ошибка при параллельной обработке групп: {}", ex.getMessage());
+                    return null;
+                });
+
+        CompletableFuture<Void> teachersFuture = CompletableFuture
+                .runAsync(() -> processTeachersBatch(lessons))
+                .exceptionally(ex -> {
+                    log.error("Ошибка при параллельной обработке преподавателей: {}", ex.getMessage());
+                    return null;
+                });
+
+        CompletableFuture<Void> roomsFuture = CompletableFuture
+                .runAsync(() -> processRoomsBatch(lessons))
+                .exceptionally(ex -> {
+                    log.error("Ошибка при параллельной обработке аудиторий: {}", ex.getMessage());
+                    return null;
+                });
+
+        // Ждем завершения ВСЕХ задач
+        try {
+            CompletableFuture.allOf(groupsFuture, teachersFuture, roomsFuture).join();
+            log.debug("Параллельная обработка справочников завершена");
+        } catch (Exception e) {
+            log.error("Критическая ошибка при параллельной обработке: {}", e.getMessage());
+            throw new RuntimeException("Не удалось выполнить параллельную обработку", e);
+        }
     }
 
     /**
