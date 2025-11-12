@@ -102,9 +102,6 @@ public class SaverToMemory {
         return totalReferences > 500; // Много справочников - используем параллелизм
     }
 
-    /**
-     * ОПТИМИЗАЦИЯ N+1: обработка всех справочников пакетно
-     */
     private void processAllReferencesBatch(List<LessonEntity> lessons) {
         log.debug("Пакетная обработка справочников для {} уроков", lessons.size());
 
