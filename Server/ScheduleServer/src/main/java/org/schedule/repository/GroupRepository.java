@@ -13,8 +13,6 @@ import java.util.Optional;
 @Repository
 public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
     Optional<GroupEntity> findByGroupName(String groupName);
-    boolean existsByGroupName(String groupName);
-    Optional<GroupEntity> findByIdFromApi(Long idFromApi);
 
     @Query("SELECT g FROM GroupEntity g WHERE g.groupName IN :groupNames")
     List<GroupEntity> findByGroupNamesIn(@Param("groupNames") List<String> groupNames);

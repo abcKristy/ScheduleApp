@@ -317,11 +317,6 @@ public class SaverToMemory {
         }
     }
 
-    // ВСПОМОГАТЕЛЬНЫЕ КЛАССЫ
-
-    /**
-     * Результат пакетного сохранения
-     */
     public static class BatchSaveResult {
         private final int savedCount;
         private final int errorCount;
@@ -346,17 +341,6 @@ public class SaverToMemory {
         }
     }
 
-    // СУЩЕСТВУЮЩИЕ МЕТОДЫ ДЛЯ ОБРАТНОЙ СОВМЕСТИМОСТИ
-
-    @Transactional
-    public void saveToDatabase(LessonEntity lesson) {
-        // Для обратной совместимости - используем пакетный метод для одного урока
-        BatchSaveResult result = saveLessonsBatch(Collections.singletonList(lesson));
-        if (result.getErrorCount() > 0) {
-            throw new RuntimeException("Не удалось сохранить урок: " + String.join(", ", result.getErrors()));
-        }
-    }
-
     @Transactional
     public void saveLessonsWithErrorHandling(List<LessonEntity> lessons) {
         // Заменяем старую реализацию на новую пакетную
@@ -375,36 +359,6 @@ public class SaverToMemory {
                         String.join("; ", result.getErrors().subList(0, Math.min(3, result.getErrors().size()))));
             }
         }
-    }
-
-    // СУЩЕСТВУЮЩИЕ МЕТОДЫ ОБНОВЛЕНИЯ ID (без изменений)
-
-    private void updateExistingLesson(LessonEntity existing, LessonEntity newData) {
-        existing.setDiscipline(newData.getDiscipline());
-        existing.setLessonType(newData.getLessonType());
-        existing.setStartTime(newData.getStartTime());
-        existing.setEndTime(newData.getEndTime());
-        existing.setRoom(newData.getRoom());
-        existing.setTeacher(newData.getTeacher());
-        existing.setRecurrence(newData.getRecurrence());
-        existing.setExceptions(newData.getExceptions());
-
-        existing.getGroups().clear();
-        if (newData.getGroups() != null) {
-            existing.getGroups().addAll(newData.getGroups());
-        }
-
-        existing.getTeachers().clear();
-        if (newData.getTeachers() != null) {
-            existing.getTeachers().addAll(newData.getTeachers());
-        }
-
-        existing.getRooms().clear();
-        if (newData.getRooms() != null) {
-            existing.getRooms().addAll(newData.getRooms());
-        }
-
-        lessonRepository.save(existing);
     }
 
     @Transactional

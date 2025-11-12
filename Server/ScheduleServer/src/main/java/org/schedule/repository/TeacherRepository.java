@@ -13,10 +13,6 @@ import java.util.Optional;
 @Repository
 public interface TeacherRepository extends JpaRepository<TeacherEntity, Long> {
     Optional<TeacherEntity> findByFullName(String fullName);
-    Optional<TeacherEntity> findByIdFromApi(Long idFromApi);
-
-    @Query("SELECT t FROM TeacherEntity t WHERE t.fullName IN :fullNames")
-    List<TeacherEntity> findByFullNamesIn(@Param("fullNames") List<String> fullNames);
 
     @Query("SELECT t FROM TeacherEntity t WHERE t.fullName IN :fullNames")
     List<TeacherEntity> findByFullNameIn(@Param("fullNames") Collection<String> fullNames);

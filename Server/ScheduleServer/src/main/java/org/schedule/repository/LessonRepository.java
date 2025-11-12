@@ -9,8 +9,6 @@ import java.util.Optional;
 
 @Repository
 public interface LessonRepository extends JpaRepository<LessonEntity, Long> {
-    Optional<LessonEntity> findById(String id);
-    boolean existsById(String id);
     List<LessonEntity> findByGroups_GroupName(String groupName);
     List<LessonEntity> findByTeachers_FullName(String teacherName);
     List<LessonEntity> findByRooms_RoomName(String roomName);
