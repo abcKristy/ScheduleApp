@@ -2,12 +2,13 @@ package org.schedule.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.schedule.entity.forBD.LessonType;
+import org.schedule.entity.forBD.RecurrenceRule;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 public class ScheduleResponseDto {
-    private String id;
     private String discipline;
     private LessonType lessonType;
 
@@ -23,14 +24,17 @@ public class ScheduleResponseDto {
     private String groupsSummary;
     private String description;
 
+    // Новые поля
+    private RecurrenceRule recurrence;
+    private List<LocalDate> exceptions;
+
     // Конструкторы
     public ScheduleResponseDto() {}
 
-    public ScheduleResponseDto(String id, String discipline, LessonType lessonType,
+    public ScheduleResponseDto(String discipline, LessonType lessonType,
                                LocalDateTime startTime, LocalDateTime endTime,
                                String room, String teacher, List<String> groups,
                                String groupsSummary, String description) {
-        this.id = id;
         this.discipline = discipline;
         this.lessonType = lessonType;
         this.startTime = startTime;
@@ -42,10 +46,26 @@ public class ScheduleResponseDto {
         this.description = description;
     }
 
-    // Getters and Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    // Полный конструктор со всеми полями
+    public ScheduleResponseDto(String discipline, LessonType lessonType,
+                               LocalDateTime startTime, LocalDateTime endTime,
+                               String room, String teacher, List<String> groups,
+                               String groupsSummary, String description,
+                               RecurrenceRule recurrence, List<LocalDate> exceptions) {
+        this.discipline = discipline;
+        this.lessonType = lessonType;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.room = room;
+        this.teacher = teacher;
+        this.groups = groups;
+        this.groupsSummary = groupsSummary;
+        this.description = description;
+        this.recurrence = recurrence;
+        this.exceptions = exceptions;
+    }
 
+    // Getters and Setters
     public String getDiscipline() { return discipline; }
     public void setDiscipline(String discipline) { this.discipline = discipline; }
 
@@ -72,4 +92,11 @@ public class ScheduleResponseDto {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    // Новые геттеры и сеттеры
+    public RecurrenceRule getRecurrence() { return recurrence; }
+    public void setRecurrence(RecurrenceRule recurrence) { this.recurrence = recurrence; }
+
+    public List<LocalDate> getExceptions() { return exceptions; }
+    public void setExceptions(List<LocalDate> exceptions) { this.exceptions = exceptions; }
 }

@@ -152,7 +152,6 @@ public class ScheduleMapper {
                     .collect(Collectors.toList());
 
             return new ScheduleResponseDto(
-                    lesson.getId(),
                     lesson.getDiscipline(),
                     lesson.getLessonType(),
                     lesson.getStartTime(),
@@ -161,13 +160,31 @@ public class ScheduleMapper {
                     lesson.getTeacher(),
                     groupNames,
                     lesson.getGroupsSummary(),
-                    lesson.getDescription()
+                    lesson.getDescription(),
+                    lesson.getRecurrence(),
+                    lesson.getExceptions()
             );
         } catch (Exception e) {
             log.error("Ошибка при маппинге LessonEntity в ScheduleResponseDto для занятия: {}",
                     lesson.getDiscipline(), e);
             return createFallbackResponse(lesson);
         }
+    }
+
+    private ScheduleResponseDto createFallbackResponse(LessonEntity lesson) {
+        return new ScheduleResponseDto(
+                lesson.getDiscipline(),
+                lesson.getLessonType(),
+                lesson.getStartTime(),
+                lesson.getEndTime(),
+                lesson.getRoom(),
+                lesson.getTeacher(),
+                List.of(),
+                lesson.getGroupsSummary(),
+                lesson.getDescription(),
+                lesson.getRecurrence(),
+                lesson.getExceptions()
+        );
     }
 
     public List<ScheduleResponseDto> toResponseDtoList(List<LessonEntity> lessons) {
@@ -178,20 +195,5 @@ public class ScheduleMapper {
         return lessons.stream()
                 .map(this::toResponseDto)
                 .collect(Collectors.toList());
-    }
-
-    private ScheduleResponseDto createFallbackResponse(LessonEntity lesson) {
-        return new ScheduleResponseDto(
-                lesson.getId(),
-                lesson.getDiscipline(),
-                lesson.getLessonType(),
-                lesson.getStartTime(),
-                lesson.getEndTime(),
-                lesson.getRoom(),
-                lesson.getTeacher(),
-                List.of(),
-                lesson.getGroupsSummary(),
-                lesson.getDescription()
-        );
     }
 }
