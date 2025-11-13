@@ -91,6 +91,7 @@ fun ScreenList() {
                                 scheduleItem = scheduleItem,
                                 onOptionsClick = {
                                     // Обработка нажатия на кнопку меню
+                                    // Можно показать детали о повторении и исключениях
                                 }
                             )
                         }
@@ -103,10 +104,10 @@ fun ScreenList() {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (selectedDate != null) {
-                                "Сегодня занятий нет!"
-                            } else {
-                                "Выберите дату"
+                            text = when {
+                                selectedDate != null && scheduleItems.isNotEmpty() -> "На выбранную дату занятий нет!"
+                                selectedDate != null -> "Нет данных о занятиях"
+                                else -> "Выберите дату"
                             },
                             color = Color.Gray
                         )
@@ -115,7 +116,7 @@ fun ScreenList() {
 
                 if (errorMessage != null) {
                     Text(
-                        text = "Используются тестовые данные ИКБО-10-23: $errorMessage",
+                        text = "Используются тестовые данные: $errorMessage",
                         color = Color.Red,
                         modifier = Modifier.padding(16.dp)
                     )

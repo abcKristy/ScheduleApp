@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,12 +35,16 @@ import com.example.scheduleapp.data.ScheduleItem
 import com.example.scheduleapp.ui.theme.deepGreen
 import com.example.scheduleapp.ui.theme.gray
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun ScheduleListItem(
     scheduleItem: ScheduleItem,
     onOptionsClick: ()->Unit
 ) {
+    val hasRecurrence = scheduleItem.recurrence != null
+    val hasExceptions = scheduleItem.exceptions.isNotEmpty()
+
     Card(
         modifier = Modifier
             .wrapContentHeight()
@@ -48,128 +53,174 @@ fun ScheduleListItem(
         elevation = CardDefaults.cardElevation(4.dp)
     )
     {
-        Row(
+        Column(
             modifier = Modifier
                 .background(gray)
                 .wrapContentHeight()
                 .padding(16.dp)
-        )
-        {
-            Column(
+        ) {
+            Row(
                 modifier = Modifier
-                    .weight(1f),
-                horizontalAlignment = Alignment.Start
-            )
-            {
-                Text(
-                    text = scheduleItem.formattedStartTime,
-                    fontWeight = FontWeight.Bold,
-                    color = deepGreen
-                )
-                Text(
-                    text = scheduleItem.duration,
-                    color = deepGreen
-                )
-                Text(
-                    text = scheduleItem.formattedEndTime,
-                    fontWeight = FontWeight.Bold,
-                    color = deepGreen
-                )
-            }
-            Column(
-                modifier = Modifier
-                    .weight(0.2f)
-                    .wrapContentHeight(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxWidth()
+                    .wrapContentHeight()
             ) {
-                Box(
+                Column(
                     modifier = Modifier
-                        .size(16.dp)
-                        .border(
-                            width = 2.dp,
-                            color = deepGreen,
-                            shape = CircleShape
-                        )
+                        .weight(1f),
+                    horizontalAlignment = Alignment.Start
                 )
-
-                Canvas(
-                    modifier = Modifier
-                        .height(100.dp)
-                        .width(2.dp)
-                        .padding(vertical = 4.dp)
-                ) {
-                    drawLine(
-                        color = deepGreen,
-                        start = Offset(size.width / 2, 0f),
-                        end = Offset(size.width / 2, size.height),
-                        strokeWidth = 2.dp.toPx()
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Column(modifier = Modifier
-                .weight(2f)) {
-                Row(
-                    modifier = Modifier
-                        .wrapContentHeight(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ){
+                {
                     Text(
-                        text = scheduleItem.discipline,
+                        text = scheduleItem.formattedStartTime,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f),
                         color = deepGreen
                     )
-                    IconButton(
-                        onClick = onOptionsClick,
-                        modifier = Modifier.size(24.dp)
+                    Text(
+                        text = scheduleItem.duration,
+                        color = deepGreen
+                    )
+                    Text(
+                        text = scheduleItem.formattedEndTime,
+                        fontWeight = FontWeight.Bold,
+                        color = deepGreen
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(0.2f)
+                        .wrapContentHeight(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .border(
+                                width = 2.dp,
+                                color = deepGreen,
+                                shape = CircleShape
+                            )
+                    )
+
+                    Canvas(
+                        modifier = Modifier
+                            .height(100.dp)
+                            .width(2.dp)
+                            .padding(vertical = 4.dp)
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_more),
-                            contentDescription = "details of schedule",
-                            tint = deepGreen
+                        drawLine(
+                            color = deepGreen,
+                            start = Offset(size.width / 2, 0f),
+                            end = Offset(size.width / 2, size.height),
+                            strokeWidth = 2.dp.toPx()
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = scheduleItem.groupsSummary,
-                    color = deepGreen
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = scheduleItem.teacher,
-                    color = deepGreen
-                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier
+                    .weight(2f)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Text(
+                            text = scheduleItem.discipline,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f),
+                            color = deepGreen
+                        )
+                        IconButton(
+                            onClick = onOptionsClick,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_more),
+                                contentDescription = "details of schedule",
+                                tint = deepGreen
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = scheduleItem.groupsSummary,
+                        color = deepGreen
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = scheduleItem.teacher,
+                        color = deepGreen
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = scheduleItem.room,
+                        color = deepGreen
+                    )
+
+                    // Информация о повторении
+                    if (hasRecurrence || hasExceptions) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        val recurrenceInfo = buildString {
+                            if (hasRecurrence) {
+                                val recurrence = scheduleItem.recurrence!!
+                                append("Повторение: ")
+                                when (recurrence.frequency?.uppercase()) {
+                                    "WEEKLY" -> append("еженедельно")
+                                    "DAILY" -> append("ежедневно")
+                                    "MONTHLY" -> append("ежемесячно")
+                                    else -> append("повторяется")
+                                }
+                                if (recurrence.interval != null && recurrence.interval > 1) {
+                                    append(" каждые ${recurrence.interval} нед.")
+                                }
+                                if (recurrence.until != null) {
+                                    append(" до ${recurrence.until.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))}")
+                                }
+                            }
+                            if (hasExceptions) {
+                                if (isNotEmpty()) append("\n")
+                                append("Исключения: ${scheduleItem.exceptions.size} дат")
+                            }
+                        }
+                        Text(
+                            text = recurrenceInfo,
+                            color = deepGreen.copy(alpha = 0.7f),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-
-
-
-
 @Preview(showBackground = true)
 @Composable
 fun ScheduleItemPreview() {
     MaterialTheme {
-        ScheduleItem(
-            discipline = "Разработка баз данных",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 6, 10, 40),
-            endTime = LocalDateTime.of(2025, 9, 6, 12, 10),
-            room = "И-212-б (В-78)",
-            teacher = "Ужахов Нурдин Люреханович",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = "SQL запросы",
-            recurrence = RecurrenceRule(
-                frequency = "WEEKLY",
-                interval = 1,
-                until = LocalDateTime.of(2025, 12, 13, 23, 59)
-            )
+        ScheduleListItem(
+            scheduleItem = ScheduleItem(
+                discipline = "Разработка баз данных",
+                lessonType = "PR",
+                startTime = LocalDateTime.of(2025, 9, 6, 10, 40),
+                endTime = LocalDateTime.of(2025, 9, 6, 12, 10),
+                room = "И-212-б (В-78)",
+                teacher = "Ужахов Нурдин Люреханович",
+                groups = listOf("ИКБО-60-23"),
+                groupsSummary = "ИКБО-60-23",
+                description = "SQL запросы",
+                recurrence = RecurrenceRule(
+                    frequency = "WEEKLY",
+                    interval = 1,
+                    until = LocalDateTime.of(2025, 12, 13, 23, 59)
+                ),
+                exceptions = listOf(
+                    java.time.LocalDate.of(2025, 10, 4),
+                    java.time.LocalDate.of(2025, 11, 1)
+                )
+            ),
+            onOptionsClick = {}
         )
     }
 }
