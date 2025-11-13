@@ -271,7 +271,10 @@ public class ParserToLesson {
         try {
             String cleanStr = dateTimeStr;
 
-            if (cleanStr.contains(":")) {
+            // Обрабатываем параметры временной зоны
+            if (cleanStr.contains(";")) {
+                cleanStr = cleanStr.substring(cleanStr.indexOf(":") + 1);
+            } else if (cleanStr.contains(":")) {
                 cleanStr = cleanStr.substring(cleanStr.indexOf(":") + 1);
             }
 
@@ -279,13 +282,10 @@ public class ParserToLesson {
                 cleanStr = cleanStr.substring(0, cleanStr.length() - 1);
             }
 
-            if (cleanStr.contains("T")) {
-                return LocalDateTime.parse(cleanStr, DATE_TIME_FORMATTER);
-            } else {
-                return LocalDateTime.parse(cleanStr + "T000000", DATE_TIME_FORMATTER);
-            }
+            return parseDateTimeString(cleanStr);
+
         } catch (Exception e) {
-            log.error("Ошибка парсинга даты {}", propertyName);
+            log.error("Ошибка парсинга даты {}: {}", propertyName, dateTimeStr, e);
             return null;
         }
     }
@@ -330,20 +330,55 @@ public class ParserToLesson {
             if (entry.getKey().startsWith("EXDATE")) {
                 try {
                     String dateStr = entry.getValue();
+
+                    // Извлекаем значение после двоеточия если есть
                     if (dateStr.contains(":")) {
                         dateStr = dateStr.substring(dateStr.indexOf(":") + 1);
                     }
-                    LocalDateTime dateTime = parseDateTime(Collections.singletonMap("DT", dateStr), "DT");
-                    if (dateTime != null) {
-                        exceptions.add(dateTime.toLocalDate());
+
+                    // Разбиваем строку на отдельные даты по запятой
+                    String[] dateStrings = dateStr.split(",");
+
+                    for (String singleDateStr : dateStrings) {
+                        String cleanDateStr = singleDateStr.trim();
+
+                        // Обрабатываем временную зону если есть
+                        if (cleanDateStr.contains(";")) {
+                            cleanDateStr = cleanDateStr.substring(0, cleanDateStr.indexOf(";"));
+                        }
+
+                        // Убираем 'Z' в конце если есть
+                        if (cleanDateStr.endsWith("Z")) {
+                            cleanDateStr = cleanDateStr.substring(0, cleanDateStr.length() - 1);
+                        }
+
+                        LocalDateTime dateTime = parseDateTimeString(cleanDateStr);
+                        if (dateTime != null) {
+                            exceptions.add(dateTime.toLocalDate());
+                        }
                     }
+
                 } catch (Exception e) {
-                    log.error("Ошибка парсинга EXDATE");
+                    log.error("Ошибка парсинга EXDATE: {}", entry.getValue(), e);
                 }
             }
         }
-
         return exceptions;
+    }
+
+    // Вспомогательный метод для парсинга строки даты
+    private LocalDateTime parseDateTimeString(String dateTimeStr) {
+        try {
+            if (dateTimeStr.contains("T")) {
+                return LocalDateTime.parse(dateTimeStr, DATE_TIME_FORMATTER);
+            } else {
+                // Если только дата, добавляем время 00:00:00
+                return LocalDateTime.parse(dateTimeStr + "T000000", DATE_TIME_FORMATTER);
+            }
+        } catch (Exception e) {
+            log.warn("Не удалось распарсить дату: {}", dateTimeStr);
+            return null;
+        }
     }
 
     private String extractRruleValue(String rrule, String key) {

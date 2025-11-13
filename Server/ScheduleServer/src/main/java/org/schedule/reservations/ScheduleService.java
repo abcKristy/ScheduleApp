@@ -62,6 +62,7 @@ public class ScheduleService {
             List<ResponseDto> response = scheduleMapper.mapToResponseDto(remainingEntities, MIREA_API_URL);
             List<ScheduleDto> schedule = scheduleMapper.mapToScheduleDto(response);
             List<LessonEntity> parsedLessons = scheduleMapper.parseStringData(schedule);
+            log.info("!!!!!!!!! {}",parsedLessons);
 
             // Шаг 3: Сохраняем новые данные в БД (отдельная транзакция записи)
             writeService.saveLessonsAndUpdateIds(parsedLessons, response);
