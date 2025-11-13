@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,71 +23,69 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.scheduleapp.ui.theme.darkBlue
-import com.example.scheduleapp.ui.theme.deepGreen
+import com.example.scheduleapp.ui.theme.ScheduleAppTheme
+import com.example.scheduleapp.ui.theme.customColors
+import com.example.scheduleapp.ui.theme.white
+import com.example.scheduleapp.ui.theme.lightGray
+import com.example.scheduleapp.ui.theme.whiteGray
 
 @Composable
 fun BottomNav(
     navController: NavController
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 60.dp),
-        contentAlignment = Alignment.BottomCenter
-    ) {
-        Row(
+    ScheduleAppTheme {
+        val customColors = androidx.compose.material3.MaterialTheme.customColors
+
+        Box(
             modifier = Modifier
-                .width(200.dp)
-                .height(60.dp)
-                .clip(CircleShape)
-                .background(deepGreen)
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxWidth()
+                .padding(bottom = 60.dp),
+            contentAlignment = Alignment.BottomCenter
         ) {
-            val backStackEntry by navController.currentBackStackEntryAsState()
-            val currentRoute = backStackEntry?.destination?.route
+            Row(
+                modifier = Modifier
+                    .width(150.dp)
+                    .height(60.dp)
+                    .clip(CircleShape)
+                    .background(customColors.botnav)
+                    .padding(2.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val backStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = backStackEntry?.destination?.route
 
-            BottomItem.items.forEach { item ->
-                val isSelected = currentRoute == item.route
+                BottomItem.items.forEach { item ->
+                    val isSelected = currentRoute == item.route
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clickable {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clickable {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
-                        }
-                        .padding(2.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isSelected) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
-                                .background(darkBlue)
-                        )
-                    }
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            .padding(2.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            painter = painterResource(item.iconId),
-                            contentDescription = "button "+item.route,
-                            modifier = Modifier.size(18.dp),
-                            tint = if (isSelected) deepGreen else darkBlue
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(1.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(item.iconId),
+                                contentDescription = "button "+item.route,
+                                modifier = Modifier.size(23.dp),
+                                tint = if (isSelected) white else whiteGray
+                            )
+                        }
                     }
                 }
             }

@@ -1,301 +1,217 @@
 package com.example.scheduleapp.screens.master
 
-import android.annotation.SuppressLint
 import android.content.Intent
-import android.net.Uri
-import androidx.compose.foundation.Image
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.scheduleapp.R
-import com.example.scheduleapp.ui.theme.deepGreen
-import com.example.scheduleapp.ui.theme.gray
-import com.example.scheduleapp.ui.theme.lightGreen
 import androidx.core.net.toUri
+import com.example.scheduleapp.R
+import com.example.scheduleapp.ui.theme.ScheduleAppTheme
+import com.example.scheduleapp.ui.theme.blue
+import com.example.scheduleapp.ui.theme.customColors
+import com.example.scheduleapp.ui.theme.gray
+import com.example.scheduleapp.ui.theme.lightBlue
+import com.example.scheduleapp.ui.theme.lightGray
+import com.example.scheduleapp.ui.theme.lightGreen
+import com.example.scheduleapp.ui.theme.white
 
 @Composable
 fun ScreenProfile() {
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.customColors.bg1),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isSystemInDarkTheme()){
+            ShinyBottom(lightGreen,120,320)
+            ShinyBottom(lightGreen,-120,-320)
+        }else{
+            ShinyBottom(blue,100,300)
+            ShinyBottom(lightGreen,-100,-300)
+        }
         Box(
             modifier = Modifier
-                .fillMaxHeight(0.5f)
-                .fillMaxWidth()
+                .width(350.dp)
+                .height(500.dp)
+                .clip(RoundedCornerShape(20.dp))
                 .background(
-                    brush = Brush.verticalGradient(
+                    Brush.verticalGradient(
                         colors = listOf(
-                            Color.Transparent,
-                            colorResource(id = R.color.deepGreen)
+                            lightGray.copy(0.4f),
+                            lightGray.copy(0.4f)
                         )
                     )
                 )
-                .align(Alignment.BottomStart)
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(70.dp))
-            Box(
+            Column(
                 modifier = Modifier
-                    .shadow(
-                        elevation = 100.dp,
-                        shape = CircleShape,
-                        spotColor = colorResource(id = R.color.lightGreen),
-                        ambientColor = colorResource(id = R.color.lightGreen)
-                    )
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Image(
-                    painter = painterResource(R.drawable.avatar),
-                    contentDescription = "Glowing avatar",
-                    contentScale = ContentScale.Crop,
+                Box(
                     modifier = Modifier
                         .size(100.dp)
                         .clip(CircleShape)
                         .border(
-                            width = 5.dp,
-                            color = lightGreen,
+                            width = 3.dp,
+                            color = Color.White,
                             shape = CircleShape
                         )
-                )
-            }
-            Text(
-                text = "Kristina",
-                fontSize = 25.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.lightGreen),
-                modifier = Modifier
-                    .padding(bottom = 20.dp)
-                    .padding(top = 10.dp)
-
-            )
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 15.dp)
-                    .border(
-                        width = 2.dp,
-                        color = deepGreen,
-                        shape = RoundedCornerShape(20.dp)
-                    ),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = gray
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Major Group: ",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = deepGreen
-                    )
-                    Text(
-                        text = "IKBO_60-23",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = deepGreen
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "User Icon",
+                        tint = Color.White,
+                        modifier = Modifier.size(50.dp)
                     )
                 }
-            }
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 15.dp)
-                    .border(
-                        width = 2.dp,
-                        color = deepGreen,
-                        shape = RoundedCornerShape(20.dp)
-                    ),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = gray
+                Text(
+                    text = "Кристина",
+                    color = white,
+                    fontSize = 25.sp,
+                    modifier = Modifier.padding(top = 16.dp),
+                    fontWeight = FontWeight.Bold
                 )
-            ) {
+
+                Text(
+                    text = "ИКБО-60-23",
+                    color = white,
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(top = 8.dp),
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(40.dp))
+
                 Row(
-                    modifier = Modifier.padding(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 16.dp)
                 ) {
-                    Text(
-                        text = "Email: ",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = deepGreen
+                    Icon(
+                        imageVector = Icons.Default.Email,
+                        contentDescription = "Email",
+                        tint = white,
+                        modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "ilicheva.k.o@edu.ru",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = deepGreen
+                        text = "ilicheva@edu.mirea.ru",
+                        color = white,
+                        modifier = Modifier.padding(start = 8.dp),
+                        fontWeight = FontWeight.Bold
                     )
                 }
-            }
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 15.dp)
-                    .border(
-                        width = 2.dp,
-                        color = deepGreen,
-                        shape = RoundedCornerShape(20.dp)
-                    ),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = gray
-                )
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Row(
-                        modifier = Modifier
-                            .padding(10.dp)
-                            .fillMaxWidth(0.9f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Theme: ",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = deepGreen
-                        )
-                        Text(
-                            text = "Dark",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = deepGreen
-                        )
-                    }
 
+                val context = LocalContext.current
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(bottom = 32.dp)
+                        .clickable {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                "https://online-edu.mirea.ru/login/index.php".toUri()
+                            )
+                            context.startActivity(intent)
+                        }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Website",
+                        tint = white,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "Перейти на сайт СДО",
+                        color = lightBlue,
+                        modifier = Modifier.padding(start = 8.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(50.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                        .clickable { /* Обработка смены темы */ },
+                    horizontalArrangement = Arrangement.Center
+                ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_dark_mode),
-                        contentDescription = "mode",
-                        tint = deepGreen,
-                        modifier = Modifier
-                            .size(30.dp)
+                        contentDescription = "Theme",
+                        tint = white,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "Тема: ",
+                        color = white,
+                        modifier = Modifier.padding(start = 8.dp),
+                        fontWeight = FontWeight.Bold
                     )
                 }
-            }
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 15.dp)
-                    .border(
-                        width = 2.dp,
-                        color = deepGreen,
-                        shape = RoundedCornerShape(20.dp)
-                    ),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = gray
-                )
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Row(
-                        modifier = Modifier
-                            .padding(10.dp)
-                            .fillMaxWidth(0.9f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val context = LocalContext.current
-                        Text(
-                            text = "Go to site sdo",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = deepGreen,
-                            modifier = Modifier.clickable {
-                                val intent = Intent(
-                                    Intent.ACTION_VIEW,
-                                    "https://online-edu.mirea.ru/login/index.php".toUri()
-                                )
-                                context.startActivity(intent)
-                            }
-                        )
-                    }
 
+                // Настройки
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { /* Обработка перехода в настройки */ },
+                    horizontalArrangement = Arrangement.Center
+                ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_goto),
-                        contentDescription = "mode",
-                        tint = deepGreen,
-                        modifier = Modifier
-                            .size(25.dp)
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = white,
+                        modifier = Modifier.size(20.dp)
                     )
-                }
-            }
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 15.dp)
-                    .border(
-                        width = 2.dp,
-                        color = deepGreen,
-                        shape = RoundedCornerShape(20.dp)
-                    ),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = gray
-                )
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Row(
-                        modifier = Modifier
-                            .padding(10.dp)
-                            .fillMaxWidth(0.9f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Settings",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = deepGreen
-                        )
-                    }
-
-                    Icon(
-                        painter = painterResource(R.drawable.ic_settings),
-                        contentDescription = "mode",
-                        tint = deepGreen,
-                        modifier = Modifier
-                            .size(25.dp)
+                    Text(
+                        text = "Настройки",
+                        color = white,
+                        modifier = Modifier.padding(start = 8.dp),
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -303,14 +219,36 @@ fun ScreenProfile() {
     }
 }
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Preview
+@Preview(
+    name = "Light Theme",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_NO
+)
 @Composable
-fun TestProfile() {
-    Scaffold(
-        containerColor = colorResource(id = R.color.gray)
-    )
-    {
-        ScreenProfile()
+fun ScreenProfileLightPreview() {
+    ScheduleAppTheme(darkTheme = false) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            ScreenProfile()
+        }
+    }
+}
+
+@Preview(
+    name = "Dark Theme",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+fun ScreenProfileDarkPreview() {
+    ScheduleAppTheme(darkTheme = true) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            ScreenProfile()
+        }
     }
 }

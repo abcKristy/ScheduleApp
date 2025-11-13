@@ -14,7 +14,6 @@ import com.example.scheduleapp.screens.profile.RegisterScreen
 import com.example.scheduleapp.screens.detail.UserDetailScreen
 import com.example.scheduleapp.screens.detail.ScheduleDetailScreen
 import com.example.scheduleapp.screens.master.ScreenList
-import com.example.scheduleapp.screens.master.ScreenPrevious
 import com.example.scheduleapp.screens.master.ScreenProfile
 import com.example.scheduleapp.screens.master.ScreenSearch
 import com.example.scheduleapp.screens.master.WelcomeScreen
@@ -25,8 +24,6 @@ fun MainNavGraph(navController: NavHostController) {
         mutableStateOf(NavigationRoute.Welcome.route)
     }
 
-    // Здесь можно добавить логику для проверки, авторизован ли пользователь
-    // if (isUserLoggedIn) startDestination = NavigationRoute.Main.route
 
     NavHost(
         navController = navController,

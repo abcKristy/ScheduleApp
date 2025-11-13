@@ -31,8 +31,7 @@ fun MainScreen() {
             if (showBottomNav) {
                 BottomNav(navController)
             }
-        },
-        containerColor = colorResource(id = R.color.gray)
+        }
     ) {
         MainNavGraph(navController)
     }

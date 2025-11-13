@@ -1,15 +1,20 @@
 package com.example.scheduleapp.screens.master
 
+import android.content.res.Configuration
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,12 +24,12 @@ import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +39,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,11 +49,12 @@ import androidx.compose.ui.unit.sp
 import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.data.SearchHistoryManager
 import com.example.scheduleapp.logic.getScheduleItems
-import com.example.scheduleapp.ui.theme.darkGray
-import com.example.scheduleapp.ui.theme.deepGreen
-import com.example.scheduleapp.ui.theme.gray
-import com.example.scheduleapp.ui.theme.lightGray
+import com.example.scheduleapp.ui.theme.ScheduleAppTheme
+import com.example.scheduleapp.ui.theme.blue
+import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.lightGreen
+import com.example.scheduleapp.ui.theme.white
+import com.example.scheduleapp.ui.theme.lightGray
 import kotlinx.coroutines.launch
 
 @Composable
@@ -56,111 +64,137 @@ fun ScreenSearch() {
     val searchHistory = SearchHistoryManager.historyList
     val coroutineScope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Spacer(modifier = Modifier.height(30.dp))
+    ScheduleAppTheme {
+        val customColors = androidx.compose.material3.MaterialTheme.customColors
 
-        // Поисковая строка
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            shape = RoundedCornerShape(20.dp),
-            modifier = Modifier.fillMaxWidth()
-                .height(60.dp)
-                .shadow(
-                    elevation = 8.dp,
-                    shape = RoundedCornerShape(20.dp),
-                    clip = true,
-                    ambientColor = deepGreen,
-                    spotColor = deepGreen
-                ),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = lightGreen,
-                unfocusedBorderColor = deepGreen,
-                cursorColor = deepGreen,
-                textColor = darkGray,
-                backgroundColor = lightGray,
-                trailingIconColor = deepGreen
-            ),
-            trailingIcon = {
-                IconButton(
-                    onClick = {
-                        if (searchQuery.isNotBlank()) {
-                            val trimmedQuery = searchQuery.trimEnd()
-                            AppState.setCurrentGroup(trimmedQuery)
-                            coroutineScope.launch {
-                                loadScheduleData(context, trimmedQuery)
-                            }
-                            searchQuery = ""
-                        }
-                    },
-                    enabled = searchQuery.isNotBlank()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "search",
-                        modifier = Modifier.size(24.dp),
-                        tint = deepGreen
-                    )
-                }
-            },
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (AppState.currentGroup.isNotBlank()) {
-            Text(
-                text = "Текущая группа: ${AppState.currentGroup}",
-                modifier = Modifier.padding(bottom = 16.dp),
-                color = deepGreen,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
-            )
+        val invertedShiny = if (isSystemInDarkTheme()) {
+            blue
+        } else {
+            lightGreen
         }
 
-        // История поиска
-        if (searchHistory.isNotEmpty()) {
-            Text(
-                text = "Последние запросы:",
-                modifier = Modifier.padding(bottom = 8.dp),
-                color = deepGreen
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(customColors.bg2)
+        ) {
+            // Добавляем shiny bottom с инвертированным цветом
+            ShinyBottom(shiny = invertedShiny,180,520)
 
-            LazyColumn {
-                items(searchHistory) { historyItem ->
-                    HistoryItem(
-                        query = historyItem,
-                        onClick = {
-                            AppState.setCurrentGroup(historyItem)
-                            coroutineScope.launch {
-                                loadScheduleData(context, historyItem)
-                            }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Spacer(modifier = Modifier.height(30.dp))
+
+                // Поисковая строка
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth()
+                        .height(60.dp)
+                        .shadow(
+                            elevation = 8.dp,
+                            shape = RoundedCornerShape(20.dp),
+                            clip = true,
+                            ambientColor = customColors.searchBar,
+                            spotColor = customColors.searchBar
+                        )
+                        .border(
+                            border = BorderStroke(
+                                width = 3.dp,
+                                color = customColors.searchBar
+                            ),
+                            shape = RoundedCornerShape(20.dp)
+                        ),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        cursorColor = customColors.searchBar,
+                        textColor = white,
+                        backgroundColor = customColors.bg2,
+                        trailingIconColor = customColors.searchBar
+                    ),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                if (searchQuery.isNotBlank()) {
+                                    val trimmedQuery = searchQuery.trimEnd()
+                                    AppState.setCurrentGroup(trimmedQuery)
+                                    coroutineScope.launch {
+                                        loadScheduleData(context, trimmedQuery)
+                                    }
+                                    searchQuery = ""
+                                }
+                            },
+                            enabled = searchQuery.isNotBlank()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "search",
+                                modifier = Modifier.size(24.dp),
+                                tint = customColors.searchBar
+                            )
                         }
+                    },
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (AppState.currentGroup.isNotBlank()) {
+                    Text(
+                        text = "Текущая группа: ${AppState.currentGroup}",
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        color = white,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
                     )
                 }
-            }
-        } else {
-            // Сообщение когда история пуста
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "search",
-                        tint = deepGreen
-                    )
+
+                // История поиска
+                if (searchHistory.isNotEmpty()) {
                     Text(
-                        text = "История поиска пуста",
-                        color = deepGreen
+                        text = "Последние запросы:",
+                        modifier = Modifier.padding(bottom = 8.dp),
+                        color = white
                     )
+
+                    LazyColumn {
+                        items(searchHistory) { historyItem ->
+                            HistoryItem(
+                                query = historyItem,
+                                onClick = {
+                                    AppState.setCurrentGroup(historyItem)
+                                    coroutineScope.launch {
+                                        loadScheduleData(context, historyItem)
+                                    }
+                                }
+                            )
+                        }
+                    }
+                } else {
+                    // Сообщение когда история пуста
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "search",
+                                tint = white
+                            )
+                            Text(
+                                text = "История поиска пуста",
+                                color = white
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -170,27 +204,72 @@ fun ScreenSearch() {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HistoryItem(query: String, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        elevation = 4.dp,
-        shape = RoundedCornerShape(20.dp),
-        backgroundColor = gray,
-        border = BorderStroke(3.dp, lightGray)
-    ) {
-        Box(
+    ScheduleAppTheme {
+        val customColors = androidx.compose.material3.MaterialTheme.customColors
+
+        Card(
+            onClick = onClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(vertical = 4.dp),
+            elevation = 4.dp,
+            shape = RoundedCornerShape(20.dp),
+            backgroundColor = MaterialTheme.customColors.bg2,
+            border = BorderStroke(2.dp, customColors.searchBar)
         ) {
-            Text(
-                text = query,
-                color = deepGreen,
-                fontWeight = FontWeight.Bold
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = query,
+                    color = white,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ShinyBottom(shiny: Color,x:Int, y:Int){
+    Canvas(
+        modifier = Modifier
+            .size(320.dp)
+            .offset(x = (x).dp, y = (y).dp)
+    ) {
+        val radius = 320.dp.toPx()
+        val colorList = if (shiny == blue) {
+            listOf(
+                shiny,
+                shiny.copy(alpha = 0.95f),
+                shiny.copy(alpha = 0.9f),
+                shiny.copy(alpha = 0.8f),
+                shiny.copy(alpha = 0.65f),
+                shiny.copy(alpha = 0.42f),
+                shiny.copy(alpha = 0.2f),
+                Color.Transparent
+            )
+        } else {
+            listOf(
+                shiny,
+                shiny.copy(alpha = 0.85f),
+                shiny.copy(alpha = 0.7f),
+                shiny.copy(alpha = 0.5f),
+                shiny.copy(alpha = 0.35f),
+                shiny.copy(alpha = 0.2f),
+                shiny.copy(alpha = 0.1f),
+                shiny.copy(alpha = 0.05f),
+                Color.Transparent
             )
         }
+        val brush = Brush.radialGradient(
+            colors = colorList,
+            center = center,
+            radius = radius,
+        )
+        drawCircle(brush = brush, radius = radius)
     }
 }
 
@@ -206,7 +285,7 @@ private suspend fun loadScheduleData(context: android.content.Context, group: St
             if (items.isNotEmpty()) {
                 // Группа найдена - сохраняем данные и добавляем в историю
                 AppState.setScheduleItems(items)
-                SearchHistoryManager.addToHistory(context, group) // ← передаем context
+                SearchHistoryManager.addToHistory(context, group)
             } else {
                 // Группа не найдена - показываем тост и НЕ добавляем в историю
                 showToast(context, "Группа '$group' не найдена")
@@ -226,23 +305,37 @@ private fun showToast(context: android.content.Context, message: String) {
     android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
 }
 
+// Превью для пустой истории (дневная тема)
+@Preview(
+    name = "Пустая история - День",
+    uiMode = Configuration.UI_MODE_NIGHT_NO
+)
 @Composable
-@Preview(name = "Пустая история поиска")
-fun ScreenSearchEmptyPreview() {
-    MaterialTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(gray)
-        ) {
-            ScreenSearch()
-        }
+fun ScreenSearchEmptyDayPreview() {
+    ScheduleAppTheme(darkTheme = false) {
+        ScreenSearch()
     }
 }
 
+// Превью для пустой истории (ночная тема)
+@Preview(
+    name = "Пустая история - Ночь",
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
 @Composable
-@Preview(name = "С историей поиска")
-fun ScreenSearchWithHistoryPreview() {
+fun ScreenSearchEmptyNightPreview() {
+    ScheduleAppTheme(darkTheme = true) {
+        ScreenSearch()
+    }
+}
+
+// Превью с историей (дневная тема)
+@Preview(
+    name = "С историей - День",
+    uiMode = Configuration.UI_MODE_NIGHT_NO
+)
+@Composable
+fun ScreenSearchWithHistoryDayPreview() {
     // Временно добавляем тестовые данные в историю для превью
     val testHistory = listOf(
         "ИКБО-11-23",
@@ -252,12 +345,16 @@ fun ScreenSearchWithHistoryPreview() {
         "Петр Петров"
     )
 
-    MaterialTheme {
+    ScheduleAppTheme(darkTheme = false) {
+        val customColors = androidx.compose.material3.MaterialTheme.customColors
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(gray)
+                .background(customColors.bg2)
         ) {
+            ShinyBottom(shiny = lightGreen,180,520) // В день используем ночной shiny
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -267,7 +364,7 @@ fun ScreenSearchWithHistoryPreview() {
 
                 // Поисковая строка
                 OutlinedTextField(
-                    value = "",
+                    value = "ИКБО-11-23",
                     onValueChange = {},
                     shape = RoundedCornerShape(20.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -276,37 +373,38 @@ fun ScreenSearchWithHistoryPreview() {
                             elevation = 8.dp,
                             shape = RoundedCornerShape(20.dp),
                             clip = true,
-                            ambientColor = deepGreen,
-                            spotColor = deepGreen
+                            ambientColor = customColors.searchBar,
+                            spotColor = customColors.searchBar
+                        )
+                        .border(
+                            border = BorderStroke(
+                                width = 3.dp,
+                                color = customColors.searchBar
+                            ),
+                            shape = RoundedCornerShape(20.dp)
                         ),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = lightGreen,
-                        unfocusedBorderColor = deepGreen,
-                        cursorColor = deepGreen,
-                        textColor = darkGray,
-                        backgroundColor = lightGray,
-                        trailingIconColor = deepGreen
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        cursorColor = customColors.searchBar,
+                        textColor = white,
+                        backgroundColor = customColors.bg2,
+                        trailingIconColor = customColors.searchBar
                     ),
                     trailingIcon = {
                         IconButton(
                             onClick = {},
-                            enabled = false
+                            enabled = true
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = "search",
                                 modifier = Modifier.size(24.dp),
-                                tint = deepGreen
+                                tint = customColors.searchBar
                             )
                         }
                     },
-                    singleLine = true,
-                    placeholder = {
-                        Text(
-                            text = "Введите название группы или имя преподавателя",
-                            color = lightGray
-                        )
-                    }
+                    singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -315,7 +413,7 @@ fun ScreenSearchWithHistoryPreview() {
                 Text(
                     text = "Текущая группа: ИКБО-11-23",
                     modifier = Modifier.padding(bottom = 16.dp),
-                    color = deepGreen,
+                    color = white,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -324,7 +422,116 @@ fun ScreenSearchWithHistoryPreview() {
                 Text(
                     text = "Последние запросы:",
                     modifier = Modifier.padding(bottom = 8.dp),
-                    color = deepGreen
+                    color = white
+                )
+
+                LazyColumn {
+                    items(testHistory) { historyItem ->
+                        HistoryItem(
+                            query = historyItem,
+                            onClick = {}
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Превью с историей (ночная тема)
+@Preview(
+    name = "С историей - Ночь",
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+fun ScreenSearchWithHistoryNightPreview() {
+    // Временно добавляем тестовые данные в историю для превью
+    val testHistory = listOf(
+        "ИКБО-11-23",
+        "ИКБО-12-23",
+        "ИКБО-13-23",
+        "Иван Иванов",
+        "Петр Петров"
+    )
+
+    ScheduleAppTheme(darkTheme = true) {
+        val customColors = androidx.compose.material3.MaterialTheme.customColors
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(customColors.bg2)
+        ) {
+            ShinyBottom(shiny = blue,180,520) // В ночь используем дневной shiny
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Spacer(modifier = Modifier.height(30.dp))
+
+                // Поисковая строка
+                OutlinedTextField(
+                    value = "ИКБО-11-23",
+                    onValueChange = {},
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth()
+                        .height(60.dp)
+                        .shadow(
+                            elevation = 8.dp,
+                            shape = RoundedCornerShape(20.dp),
+                            clip = true,
+                            ambientColor = customColors.searchBar,
+                            spotColor = customColors.searchBar
+                        )
+                        .border(
+                            border = BorderStroke(
+                                width = 3.dp,
+                                color = customColors.searchBar
+                            ),
+                            shape = RoundedCornerShape(20.dp)
+                        ),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        cursorColor = customColors.searchBar,
+                        textColor = white,
+                        backgroundColor = customColors.bg2,
+                        trailingIconColor = customColors.searchBar
+                    ),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {},
+                            enabled = true
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "search",
+                                modifier = Modifier.size(24.dp),
+                                tint = customColors.searchBar
+                            )
+                        }
+                    },
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Текущая группа
+                Text(
+                    text = "Текущая группа: ИКБО-11-23",
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    color = white,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+
+                // История поиска
+                Text(
+                    text = "Последние запросы:",
+                    modifier = Modifier.padding(bottom = 8.dp),
+                    color = white
                 )
 
                 LazyColumn {

@@ -1,6 +1,5 @@
 package com.example.scheduleapp.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -14,7 +13,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-// Ваши кастомные цвета
 data class CustomColors(
     val bg1: Color,
     val bg2: Color,
@@ -25,7 +23,6 @@ data class CustomColors(
     val subTitle: Color
 )
 
-// Темная тема с вашими названиями
 private val darkCustomColors = CustomColors(
     bg1 = gray,
     bg2 = darkGray,
@@ -36,7 +33,6 @@ private val darkCustomColors = CustomColors(
     subTitle = white
 )
 
-// Светлая тема с вашими названиями
 private val lightCustomColors = CustomColors(
     bg1 = white,
     bg2 = lightGray,
@@ -47,7 +43,6 @@ private val lightCustomColors = CustomColors(
     subTitle = gray
 )
 
-// CompositionLocal для доступа к кастомным цветам
 val LocalCustomColors = staticCompositionLocalOf { lightCustomColors }
 
 @Composable
@@ -56,7 +51,6 @@ fun ScheduleAppTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    // Базовые цвета Material Theme
     val baseColorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
@@ -66,7 +60,6 @@ fun ScheduleAppTheme(
         else -> lightColorScheme()
     }
 
-    // Ваши кастомные цвета
     val customColors = if (darkTheme) darkCustomColors else lightCustomColors
 
     MaterialTheme(
@@ -80,6 +73,5 @@ fun ScheduleAppTheme(
     }
 }
 
-// Extension для удобного доступа к кастомным цветам
 val MaterialTheme.customColors: CustomColors
     @Composable get() = LocalCustomColors.current
