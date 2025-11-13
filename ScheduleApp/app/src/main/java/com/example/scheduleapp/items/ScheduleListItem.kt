@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.scheduleapp.R
+import com.example.scheduleapp.data.RecurrenceRule
 import com.example.scheduleapp.data.ScheduleItem
 import com.example.scheduleapp.ui.theme.deepGreen
 import com.example.scheduleapp.ui.theme.gray
@@ -154,20 +155,21 @@ fun ScheduleListItem(
 @Composable
 fun ScheduleItemPreview() {
     MaterialTheme {
-        ScheduleListItem(
-            scheduleItem = ScheduleItem(
-                id = "296a15c0-f67b-4fe5-a70a-2f0232fcb7c5",
-                discipline = "Бэкенд-разработка",
-                lessonType = "LK",
-                startTime = LocalDateTime.of(2025, 9, 6, 9, 0),
-                endTime = LocalDateTime.of(2025, 9, 6, 10, 30),
-                room = "А-18 (В-78)",
-                teacher = "Волков Михаил Юрьевич",
-                groups = listOf("ИКБО-10-23", "ИКБО-13-23", "ИКБО-12-23", "ИКБО-11-23", "ИКБО-14-23", "ИКБО-15-23"),
-                groupsSummary = "ИКБО-10-23, ИКБО-13-23, ИКБО-12-23, ИКБО-11-23, ИКБО-14-23, ИКБО-15-23",
-                description = null
-            ),
-            onOptionsClick = {}
+        ScheduleItem(
+            discipline = "Разработка баз данных",
+            lessonType = "PR",
+            startTime = LocalDateTime.of(2025, 9, 6, 10, 40),
+            endTime = LocalDateTime.of(2025, 9, 6, 12, 10),
+            room = "И-212-б (В-78)",
+            teacher = "Ужахов Нурдин Люреханович",
+            groups = listOf("ИКБО-60-23"),
+            groupsSummary = "ИКБО-60-23",
+            description = "SQL запросы",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 13, 23, 59)
+            )
         )
     }
 }

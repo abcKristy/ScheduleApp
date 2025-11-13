@@ -1,11 +1,11 @@
 package com.example.scheduleapp.data
 
 import java.time.LocalDateTime
+import java.time.LocalDate
 
 fun TestSchedule(): List<ScheduleItem> {
     return listOf(
         ScheduleItem(
-            id = "065156fa-6ab0-4688-aa26-c1ec5a9d9d19",
             discipline = "Обоснование и разработка требований к программным системам",
             lessonType = "PR",
             startTime = LocalDateTime.of(2025, 9, 1, 16, 20),
@@ -14,10 +14,18 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Ахмедова Хамида Гаджиалиевна",
             groups = listOf("ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23",
-            description = null
+            description = null,
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 25, 23, 59)
+            ),
+            exceptions = listOf(
+                LocalDate.of(2025, 10, 6), // Перенос занятия
+                LocalDate.of(2025, 11, 3)  // Праздничный день
+            )
         ),
         ScheduleItem(
-            id = "0dee8489-5ab5-428c-8326-6d6fdd319eed",
             discipline = "Проектирование и разработка мобильных приложений на языке Котлин",
             lessonType = "PR",
             startTime = LocalDateTime.of(2025, 9, 2, 12, 40),
@@ -26,10 +34,15 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Егоров Никита Сергеевич",
             groups = listOf("ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23",
-            description = null
+            description = "Практическое занятие по разработке UI",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 20, 23, 59)
+            ),
+            exceptions = listOf(LocalDate.of(2025, 11, 10)) // Перенос
         ),
         ScheduleItem(
-            id = "140af794-ac2b-49fa-9564-1714de833061",
             discipline = "Обоснование и разработка требований к программным системам",
             lessonType = "PR",
             startTime = LocalDateTime.of(2025, 9, 8, 16, 20),
@@ -38,10 +51,14 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Ахмедова Хамида Гаджиалиевна",
             groups = listOf("ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23",
-            description = null
+            description = null,
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 25, 23, 59)
+            )
         ),
         ScheduleItem(
-            id = "1c9bf3c9-1159-4a81-b3cf-3fa026703c64",
             discipline = "Основы сетевых технологий",
             lessonType = "PR",
             startTime = LocalDateTime.of(2025, 9, 1, 9, 0),
@@ -50,10 +67,14 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Круглов Анатолий Михайлович",
             groups = listOf("ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23",
-            description = null
+            description = "Лабораторная работа №1",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 2,
+                until = LocalDateTime.of(2025, 12, 15, 23, 59)
+            )
         ),
         ScheduleItem(
-            id = "2021224c-0b89-4586-ba09-c814adf714c1",
             discipline = "Технологические основы интернета вещей",
             lessonType = "LK",
             startTime = LocalDateTime.of(2025, 9, 11, 12, 40),
@@ -62,10 +83,14 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Образцов Владимир Михайлович",
             groups = listOf("ИКБО-52-23", "ИКБО-50-23", "ИКБО-62-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
             groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
-            description = null
+            description = "Лекция по основам IoT",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 18, 23, 59)
+            )
         ),
         ScheduleItem(
-            id = "29f909c2-5a33-4707-8668-d0ac7eade66e",
             discipline = "Моделирование бизнес-процессов",
             lessonType = "PR",
             startTime = LocalDateTime.of(2025, 9, 11, 9, 0),
@@ -74,10 +99,14 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Карамышев Антон Николаевич",
             groups = listOf("ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23",
-            description = null
+            description = "Работа с BPMN",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 11, 23, 59)
+            )
         ),
         ScheduleItem(
-            id = "2bfdf36b-f2e7-45e5-b7a3-0dddbe5ee2ac",
             discipline = "Проектирование и разработка мобильных приложений на языке Котлин",
             lessonType = "PR",
             startTime = LocalDateTime.of(2025, 9, 9, 14, 20),
@@ -86,10 +115,14 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Егоров Никита Сергеевич",
             groups = listOf("ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23",
-            description = null
+            description = "Работа с базами данных в Android",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 20, 23, 59)
+            )
         ),
         ScheduleItem(
-            id = "2c5631c7-c04e-4457-b306-39f92a7c1eaf",
             discipline = "Проектирование и разработка мобильных приложений на языке Котлин",
             lessonType = "PR",
             startTime = LocalDateTime.of(2025, 9, 2, 14, 20),
@@ -98,10 +131,14 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Егоров Никита Сергеевич",
             groups = listOf("ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23",
-            description = null
+            description = "Основы Kotlin Coroutines",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 20, 23, 59)
+            )
         ),
         ScheduleItem(
-            id = "32b48a24-bc02-4e51-9fc5-d41e5f7e0bc9",
             discipline = "Моделирование бизнес-процессов",
             lessonType = "PR",
             startTime = LocalDateTime.of(2025, 9, 4, 10, 40),
@@ -110,10 +147,14 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Карамышев Антон Николаевич",
             groups = listOf("ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23",
-            description = null
+            description = "Анализ бизнес-процессов",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 11, 23, 59)
+            )
         ),
         ScheduleItem(
-            id = "330f7684-a876-4416-8f42-e4cf771d9f9f",
             discipline = "Моделирование сред и разработка приложений виртуальной и дополненной реальности",
             lessonType = "PR",
             startTime = LocalDateTime.of(2025, 9, 6, 12, 40),
@@ -122,10 +163,14 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Тюшкевич Николай Максимович",
             groups = listOf("ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23",
-            description = null
+            description = "Введение в Unity",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 13, 23, 59)
+            )
         ),
         ScheduleItem(
-            id = "427a9e1d-fc55-4c00-a7f7-fce4a296c28d",
             discipline = "Технологические основы интернета вещей",
             lessonType = "PR",
             startTime = LocalDateTime.of(2025, 9, 2, 18, 0),
@@ -134,10 +179,14 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Образцов Владимир Михайлович",
             groups = listOf("ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23",
-            description = null
+            description = "Работа с Arduino",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 2,
+                until = LocalDateTime.of(2025, 12, 16, 23, 59)
+            )
         ),
         ScheduleItem(
-            id = "469067f3-dfe8-4286-9c49-9b143c8cdb58",
             discipline = "Обоснование и разработка требований к программным системам",
             lessonType = "LK",
             startTime = LocalDateTime.of(2025, 9, 1, 14, 20),
@@ -146,10 +195,14 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Ахмедова Хамида Гаджиалиевна",
             groups = listOf("ИКБО-62-23", "ИКБО-61-23", "ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
-            description = null
+            description = "Лекция по методологиям разработки требований",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 25, 23, 59)
+            )
         ),
         ScheduleItem(
-            id = "5192cb30-3a75-4571-b6e5-0bc984713657",
             discipline = "Проектирование и разработка мобильных приложений на языке Котлин",
             lessonType = "PR",
             startTime = LocalDateTime.of(2025, 9, 1, 14, 20),
@@ -158,10 +211,14 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Егоров Никита Сергеевич",
             groups = listOf("ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23",
-            description = null
+            description = "Введение в Android Development",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 20, 23, 59)
+            )
         ),
         ScheduleItem(
-            id = "53e0b8b3-cbfb-4244-8970-44b6463bc476",
             discipline = "Проектирование и разработка мобильных приложений на языке Котлин",
             lessonType = "LK",
             startTime = LocalDateTime.of(2025, 9, 2, 16, 20),
@@ -170,10 +227,14 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Степанов Павел Валериевич",
             groups = listOf("ИКБО-62-23", "ИКБО-61-23", "ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
-            description = null
+            description = "Архитектура мобильных приложений",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 20, 23, 59)
+            )
         ),
         ScheduleItem(
-            id = "59ff6ce7-4ad6-4345-b326-bf5a46ba10ee",
             discipline = "Разработка баз данных",
             lessonType = "PR",
             startTime = LocalDateTime.of(2025, 9, 6, 10, 40),
@@ -182,259 +243,12 @@ fun TestSchedule(): List<ScheduleItem> {
             teacher = "Ужахов Нурдин Люреханович",
             groups = listOf("ИКБО-60-23"),
             groupsSummary = "ИКБО-60-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "603dd784-686b-4475-9076-c2d54ff437de",
-            discipline = "Моделирование сред и разработка приложений виртуальной и дополненной реальности",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 13, 12, 40),
-            endTime = LocalDateTime.of(2025, 9, 13, 14, 10),
-            room = "А-423 (В-78)",
-            teacher = "Тюшкевич Николай Максимович",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "61353c22-4769-4113-b895-6a4e22ef9f71",
-            discipline = "Обоснование и разработка требований к программным системам",
-            lessonType = "LK",
-            startTime = LocalDateTime.of(2025, 9, 8, 14, 20),
-            endTime = LocalDateTime.of(2025, 9, 8, 15, 50),
-            room = "А-6 (В-78)",
-            teacher = "Ахмедова Хамида Гаджиалиевна",
-            groups = listOf("ИКБО-62-23", "ИКБО-61-23", "ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "633f835b-2865-48b5-91b1-6b5cd6498e2b",
-            discipline = "Моделирование бизнес-процессов",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 4, 9, 0),
-            endTime = LocalDateTime.of(2025, 9, 4, 10, 30),
-            room = "А-424-1 (В-78)",
-            teacher = "Карамышев Антон Николаевич",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "65790812-cf0b-425e-b719-89800d3ac36d",
-            discipline = "Моделирование сред и разработка приложений виртуальной и дополненной реальности",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 13, 10, 40),
-            endTime = LocalDateTime.of(2025, 9, 13, 12, 10),
-            room = "А-423 (В-78)",
-            teacher = "Тюшкевич Николай Максимович",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "6e32cae1-9a83-4da3-aee6-12b65e09243c",
-            discipline = "Проектирование и разработка мобильных приложений на языке Котлин",
-            lessonType = "LK",
-            startTime = LocalDateTime.of(2025, 9, 9, 16, 20),
-            endTime = LocalDateTime.of(2025, 9, 9, 17, 50),
-            room = "А-5 (В-78)",
-            teacher = "Степанов Павел Валериевич",
-            groups = listOf("ИКБО-62-23", "ИКБО-61-23", "ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "70f4a2d8-6bde-4fff-ac03-fad9776c05df",
-            discipline = "Разработка баз данных",
-            lessonType = "LK",
-            startTime = LocalDateTime.of(2025, 9, 8, 12, 40),
-            endTime = LocalDateTime.of(2025, 9, 8, 14, 10),
-            room = "А-9 (В-78)",
-            teacher = "Семыкина Наталья Александровна",
-            groups = listOf("ИКБО-52-23", "ИКБО-50-23", "ИКБО-62-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
-            groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "72e402da-1bf5-4505-b216-ef6095cc6280",
-            discipline = "Проектирование и разработка мобильных приложений на языке Котлин",
-            lessonType = "LK",
-            startTime = LocalDateTime.of(2025, 9, 1, 16, 20),
-            endTime = LocalDateTime.of(2025, 9, 1, 17, 50),
-            room = "А-5 (В-78)",
-            teacher = "Степанов Павел Валериевич",
-            groups = listOf("ИКБО-62-23", "ИКБО-61-23", "ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "7e841748-0797-4573-b378-2fb0b92dd507",
-            discipline = "Технологические основы интернета вещей",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 1, 18, 0),
-            endTime = LocalDateTime.of(2025, 9, 1, 19, 30),
-            room = "Г-301-в (В-78)",
-            teacher = "Образцов Владимир Михайлович",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "82f01a57-e077-4340-8b48-0c82e43f8318",
-            discipline = "Моделирование бизнес-процессов",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 11, 10, 40),
-            endTime = LocalDateTime.of(2025, 9, 11, 12, 10),
-            room = "А-424-1 (В-78)",
-            teacher = "Карамышев Антон Николаевич",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "a2c07632-ed1f-4506-b474-6b6094ea5f2d",
-            discipline = "Тестирование и верификация программного обеспечения",
-            lessonType = "LK",
-            startTime = LocalDateTime.of(2025, 9, 5, 9, 0),
-            endTime = LocalDateTime.of(2025, 9, 5, 10, 30),
-            room = "А-18 (В-78)",
-            teacher = "Петренко Александр Анатольевич",
-            groups = listOf("ИКБО-52-23", "ИКБО-50-23", "ИКБО-62-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
-            groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "ab302372-f37b-46ed-9da0-3e500d38cfbf",
-            discipline = "Основы сетевых технологий",
-            lessonType = "LK",
-            startTime = LocalDateTime.of(2025, 9, 12, 10, 40),
-            endTime = LocalDateTime.of(2025, 9, 12, 12, 10),
-            room = "А-16 (В-78)",
-            teacher = "Заботкина Екатерина Михайловна",
-            groups = listOf("ИКБО-52-23", "ИКБО-50-23", "ИКБО-62-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
-            groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "b698b60b-0b6a-4284-a80c-3bd5ec06100d",
-            discipline = "Разработка баз данных",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 13, 9, 0),
-            endTime = LocalDateTime.of(2025, 9, 13, 10, 30),
-            room = "И-212-б (В-78)",
-            teacher = "Ужахов Нурдин Люреханович",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "ba260bd0-f330-46aa-ab26-5e8bf0b96746",
-            discipline = "Моделирование бизнес-процессов",
-            lessonType = "LK",
-            startTime = LocalDateTime.of(2025, 9, 1, 12, 40),
-            endTime = LocalDateTime.of(2025, 9, 1, 14, 10),
-            room = "А-9 (В-78)",
-            teacher = "Карамышев Антон Николаевич",
-            groups = listOf("ИКБО-52-23", "ИКБО-50-23", "ИКБО-62-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
-            groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "bc769c66-17d1-4891-846e-ea1f2ae32a9c",
-            discipline = "Моделирование сред и разработка приложений виртуальной и дополненной реальности",
-            lessonType = "LK",
-            startTime = LocalDateTime.of(2025, 9, 12, 9, 0),
-            endTime = LocalDateTime.of(2025, 9, 12, 10, 30),
-            room = "А-18 (В-78)",
-            teacher = "Синицын Анатолий Васильевич",
-            groups = listOf("ИКБО-52-23", "ИКБО-50-23", "ИКБО-62-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
-            groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "c62badeb-9357-4298-a500-24ec83ac10bf",
-            discipline = "Разработка баз данных",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 6, 9, 0),
-            endTime = LocalDateTime.of(2025, 9, 6, 10, 30),
-            room = "И-212-б (В-78)",
-            teacher = "Ужахов Нурдин Люреханович",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "c6c7f93c-cdfe-4236-964e-f038bc8c1abd",
-            discipline = "Проектирование и разработка мобильных приложений на языке Котлин",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 1, 12, 40),
-            endTime = LocalDateTime.of(2025, 9, 1, 14, 10),
-            room = "А-421 (В-78)",
-            teacher = "Егоров Никита Сергеевич",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "ca473a18-4962-4679-8c5e-42f5f60c3d57",
-            discipline = "Тестирование и верификация программного обеспечения",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 8, 10, 40),
-            endTime = LocalDateTime.of(2025, 9, 8, 12, 10),
-            room = "И-208 (В-78)",
-            teacher = "Мельников Денис Александрович",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "d786b4a6-4313-4987-b72a-2833a9c550bd",
-            discipline = "Тестирование и верификация программного обеспечения",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 1, 10, 40),
-            endTime = LocalDateTime.of(2025, 9, 1, 12, 10),
-            room = "И-208 (В-78)",
-            teacher = "Мельников Денис Александрович",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "eec366f5-04d6-493c-b4f3-fee4326d3ec0",
-            discipline = "Технологические основы интернета вещей",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 9, 18, 0),
-            endTime = LocalDateTime.of(2025, 9, 9, 19, 30),
-            room = "Г-301-в (В-78)",
-            teacher = "Образцов Владимир Михайлович",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "f3200b0f-a4f8-4b4a-857b-3cacc694c080",
-            discipline = "Основы сетевых технологий",
-            lessonType = "LK",
-            startTime = LocalDateTime.of(2025, 9, 5, 10, 40),
-            endTime = LocalDateTime.of(2025, 9, 5, 12, 10),
-            room = "А-16 (В-78)",
-            teacher = "Заботкина Екатерина Михайловна",
-            groups = listOf("ИКБО-52-23", "ИКБО-50-23", "ИКБО-62-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
-            groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
-            description = null
-        ),
-        ScheduleItem(
-            id = "f9450e63-682e-4f6c-95c3-5281800ed57b",
-            discipline = "Проектирование и разработка мобильных приложений на языке Котлин",
-            lessonType = "PR",
-            startTime = LocalDateTime.of(2025, 9, 9, 12, 40),
-            endTime = LocalDateTime.of(2025, 9, 9, 14, 10),
-            room = "А-421 (В-78)",
-            teacher = "Егоров Никита Сергеевич",
-            groups = listOf("ИКБО-60-23"),
-            groupsSummary = "ИКБО-60-23",
-            description = null
+            description = "SQL запросы",
+            recurrence = RecurrenceRule(
+                frequency = "WEEKLY",
+                interval = 1,
+                until = LocalDateTime.of(2025, 12, 13, 23, 59)
+            )
         )
     )
 }

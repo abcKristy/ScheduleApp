@@ -2,6 +2,7 @@ package com.example.scheduleapp.logic
 
 import android.util.Log
 import com.example.scheduleapp.data.ScheduleItem
+import com.example.scheduleapp.data.RecurrenceRule
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONArray
 import org.json.JSONObject
@@ -11,13 +12,14 @@ import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.Path
 import java.time.LocalDateTime
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 private val dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
 // Data classes для парсинга JSON
 data class ScheduleItemResponse(
-    val id: String,
     val discipline: String,
     val lessonType: String,
     val startTime: String,
@@ -26,7 +28,15 @@ data class ScheduleItemResponse(
     val teacher: String,
     val groups: List<String>,
     val groupsSummary: String,
-    val description: String?
+    val description: String?,
+    val recurrence: RecurrenceRuleResponse? = null,
+    val exceptions: List<String>? = emptyList()
+)
+
+data class RecurrenceRuleResponse(
+    val frequency: String? = null,
+    val interval: Int? = null,
+    val until: String? = null
 )
 
 data class GroupsResponse(
@@ -60,7 +70,6 @@ fun parseScheduleFromResponse(response: List<ScheduleItemResponse>): List<Schedu
 
 fun parseScheduleItem(response: ScheduleItemResponse): ScheduleItem {
     return ScheduleItem(
-        id = response.id,
         discipline = response.discipline,
         lessonType = response.lessonType,
         startTime = LocalDateTime.parse(response.startTime, dateTimeFormatter),
@@ -69,7 +78,15 @@ fun parseScheduleItem(response: ScheduleItemResponse): ScheduleItem {
         teacher = response.teacher,
         groups = response.groups,
         groupsSummary = response.groupsSummary,
-        description = response.description?.takeIf { it != "null" && it.isNotEmpty() }
+        description = response.description?.takeIf { it != "null" && it.isNotEmpty() },
+        recurrence = response.recurrence?.let { recurrence ->
+            RecurrenceRule(
+                frequency = recurrence.frequency,
+                interval = recurrence.interval,
+                until = recurrence.until?.let { LocalDateTime.parse(it, dateTimeFormatter) }
+            )
+        },
+        exceptions = response.exceptions?.map { LocalDate.parse(it, dateFormatter) } ?: emptyList()
     )
 }
 
@@ -87,6 +104,12 @@ suspend fun getScheduleItems(
         Log.d("API_DEBUG", "Received ${response.size} items")
         val scheduleItems = parseScheduleFromResponse(response)
         Log.d("API_DEBUG", "Parsed ${scheduleItems.size} items")
+
+        // Логируем для отладки
+        scheduleItems.forEachIndexed { index, item ->
+            Log.d("API_DEBUG", "Item $index: ${item.discipline}, recurrence: ${item.recurrence}, exceptions: ${item.exceptions.size}")
+        }
+
         onSuccess(scheduleItems)
 
     } catch (e: Exception) {

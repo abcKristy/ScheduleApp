@@ -1,10 +1,10 @@
 package com.example.scheduleapp.data
 
 import java.time.LocalDateTime
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 data class ScheduleItem(
-    val id: String,
     val discipline: String,
     val lessonType: String,
     val startTime: LocalDateTime,
@@ -13,7 +13,9 @@ data class ScheduleItem(
     val teacher: String,
     val groups: List<String>,
     val groupsSummary: String,
-    val description: String?
+    val description: String?,
+    val recurrence: RecurrenceRule? = null,
+    val exceptions: List<LocalDate> = emptyList()
 ){
     val duration: String
         get() {
@@ -31,3 +33,9 @@ data class ScheduleItem(
         get() = endTime.format(DateTimeFormatter.ofPattern("HH:mm"))
 
 }
+
+data class RecurrenceRule(
+    val frequency: String? = null,
+    val interval: Int? = null,
+    val until: LocalDateTime? = null
+)
