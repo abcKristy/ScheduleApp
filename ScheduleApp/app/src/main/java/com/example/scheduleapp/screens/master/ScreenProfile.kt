@@ -41,7 +41,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import androidx.navigation.NavHostController
 import com.example.scheduleapp.R
+import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
@@ -51,7 +53,7 @@ import com.example.scheduleapp.ui.theme.lightGreen
 import com.example.scheduleapp.ui.theme.white
 
 @Composable
-fun ScreenProfile() {
+fun ScreenProfile(navController: NavHostController? = null) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -192,12 +194,13 @@ fun ScreenProfile() {
                     )
                 }
 
-                // Настройки
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { /* Обработка перехода в настройки */ },
+                        .clickable {
+                            navController?.navigate(NavigationRoute.UserSettings.route)
+                        },
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Icon(

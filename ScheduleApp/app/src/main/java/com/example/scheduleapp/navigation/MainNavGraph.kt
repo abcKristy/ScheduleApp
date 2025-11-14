@@ -11,8 +11,8 @@ import androidx.navigation.compose.composable
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.screens.profile.LoginScreen
 import com.example.scheduleapp.screens.profile.RegisterScreen
-import com.example.scheduleapp.screens.detail.UserDetailScreen
 import com.example.scheduleapp.screens.detail.ScheduleDetailScreen
+import com.example.scheduleapp.screens.detail.UserSettingsScreen
 import com.example.scheduleapp.screens.master.ScreenList
 import com.example.scheduleapp.screens.master.ScreenProfile
 import com.example.scheduleapp.screens.master.ScreenSearch
@@ -40,7 +40,7 @@ fun MainNavGraph(navController: NavHostController) {
         }
 
         composable(NavigationRoute.Profile.route) {
-            ScreenProfile()
+            ScreenProfile(navController = navController)
         }
 
         composable(NavigationRoute.ScheduleList.route) {
@@ -53,9 +53,8 @@ fun MainNavGraph(navController: NavHostController) {
 
         ////////////////////////////////////////////////
 
-        // Detail screens
-        composable(NavigationRoute.UserDetail.route) {
-            UserDetailScreen(
+        composable(NavigationRoute.UserSettings.route) {
+            UserSettingsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

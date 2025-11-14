@@ -23,7 +23,13 @@ fun MainScreen() {
     var showBottomNav by remember { mutableStateOf(true) }
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
-            showBottomNav = backStackEntry.destination.route != NavigationRoute.Welcome.route
+            val currentRoute = backStackEntry.destination.route
+            showBottomNav = when (currentRoute) {
+                NavigationRoute.ScheduleList.route -> true
+                NavigationRoute.Profile.route -> true
+                NavigationRoute.Search.route -> true
+                else -> false
+            }
         }
     }
     Scaffold(
