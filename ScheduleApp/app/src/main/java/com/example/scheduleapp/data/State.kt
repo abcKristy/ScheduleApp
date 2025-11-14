@@ -14,7 +14,8 @@ object AppState {
     val selectedDate: LocalDate? get() = _selectedDate
     fun setSelectedDate(date: LocalDate?) { _selectedDate = date }
 
-    private var _currentGroup by mutableStateOf<String>("ИКБО-11-23")
+    // Группа для отображения расписания - при запуске берется из userGroup
+    private var _currentGroup by mutableStateOf<String>("")
     val currentGroup: String get() = _currentGroup
     fun setCurrentGroup(group: String) {
         _currentGroup = group
@@ -22,6 +23,18 @@ object AppState {
             PreferencesManager.saveCurrentGroup(it, group)
         }
     }
+
+    // Группа пользователя в профиле
+    private var _userGroup by mutableStateOf<String>("не задано")
+    val userGroup: String get() = _userGroup
+    fun setUserGroup(group: String) {
+        _userGroup = group
+        context?.let {
+            PreferencesManager.saveUserGroup(it, group)
+        }
+        setCurrentGroup(group)
+    }
+
     private var _userAvatar by mutableStateOf<String?>(null)
     val userAvatar: String? get() = _userAvatar
 
@@ -40,16 +53,20 @@ object AppState {
     }
 
     private fun loadSavedData(context: Context) {
-        _currentGroup = PreferencesManager.getCurrentGroup(context)
-
-        val history = PreferencesManager.getSearchHistory(context)
-        SearchHistoryManager.initialize(history)
-
+        // Сначала загружаем пользовательские данные
         _userName = PreferencesManager.getUserName(context)
         _userGroup = PreferencesManager.getUserGroup(context)
         _userEmail = PreferencesManager.getUserEmail(context)
-
         _userAvatar = PreferencesManager.getUserAvatar(context)
+
+        _currentGroup = if (_userGroup != "не задано" && _userGroup.isNotBlank()) {
+            _userGroup
+        } else {
+            PreferencesManager.getCurrentGroup(context).ifBlank { " " }
+        }
+
+        val history = PreferencesManager.getSearchHistory(context)
+        SearchHistoryManager.initialize(history)
     }
 
     private var _userName by mutableStateOf<String>("Настройте параметры профиля")
@@ -61,15 +78,6 @@ object AppState {
         }
     }
 
-    private var _userGroup by mutableStateOf<String>("не задано")
-    val userGroup: String get() = _userGroup
-    fun setUserGroup(group: String) {
-        _userGroup = group
-        context?.let {
-            PreferencesManager.saveUserGroup(it, group)
-        }
-    }
-
     private var _userEmail by mutableStateOf<String>("не задано")
     val userEmail: String get() = _userEmail
     fun setUserEmail(email: String) {
@@ -78,6 +86,7 @@ object AppState {
             PreferencesManager.saveUserEmail(it, email)
         }
     }
+
     private var _scheduleItems by mutableStateOf<List<ScheduleItem>>(emptyList())
     val scheduleItems: List<ScheduleItem> get() = _scheduleItems
     fun setScheduleItems(items: List<ScheduleItem>) { _scheduleItems = items }

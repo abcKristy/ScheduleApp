@@ -33,7 +33,7 @@ object PreferencesManager {
     }
 
     fun getCurrentGroup(context: Context): String {
-        return getSharedPreferences(context).getString(KEY_CURRENT_GROUP, "ИКБО-11-23") ?: "ИКБО-11-23"
+        return getSharedPreferences(context).getString(KEY_CURRENT_GROUP, "") ?: ""
     }
 
     fun getSearchHistory(context: Context): List<String> {
@@ -67,15 +67,15 @@ object PreferencesManager {
     }
 
    fun getUserName(context: Context): String {
-        return getSharedPreferences(context).getString(KEY_USER_NAME, "Кристина") ?: "Кристина"
+        return getSharedPreferences(context).getString(KEY_USER_NAME, "Задайте в настройках") ?: "Задайте в настройках"
     }
 
     fun getUserGroup(context: Context): String {
-        return getSharedPreferences(context).getString(KEY_USER_GROUP, "ИКБО-60-23") ?: "ИКБО-60-23"
+        return getSharedPreferences(context).getString(KEY_USER_GROUP, "не задано") ?: "не задано"
     }
 
     fun getUserEmail(context: Context): String {
-        return getSharedPreferences(context).getString(KEY_USER_EMAIL, "ilicheva@edu.mirea.ru") ?: "ilicheva@edu.mirea.ru"
+        return getSharedPreferences(context).getString(KEY_USER_EMAIL, "не задано") ?: "не задано"
     }
 
     fun saveUserAvatar(context: Context, avatarPath: String?) {

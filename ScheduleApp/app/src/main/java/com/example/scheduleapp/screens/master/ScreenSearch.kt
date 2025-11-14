@@ -31,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,7 +67,18 @@ fun ScreenSearch() {
 
     ScheduleAppTheme {
         val customColors = androidx.compose.material3.MaterialTheme.customColors
+        val context = LocalContext.current
+        var searchQuery by remember { mutableStateOf("") }
+        val searchHistory = SearchHistoryManager.historyList
+        val coroutineScope = rememberCoroutineScope()
 
+        // Принудительно обновляем currentGroup из userGroup при входе на экран
+        LaunchedEffect(Unit) {
+            val userGroup = AppState.userGroup
+            if (userGroup != "не задано" && userGroup.isNotBlank() && AppState.currentGroup != userGroup) {
+                AppState.setCurrentGroup(userGroup)
+            }
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
