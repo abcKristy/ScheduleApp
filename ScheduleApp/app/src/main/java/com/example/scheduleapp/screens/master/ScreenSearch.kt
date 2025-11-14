@@ -67,19 +67,17 @@ fun ScreenSearch() {
     ScheduleAppTheme {
         val customColors = androidx.compose.material3.MaterialTheme.customColors
 
-        val invertedShiny = if (isSystemInDarkTheme()) {
-            blue
-        } else {
-            lightGreen
-        }
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(customColors.bg2)
         ) {
-            // Добавляем shiny bottom с инвертированным цветом
-            ShinyBottom(shiny = invertedShiny,180,520)
+
+            if (isSystemInDarkTheme()) {
+                ShinyBottom(shiny = blue,200,630)
+            } else {
+                ShinyBottom(shiny = lightGreen,180,520)
+            }
 
             Column(
                 modifier = Modifier
@@ -88,7 +86,6 @@ fun ScreenSearch() {
             ) {
                 Spacer(modifier = Modifier.height(30.dp))
 
-                // Поисковая строка
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
@@ -462,7 +459,11 @@ fun ScreenSearchWithHistoryNightPreview() {
                 .fillMaxSize()
                 .background(customColors.bg2)
         ) {
-            ShinyBottom(shiny = blue,180,520) // В ночь используем дневной shiny
+            if (isSystemInDarkTheme()) {
+                ShinyBottom(shiny = blue,200,630)
+            } else {
+                ShinyBottom(shiny = lightGreen,180,520)
+            }
 
             Column(
                 modifier = Modifier

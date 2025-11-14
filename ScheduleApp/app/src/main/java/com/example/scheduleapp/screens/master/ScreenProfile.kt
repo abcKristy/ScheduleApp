@@ -45,7 +45,6 @@ import com.example.scheduleapp.R
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
-import com.example.scheduleapp.ui.theme.gray
 import com.example.scheduleapp.ui.theme.lightBlue
 import com.example.scheduleapp.ui.theme.lightGray
 import com.example.scheduleapp.ui.theme.lightGreen
@@ -61,7 +60,7 @@ fun ScreenProfile() {
     ) {
         if (isSystemInDarkTheme()){
             ShinyBottom(lightGreen,120,320)
-            ShinyBottom(lightGreen,-120,-320)
+            ShinyBottom(blue,-190,-400)
         }else{
             ShinyBottom(blue,100,300)
             ShinyBottom(lightGreen,-100,-300)
