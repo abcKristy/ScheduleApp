@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import com.example.scheduleapp.R
+import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
@@ -54,6 +55,9 @@ import com.example.scheduleapp.ui.theme.white
 
 @Composable
 fun ScreenProfile(navController: NavHostController? = null) {
+    val userName = AppState.userName
+    val userGroup = AppState.userGroup
+    val userEmail = AppState.userEmail
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -108,7 +112,7 @@ fun ScreenProfile(navController: NavHostController? = null) {
                 }
 
                 Text(
-                    text = "Кристина",
+                    text = userName,
                     color = white,
                     fontSize = 25.sp,
                     modifier = Modifier.padding(top = 16.dp),
@@ -116,7 +120,7 @@ fun ScreenProfile(navController: NavHostController? = null) {
                 )
 
                 Text(
-                    text = "ИКБО-60-23",
+                    text = userGroup,
                     color = white,
                     fontSize = 18.sp,
                     modifier = Modifier.padding(top = 8.dp),
@@ -136,7 +140,7 @@ fun ScreenProfile(navController: NavHostController? = null) {
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "ilicheva@edu.mirea.ru",
+                        text = userEmail,
                         color = white,
                         modifier = Modifier.padding(start = 8.dp),
                         fontWeight = FontWeight.Bold

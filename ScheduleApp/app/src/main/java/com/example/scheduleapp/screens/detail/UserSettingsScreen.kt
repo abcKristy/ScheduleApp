@@ -1,5 +1,6 @@
 package com.example.scheduleapp.screens.detail
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,17 +25,25 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.scheduleapp.ui.theme.blue
+import com.example.scheduleapp.data.AppState
+import com.example.scheduleapp.screens.detail.EditDialog
+import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.lightGray
 import com.example.scheduleapp.ui.theme.lightBlue
@@ -44,13 +53,19 @@ import com.example.scheduleapp.ui.theme.white
 fun UserSettingsScreen(
     onNavigateBack: () -> Unit
 ) {
+    var showNameDialog by remember { mutableStateOf(false) }
+    var showGroupDialog by remember { mutableStateOf(false) }
+    var showEmailDialog by remember { mutableStateOf(false) }
+
+    val currentName = AppState.userName
+    val currentGroup = AppState.userGroup
+    val currentEmail = AppState.userEmail
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.customColors.bg1),
         contentAlignment = Alignment.Center
     ) {
-        // Декоративные элементы (можно адаптировать из ScreenProfile)
         Box(
             modifier = Modifier
                 .width(350.dp)
@@ -70,7 +85,6 @@ fun UserSettingsScreen(
                     .fillMaxSize()
                     .padding(24.dp)
             ) {
-                // Заголовок с кнопкой назад
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -127,12 +141,12 @@ fun UserSettingsScreen(
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Сменить аватар",
-                        tint = lightBlue,
+                        tint = white,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
                         text = "Сменить аватар",
-                        color = lightBlue,
+                        color = white,
                         modifier = Modifier.padding(start = 8.dp),
                         fontWeight = FontWeight.Bold
                     )
@@ -140,36 +154,69 @@ fun UserSettingsScreen(
 
                 Spacer(modifier = Modifier.height(40.dp))
 
-                // Настройки
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    // Смена имени
                     SettingItem(
                         icon = Icons.Default.Person,
                         title = "Имя",
-                        value = "Кристина",
-                        onClick = { /* TODO: Реализовать смену имени */ }
+                        value = currentName,
+                        onClick = {  showNameDialog = true  }
                     )
 
                     // Смена группы
                     SettingItem(
                         icon = Icons.Default.DateRange,
                         title = "Группа",
-                        value = "ИКБО-60-23",
-                        onClick = { /* TODO: Реализовать смену группы */ }
+                        value = currentGroup,
+                        onClick = {showGroupDialog = true }
                     )
 
                     // Смена почты
                     SettingItem(
                         icon = Icons.Default.Email,
                         title = "Почта",
-                        value = "ilicheva@edu.mirea.ru",
-                        onClick = { /* TODO: Реализовать смену почты */ }
+                        value = currentEmail,
+                        onClick = { showEmailDialog = true  }
                     )
                 }
             }
+        }
+        if (showNameDialog) {
+            EditDialog(
+                title = "Изменить имя",
+                currentValue = currentName,
+                onDismiss = { showNameDialog = false },
+                onConfirm = { newName ->
+                    AppState.setUserName(newName)
+                    showNameDialog = false
+                }
+            )
+        }
+
+        if (showGroupDialog) {
+            EditDialog(
+                title = "Изменить группу",
+                currentValue = currentGroup,
+                onDismiss = { showGroupDialog = false },
+                onConfirm = { newGroup ->
+                    AppState.setUserGroup(newGroup)
+                    showGroupDialog = false
+                }
+            )
+        }
+
+        if (showEmailDialog) {
+            EditDialog(
+                title = "Изменить почту",
+                currentValue = currentEmail,
+                onDismiss = { showEmailDialog = false },
+                onConfirm = { newEmail ->
+                    AppState.setUserEmail(newEmail)
+                    showEmailDialog = false
+                }
+            )
         }
     }
 }
@@ -206,7 +253,7 @@ fun SettingItem(
             )
             Text(
                 text = value,
-                color = lightBlue,
+                color = white,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal
             )
@@ -214,8 +261,46 @@ fun SettingItem(
         Icon(
             imageVector = Icons.Default.Edit,
             contentDescription = "Изменить",
-            tint = lightBlue,
+            tint = white,
             modifier = Modifier.size(20.dp)
         )
+    }
+}
+
+@Preview(
+    name = "Light Theme Settings",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_NO
+)
+@Composable
+fun UserSettingsScreenLightPreview() {
+    ScheduleAppTheme(darkTheme = false) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            UserSettingsScreen(
+                onNavigateBack = {}
+            )
+        }
+    }
+}
+
+@Preview(
+    name = "Dark Theme Settings",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+fun UserSettingsScreenDarkPreview() {
+    ScheduleAppTheme(darkTheme = true) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            UserSettingsScreen(
+                onNavigateBack = {}
+            )
+        }
     }
 }

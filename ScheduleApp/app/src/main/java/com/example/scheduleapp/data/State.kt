@@ -18,13 +18,11 @@ object AppState {
     val currentGroup: String get() = _currentGroup
     fun setCurrentGroup(group: String) {
         _currentGroup = group
-        // Автоматически сохраняем при изменении
         context?.let {
             PreferencesManager.saveCurrentGroup(it, group)
         }
     }
 
-    // Добавляем контекст для сохранения
     private var context: Context? = null
 
     fun initialize(context: Context) {
@@ -33,15 +31,42 @@ object AppState {
     }
 
     private fun loadSavedData(context: Context) {
-        // Загружаем текущую группу
         _currentGroup = PreferencesManager.getCurrentGroup(context)
 
-        // Загружаем историю поиска
         val history = PreferencesManager.getSearchHistory(context)
         SearchHistoryManager.initialize(history)
+
+        _userName = PreferencesManager.getUserName(context)
+        _userGroup = PreferencesManager.getUserGroup(context)
+        _userEmail = PreferencesManager.getUserEmail(context)
     }
 
-    // ... остальной существующий код без изменений ...
+    private var _userName by mutableStateOf<String>("Настройте параметры профиля")
+    val userName: String get() = _userName
+    fun setUserName(name: String) {
+        _userName = name
+        context?.let {
+            PreferencesManager.saveUserName(it, name)
+        }
+    }
+
+    private var _userGroup by mutableStateOf<String>("не задано")
+    val userGroup: String get() = _userGroup
+    fun setUserGroup(group: String) {
+        _userGroup = group
+        context?.let {
+            PreferencesManager.saveUserGroup(it, group)
+        }
+    }
+
+    private var _userEmail by mutableStateOf<String>("не задано")
+    val userEmail: String get() = _userEmail
+    fun setUserEmail(email: String) {
+        _userEmail = email
+        context?.let {
+            PreferencesManager.saveUserEmail(it, email)
+        }
+    }
     private var _scheduleItems by mutableStateOf<List<ScheduleItem>>(emptyList())
     val scheduleItems: List<ScheduleItem> get() = _scheduleItems
     fun setScheduleItems(items: List<ScheduleItem>) { _scheduleItems = items }

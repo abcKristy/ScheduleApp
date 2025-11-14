@@ -2,7 +2,5 @@
 <resources>
 
     <style name="Theme.ScheduleApp" parent="android:Theme.Material.Light.NoActionBar" >
-        <item name="android:statusBarColor">@color/darkBlue</item>
-        <item name="android:navigationBarColor">@color/darkBlue</item>
     </style>
 </resources>

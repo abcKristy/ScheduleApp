@@ -32,6 +32,7 @@ import com.example.scheduleapp.items.Calendar
 import com.example.scheduleapp.items.ScheduleListItem
 import com.example.scheduleapp.logic.filterScheduleByDate
 import com.example.scheduleapp.logic.getScheduleItems
+import com.example.scheduleapp.ui.theme.gray
 
 @Composable
 fun ScreenList() {
@@ -131,7 +132,7 @@ fun ScreenList() {
 @Preview
 fun TestList() {
     Scaffold(
-        containerColor = colorResource(id = R.color.gray)
+        containerColor = gray
     ) {
         ScreenList()
     }

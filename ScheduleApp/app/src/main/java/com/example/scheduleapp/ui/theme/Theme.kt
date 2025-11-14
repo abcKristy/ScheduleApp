@@ -20,7 +20,8 @@ data class CustomColors(
     val botnav: Color,
     val searchBar: Color,
     val title: Color,
-    val subTitle: Color
+    val subTitle: Color,
+    val dialogCont: Color
 )
 
 private val darkCustomColors = CustomColors(
@@ -30,7 +31,8 @@ private val darkCustomColors = CustomColors(
     botnav = darkGray,
     searchBar = blue,
     title = white,
-    subTitle = white
+    subTitle = white,
+    dialogCont = deepGreen
 )
 
 private val lightCustomColors = CustomColors(
@@ -40,7 +42,8 @@ private val lightCustomColors = CustomColors(
     botnav = lightGray,
     searchBar = deepGreen,
     title = black,
-    subTitle = gray
+    subTitle = gray,
+    dialogCont = blue
 )
 
 val LocalCustomColors = staticCompositionLocalOf { lightCustomColors }
