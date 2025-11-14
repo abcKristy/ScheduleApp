@@ -2,6 +2,7 @@ package com.example.scheduleapp.screens.master
 
 import android.content.Intent
 import android.content.res.Configuration
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
+import coil.compose.rememberImagePainter
+import coil.request.ImageRequest
 import com.example.scheduleapp.R
 import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.navigation.NavigationRoute
@@ -58,6 +61,7 @@ fun ScreenProfile(navController: NavHostController? = null) {
     val userName = AppState.userName
     val userGroup = AppState.userGroup
     val userEmail = AppState.userEmail
+    val userAvatar = AppState.userAvatar
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -103,12 +107,26 @@ fun ScreenProfile(navController: NavHostController? = null) {
                         .background(Color.LightGray),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "User Icon",
-                        tint = Color.White,
-                        modifier = Modifier.size(50.dp)
-                    )
+                    if (userAvatar != null) {
+                        Image(
+                            painter = rememberImagePainter(
+                                ImageRequest.Builder(LocalContext.current)
+                                    .data(userAvatar)
+                                    .build()
+                            ),
+                            contentDescription = "Аватар пользователя",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "User Icon",
+                            tint = Color.White,
+                            modifier = Modifier.size(50.dp)
+                        )
+                    }
                 }
 
                 Text(

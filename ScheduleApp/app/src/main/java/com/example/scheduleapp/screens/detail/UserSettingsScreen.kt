@@ -1,6 +1,11 @@
 package com.example.scheduleapp.screens.detail
 
+import android.content.Context
 import android.content.res.Configuration
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,20 +43,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
+import coil.request.ImageRequest
 import com.example.scheduleapp.data.AppState
-import com.example.scheduleapp.screens.detail.EditDialog
+import com.example.scheduleapp.logic.rememberImagePickerManager
+import com.example.scheduleapp.screens.dialogs.AvatarPickerDialog
+import com.example.scheduleapp.screens.dialogs.EditDialog
 import com.example.scheduleapp.screens.master.ShinyBottom
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.lightGray
-import com.example.scheduleapp.ui.theme.lightBlue
 import com.example.scheduleapp.ui.theme.lightGreen
 import com.example.scheduleapp.ui.theme.white
+import java.io.File
 
 @Composable
 fun UserSettingsScreen(
@@ -60,10 +70,39 @@ fun UserSettingsScreen(
     var showNameDialog by remember { mutableStateOf(false) }
     var showGroupDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
+    var showAvatarPicker by remember { mutableStateOf(false) }
 
     val currentName = AppState.userName
     val currentGroup = AppState.userGroup
     val currentEmail = AppState.userEmail
+    val currentAvatar = AppState.userAvatar
+
+    val context = LocalContext.current
+    val imagePickerManager = rememberImagePickerManager()
+
+    // Лаунчер для галереи
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val avatarPath = saveImageFromUri(context, it)
+            AppState.setUserAvatar(avatarPath)
+        }
+        showAvatarPicker = false
+    }
+
+    // Лаунчер для камеры
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            // Путь уже сохранен в tempFile
+        }
+        showAvatarPicker = false
+    }
+
+    var tempFile by remember { mutableStateOf<File?>(null) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -120,7 +159,6 @@ fun UserSettingsScreen(
                     )
                 }
 
-                // Аватар
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
@@ -131,15 +169,32 @@ fun UserSettingsScreen(
                             color = Color.White,
                             shape = CircleShape
                         )
-                        .background(Color.LightGray),
+                        .background(Color.LightGray)
+                        .clickable { showAvatarPicker = true },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "User Icon",
-                        tint = Color.White,
-                        modifier = Modifier.size(50.dp)
-                    )
+                    if (currentAvatar != null) {
+                        // Показываем выбранное фото
+                        Image(
+                            painter = rememberImagePainter(
+                                ImageRequest.Builder(LocalContext.current)
+                                    .data(currentAvatar)
+                                    .build()
+                            ),
+                            contentDescription = "Аватар пользователя",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        // Показываем иконку по умолчанию
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "User Icon",
+                            tint = Color.White,
+                            modifier = Modifier.size(50.dp)
+                        )
+                    }
                 }
 
                 // Кнопка смены аватара
@@ -147,7 +202,7 @@ fun UserSettingsScreen(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(top = 16.dp)
-                        .clickable { /* TODO: Реализовать смену аватара */ },
+                        .clickable { showAvatarPicker = true },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
@@ -165,7 +220,6 @@ fun UserSettingsScreen(
                 }
 
                 Spacer(modifier = Modifier.height(40.dp))
-
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -230,6 +284,20 @@ fun UserSettingsScreen(
                 }
             )
         }
+        if (showAvatarPicker) {
+            AvatarPickerDialog(
+                onDismiss = { showAvatarPicker = false },
+                onCameraSelected = {
+                    val file = imagePickerManager.createImageFile()
+                    tempFile = file
+                    cameraLauncher.launch(Uri.fromFile(file))
+                    AppState.setUserAvatar(file.absolutePath)
+                },
+                onGallerySelected = {
+                    galleryLauncher.launch("image/*")
+                }
+            )
+        }
     }
 }
 
@@ -278,6 +346,18 @@ fun SettingItem(
         )
     }
 }
+
+fun saveImageFromUri(context: Context, uri: Uri): String {
+    val file = File(context.getExternalFilesDir(null), "avatar_${System.currentTimeMillis()}.jpg")
+    context.contentResolver.openInputStream(uri)?.use { input ->
+        file.outputStream().use { output ->
+            input.copyTo(output)
+        }
+    }
+    return file.absolutePath
+}
+
+
 
 @Preview(
     name = "Light Theme Settings",

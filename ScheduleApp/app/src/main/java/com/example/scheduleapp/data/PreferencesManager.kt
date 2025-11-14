@@ -12,6 +12,7 @@ object PreferencesManager {
     private const val KEY_USER_NAME = "user_name"
     private const val KEY_USER_GROUP = "user_group"
     private const val KEY_USER_EMAIL = "user_email"
+    private const val KEY_USER_AVATAR = "user_avatar"
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -65,8 +66,7 @@ object PreferencesManager {
         }
     }
 
-    // Методы для получения пользовательских данных
-    fun getUserName(context: Context): String {
+   fun getUserName(context: Context): String {
         return getSharedPreferences(context).getString(KEY_USER_NAME, "Кристина") ?: "Кристина"
     }
 
@@ -76,5 +76,16 @@ object PreferencesManager {
 
     fun getUserEmail(context: Context): String {
         return getSharedPreferences(context).getString(KEY_USER_EMAIL, "ilicheva@edu.mirea.ru") ?: "ilicheva@edu.mirea.ru"
+    }
+
+    fun saveUserAvatar(context: Context, avatarPath: String?) {
+        getSharedPreferences(context).edit().apply {
+            putString(KEY_USER_AVATAR, avatarPath)
+            apply()
+        }
+    }
+
+    fun getUserAvatar(context: Context): String? {
+        return getSharedPreferences(context).getString(KEY_USER_AVATAR, null)
     }
 }

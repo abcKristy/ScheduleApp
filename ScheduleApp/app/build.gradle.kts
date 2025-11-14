@@ -48,6 +48,9 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
 
 
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
+
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("com.google.accompanist:accompanist-pager:0.28.0")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.28.0")

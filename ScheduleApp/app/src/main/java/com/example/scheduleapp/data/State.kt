@@ -22,6 +22,15 @@ object AppState {
             PreferencesManager.saveCurrentGroup(it, group)
         }
     }
+    private var _userAvatar by mutableStateOf<String?>(null)
+    val userAvatar: String? get() = _userAvatar
+
+    fun setUserAvatar(avatarPath: String?) {
+        _userAvatar = avatarPath
+        context?.let {
+            PreferencesManager.saveUserAvatar(it, avatarPath)
+        }
+    }
 
     private var context: Context? = null
 
@@ -39,6 +48,8 @@ object AppState {
         _userName = PreferencesManager.getUserName(context)
         _userGroup = PreferencesManager.getUserGroup(context)
         _userEmail = PreferencesManager.getUserEmail(context)
+
+        _userAvatar = PreferencesManager.getUserAvatar(context)
     }
 
     private var _userName by mutableStateOf<String>("Настройте параметры профиля")
