@@ -29,6 +29,9 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -71,6 +74,7 @@ fun UserSettingsScreen(
     var showGroupDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
     var showAvatarPicker by remember { mutableStateOf(false) }
+    var showCameraPermissionDialog by remember { mutableStateOf(false) }
 
     val currentName = AppState.userName
     val currentGroup = AppState.userGroup
@@ -79,6 +83,9 @@ fun UserSettingsScreen(
 
     val context = LocalContext.current
     val imagePickerManager = rememberImagePickerManager()
+
+    // Объявляем tempFile здесь
+    var tempFile by remember { mutableStateOf<File?>(null) }
 
     // Лаунчер для галереи
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -96,12 +103,34 @@ fun UserSettingsScreen(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            // Путь уже сохранен в tempFile
+            tempFile?.let { file ->
+                AppState.setUserAvatar(file.absolutePath)
+            }
         }
         showAvatarPicker = false
     }
 
-    var tempFile by remember { mutableStateOf<File?>(null) }
+    // Функция для проверки разрешения камеры
+    fun checkCameraPermission(): Boolean {
+        return androidx.core.content.ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.CAMERA
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Разрешение получено - запускаем камеру
+            val file = imagePickerManager.createImageFile()
+            tempFile = file
+            cameraLauncher.launch(Uri.fromFile(file))
+        } else {
+            // Разрешение отклонено - показываем сообщение
+            showCameraPermissionDialog = true
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -249,6 +278,65 @@ fun UserSettingsScreen(
                 }
             }
         }
+
+        if (showAvatarPicker) {
+            AvatarPickerDialog(
+                onDismiss = { showAvatarPicker = false },
+                onCameraSelected = {
+                    if (checkCameraPermission()) {
+                        // Разрешение уже есть - запускаем камеру
+                        val file = imagePickerManager.createImageFile()
+                        tempFile = file
+
+                        // Используем FileProvider для получения URI
+                        val photoUri = imagePickerManager.getUriForFile(file)
+
+                        cameraLauncher.launch(photoUri)
+                    } else {
+                        // Запрашиваем разрешение
+                        cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                    }
+                },
+                onGallerySelected = {
+                    galleryLauncher.launch("image/*")
+                }
+            )
+        }
+
+        if (showCameraPermissionDialog) {
+            AlertDialog(
+                onDismissRequest = { showCameraPermissionDialog = false },
+                title = {
+                    Text(
+                        text = "Разрешение камеры",
+                        color = white,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Text(
+                        text = "Для использования камеры необходимо предоставить разрешение. Вы можете предоставить его в настройках приложения.",
+                        color = white,
+                        fontSize = 14.sp
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { showCameraPermissionDialog = false },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.customColors.searchBar
+                        )
+                    ) {
+                        Text("OK", color = white)
+                    }
+                },
+                containerColor = MaterialTheme.customColors.dialogCont,
+                textContentColor = white,
+                titleContentColor = white
+            )
+        }
+
         if (showNameDialog) {
             EditDialog(
                 title = "Изменить имя",
@@ -281,20 +369,6 @@ fun UserSettingsScreen(
                 onConfirm = { newEmail ->
                     AppState.setUserEmail(newEmail)
                     showEmailDialog = false
-                }
-            )
-        }
-        if (showAvatarPicker) {
-            AvatarPickerDialog(
-                onDismiss = { showAvatarPicker = false },
-                onCameraSelected = {
-                    val file = imagePickerManager.createImageFile()
-                    tempFile = file
-                    cameraLauncher.launch(Uri.fromFile(file))
-                    AppState.setUserAvatar(file.absolutePath)
-                },
-                onGallerySelected = {
-                    galleryLauncher.launch("image/*")
                 }
             )
         }
@@ -349,15 +423,21 @@ fun SettingItem(
 
 fun saveImageFromUri(context: Context, uri: Uri): String {
     val file = File(context.getExternalFilesDir(null), "avatar_${System.currentTimeMillis()}.jpg")
-    context.contentResolver.openInputStream(uri)?.use { input ->
-        file.outputStream().use { output ->
-            input.copyTo(output)
+
+    try {
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            file.outputStream().use { output ->
+                input.copyTo(output)
+            }
         }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        // В случае ошибки создаем пустой файл
+        file.createNewFile()
     }
+
     return file.absolutePath
 }
-
-
 
 @Preview(
     name = "Light Theme Settings",
