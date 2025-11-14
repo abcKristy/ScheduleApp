@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,10 +44,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.screens.detail.EditDialog
+import com.example.scheduleapp.screens.master.ShinyBottom
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
+import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.lightGray
 import com.example.scheduleapp.ui.theme.lightBlue
+import com.example.scheduleapp.ui.theme.lightGreen
 import com.example.scheduleapp.ui.theme.white
 
 @Composable
@@ -66,6 +70,14 @@ fun UserSettingsScreen(
             .background(MaterialTheme.customColors.bg1),
         contentAlignment = Alignment.Center
     ) {
+        if (isSystemInDarkTheme()){
+            ShinyBottom(lightGreen,100,-370)
+            ShinyBottom(blue,-190,400)
+        }else{
+            ShinyBottom(blue,120,-370)
+            ShinyBottom(lightGreen,-100,300)
+        }
+
         Box(
             modifier = Modifier
                 .width(350.dp)
