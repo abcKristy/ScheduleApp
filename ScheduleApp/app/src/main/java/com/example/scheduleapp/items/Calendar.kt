@@ -1,7 +1,9 @@
 package com.example.scheduleapp.items
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,6 +24,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,8 +44,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,9 +59,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scheduleapp.R
 import com.example.scheduleapp.data.AppState
+import com.example.scheduleapp.screens.master.ScreenProfile
+import com.example.scheduleapp.ui.theme.ScheduleAppTheme
+import com.example.scheduleapp.ui.theme.black
+import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.darkBlue
+import com.example.scheduleapp.ui.theme.darkGray
 import com.example.scheduleapp.ui.theme.deepGreen
 import com.example.scheduleapp.ui.theme.gray
+import com.example.scheduleapp.ui.theme.lightBlue
+import com.example.scheduleapp.ui.theme.lightGray
+import com.example.scheduleapp.ui.theme.white
+import com.example.scheduleapp.ui.theme.whiteGray
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -74,6 +95,8 @@ fun Calendar() {
     var swipeInProgress by remember { mutableStateOf(false) }
     var calendarView by remember { mutableStateOf(CalendarView.WEEK) }
 
+    val customColors = MaterialTheme.customColors
+
     val selectedDate = AppState.selectedDate
 
     Box(
@@ -82,18 +105,17 @@ fun Calendar() {
     ) {
         Column(
             modifier = Modifier
-                .background(gray)
                 .padding(4.dp)
         ) {
             selectedDate?.let { date ->
                 Text(
-                    text = "${date.format(DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale("ru")))}",
-                    color = deepGreen,
+                    text = AppState.currentGroup,
+                    color = customColors.title,
                     fontSize = 25.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(start = 20.dp)
                 )
-                Divider(modifier = Modifier.padding(vertical = 16.dp), color = deepGreen)
+                Divider(modifier = Modifier.padding(vertical = 16.dp), color = customColors.title)
             }
 
             CalendarHeader(
@@ -184,7 +206,6 @@ fun Calendar() {
                     )
                 }
             }
-            Divider(modifier = Modifier.padding(vertical = 1.dp), color = deepGreen)
         }
     }
 }
@@ -204,58 +225,66 @@ fun CalendarHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        OutlinedButton(
+        IconButton(
             onClick = onToday,
-            border = BorderStroke(
-                width = 1.dp,
-                color = deepGreen
-            ),
-            shape = CircleShape,
-            modifier = Modifier.size(50.dp),
-            contentPadding = PaddingValues(0.dp)
+            modifier = Modifier.background(
+                color = MaterialTheme.customColors.searchItem.copy(alpha = 0.45f),
+                shape = CircleShape
+            )
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_cal),
                 contentDescription = "Сегодня",
-                tint = deepGreen,
+                tint = MaterialTheme.customColors.title,
                 modifier = Modifier.size(24.dp)
             )
         }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onPrevious) {
-                Icon(
-                    Icons.Default.ArrowBack,
-                    contentDescription = "Предыдущий",
-                    tint = deepGreen
-                )
-            }
 
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onPrevious) {
+                    Icon(
+                        Icons.Default.KeyboardArrowLeft,
+                        contentDescription = "Предыдущий",
+                        tint = MaterialTheme.customColors.title
+                    )
+                }
+
+                Text(
+                    text = when (calendarView) {
+                        CalendarView.MONTH -> currentMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale("ru")))
+                        CalendarView.WEEK -> getWeekDisplayText(selectedDate ?: currentMonth.atDay(1))
+                    },
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                    color = MaterialTheme.customColors.title,
+                    fontWeight = FontWeight.Bold
+                )
+
+                IconButton(onClick = onNext) {
+                    Icon(
+                        Icons.Default.KeyboardArrowRight,
+                        contentDescription = "Следующий",
+                        tint = MaterialTheme.customColors.title
+                    )
+                }
+            }
             Text(
-                text = when (calendarView) {
-                    CalendarView.MONTH -> currentMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale("ru")))
-                    CalendarView.WEEK -> getWeekDisplayText(selectedDate ?: currentMonth.atDay(1))
-                },
-                modifier = Modifier.padding(horizontal = 8.dp),
-                color = deepGreen,
+                text = "10 неделя",
+                color = MaterialTheme.customColors.title,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            IconButton(onClick = onNext) {
-                Icon(
-                    Icons.Default.ArrowForward,
-                    contentDescription = "Следующий",
-                    tint = deepGreen
-                )
-            }
         }
+
 
         IconButton(
             onClick = onViewToggle,
             modifier = Modifier.background(
-                color = deepGreen.copy(alpha = 0.1f),
+                color = MaterialTheme.customColors.searchItem.copy(alpha = 0.45f),
                 shape = CircleShape
             )
         ) {
@@ -270,7 +299,7 @@ fun CalendarHeader(
                     CalendarView.MONTH -> "Свернуть к неделе"
                     CalendarView.WEEK -> "Развернуть к месяцу"
                 },
-                tint = deepGreen
+                tint = MaterialTheme.customColors.title
             )
         }
     }
@@ -290,18 +319,17 @@ private fun getWeekDisplayText(startDate: LocalDate): String {
 
 @Composable
 fun WeekDaysHeader() {
-    val weekDays = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
+    val weekDays = listOf("пн", "вт", "ср", "чт", "пт", "сб", "вс")
 
     Row(modifier = Modifier.fillMaxWidth()) {
         weekDays.forEach { day ->
             Text(
                 text = day,
                 style = MaterialTheme.typography.bodyMedium,
-                color = deepGreen.copy(alpha = 0.6f),
+                color = MaterialTheme.customColors.title.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(4.dp)
             )
         }
     }
@@ -497,26 +525,35 @@ fun CalendarDay(
     onClick: () -> Unit
 ) {
     val backgroundColor = when {
-        isSelected -> darkBlue
-        isToday -> deepGreen
+        isSelected -> MaterialTheme.customColors.shiny.copy(0.5f)
         else -> Color.Transparent
     }
 
-    val textColor = when {
-        isSelected -> deepGreen
-        isToday -> darkBlue
-        isOtherMonth -> deepGreen.copy(alpha = 0.3f)
-        else -> deepGreen
+    val todayBorderColor = MaterialTheme.customColors.shiny
+    val borderStyle = if (isToday && !isSelected) {
+        Stroke(width = 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(25f, 10f), 0f))
+    } else {
+        Fill
     }
+
+    val textColor = MaterialTheme.customColors.title
 
     Box(
         modifier = Modifier
             .aspectRatio(1f)
-            .padding(2.dp)
             .background(
                 color = backgroundColor,
                 shape = CircleShape
             )
+            .drawBehind {
+                if (isToday && !isSelected) {
+                    drawCircle(
+                        color = todayBorderColor,
+                        style = borderStyle,
+                        radius = size.minDimension / 2 - 1.dp.toPx()
+                    )
+                }
+            }
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
@@ -529,8 +566,35 @@ fun CalendarDay(
     }
 }
 
-@Preview
+@Preview(
+    name = "Dark Theme",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_NO
+)
 @Composable
-fun CalendarPreview() {
-    Calendar()
+fun CalendarPreviewL() {
+    ScheduleAppTheme(darkTheme = false) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Calendar()
+        }
+    }
+}
+@Preview(
+    name = "Dark Theme",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+fun CalendarPreviewN() {
+    ScheduleAppTheme(darkTheme = true) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Calendar()
+        }
+    }
 }

@@ -60,13 +60,9 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ScreenSearch() {
-    val context = LocalContext.current
-    var searchQuery by remember { mutableStateOf("") }
-    val searchHistory = SearchHistoryManager.historyList
-    val coroutineScope = rememberCoroutineScope()
 
     ScheduleAppTheme {
-        val customColors = androidx.compose.material3.MaterialTheme.customColors
+        val customColors = MaterialTheme.customColors
         val context = LocalContext.current
         var searchQuery by remember { mutableStateOf("") }
         val searchHistory = SearchHistoryManager.historyList
