@@ -2,6 +2,7 @@
 package com.example.scheduleapp.screens.master
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,7 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +33,7 @@ import com.example.scheduleapp.items.Calendar
 import com.example.scheduleapp.items.ScheduleListItem
 import com.example.scheduleapp.logic.filterScheduleByDate
 import com.example.scheduleapp.logic.getScheduleItems
+import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.gray
 
 @Composable
@@ -88,7 +92,7 @@ fun ScreenList() {
                         items(filteredSchedule) { scheduleItem ->
                             ScheduleListItem(
                                 scheduleItem = scheduleItem,
-                                onOptionsClick = {
+                                onItemClick = {
                                     // Обработка нажатия на кнопку меню
                                     // Можно показать детали о повторении и исключениях
                                 }
@@ -125,13 +129,36 @@ fun ScreenList() {
     }
 }
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Preview(
+    name = "Light Theme",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_NO
+)
 @Composable
-@Preview
-fun TestList() {
-    Scaffold(
-        containerColor = gray
-    ) {
-        ScreenList()
+fun ScreenListLightPreview() {
+    ScheduleAppTheme(darkTheme = false) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            ScreenList()
+        }
+    }
+}
+
+@Preview(
+    name = "Dark Theme",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
+@Composable
+fun ScreenListDarkPreview() {
+    ScheduleAppTheme(darkTheme = true) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            ScreenList()
+        }
     }
 }
