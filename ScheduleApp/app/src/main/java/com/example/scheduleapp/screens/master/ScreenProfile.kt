@@ -51,6 +51,7 @@ import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
+import com.example.scheduleapp.ui.theme.darkBlue
 import com.example.scheduleapp.ui.theme.lightBlue
 import com.example.scheduleapp.ui.theme.lightGray
 import com.example.scheduleapp.ui.theme.lightGreen
@@ -186,7 +187,11 @@ fun ScreenProfile(navController: NavHostController? = null) {
                     )
                     Text(
                         text = "Перейти на сайт СДО",
-                        color = lightBlue,
+                        color = if (isSystemInDarkTheme()){
+                            lightBlue
+                        }else{
+                            Color(0xFF6578F7)
+                        },
                         modifier = Modifier.padding(start = 8.dp),
                         fontWeight = FontWeight.Bold
                     )

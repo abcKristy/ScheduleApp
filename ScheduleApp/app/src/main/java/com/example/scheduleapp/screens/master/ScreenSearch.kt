@@ -122,7 +122,7 @@ fun ScreenSearch() {
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
                         cursorColor = customColors.searchBar,
-                        textColor = white,
+                        textColor = MaterialTheme.customColors.title,
                         backgroundColor = customColors.bg2,
                         trailingIconColor = customColors.searchBar
                     ),
@@ -157,7 +157,7 @@ fun ScreenSearch() {
                     Text(
                         text = "Текущая группа: ${AppState.currentGroup}",
                         modifier = Modifier.padding(bottom = 16.dp),
-                        color = white,
+                        color = MaterialTheme.customColors.title,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     )
@@ -168,7 +168,7 @@ fun ScreenSearch() {
                     Text(
                         text = "Последние запросы:",
                         modifier = Modifier.padding(bottom = 8.dp),
-                        color = white
+                        color = MaterialTheme.customColors.title
                     )
 
                     LazyColumn {
@@ -196,11 +196,14 @@ fun ScreenSearch() {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = "search",
-                                tint = white
+                                tint = MaterialTheme.customColors.title,
+                                modifier = Modifier.size(30.dp)
                             )
                             Text(
                                 text = "История поиска пуста",
-                                color = white
+                                color = MaterialTheme.customColors.title,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
                             )
                         }
                     }
@@ -224,7 +227,7 @@ fun HistoryItem(query: String, onClick: () -> Unit) {
             elevation = 4.dp,
             shape = RoundedCornerShape(20.dp),
             backgroundColor = MaterialTheme.customColors.bg2,
-            border = BorderStroke(2.dp, customColors.searchBar)
+            border = BorderStroke(2.dp, customColors.searchItem)
         ) {
             Box(
                 modifier = Modifier
@@ -233,7 +236,7 @@ fun HistoryItem(query: String, onClick: () -> Unit) {
             ) {
                 Text(
                     text = query,
-                    color = white,
+                    color = MaterialTheme.customColors.title,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -263,12 +266,12 @@ fun ShinyBottom(shiny: Color,x:Int, y:Int){
         } else {
             listOf(
                 shiny,
-                shiny.copy(alpha = 0.85f),
-                shiny.copy(alpha = 0.7f),
-                shiny.copy(alpha = 0.5f),
-                shiny.copy(alpha = 0.35f),
-                shiny.copy(alpha = 0.2f),
-                shiny.copy(alpha = 0.1f),
+                shiny.copy(alpha = 0.9f),
+                shiny.copy(alpha = 0.8f),
+                shiny.copy(alpha = 0.6f),
+                shiny.copy(alpha = 0.4f),
+                shiny.copy(alpha = 0.3f),
+                shiny.copy(alpha = 0.15f),
                 shiny.copy(alpha = 0.05f),
                 Color.Transparent
             )
@@ -282,7 +285,6 @@ fun ShinyBottom(shiny: Color,x:Int, y:Int){
     }
 }
 
-// В функции loadScheduleData обновите вызов:
 private suspend fun loadScheduleData(context: android.content.Context, group: String) {
     AppState.setLoading(true)
     AppState.setErrorMessage(null)
@@ -345,7 +347,6 @@ fun ScreenSearchEmptyNightPreview() {
 )
 @Composable
 fun ScreenSearchWithHistoryDayPreview() {
-    // Временно добавляем тестовые данные в историю для превью
     val testHistory = listOf(
         "ИКБО-11-23",
         "ИКБО-12-23",
@@ -396,7 +397,7 @@ fun ScreenSearchWithHistoryDayPreview() {
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
                         cursorColor = customColors.searchBar,
-                        textColor = white,
+                        textColor = MaterialTheme.customColors.title,
                         backgroundColor = customColors.bg2,
                         trailingIconColor = customColors.searchBar
                     ),
@@ -422,7 +423,7 @@ fun ScreenSearchWithHistoryDayPreview() {
                 Text(
                     text = "Текущая группа: ИКБО-11-23",
                     modifier = Modifier.padding(bottom = 16.dp),
-                    color = white,
+                    color = MaterialTheme.customColors.title ,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -431,7 +432,7 @@ fun ScreenSearchWithHistoryDayPreview() {
                 Text(
                     text = "Последние запросы:",
                     modifier = Modifier.padding(bottom = 8.dp),
-                    color = white
+                    color = MaterialTheme.customColors.title
                 )
 
                 LazyColumn {
@@ -484,7 +485,6 @@ fun ScreenSearchWithHistoryNightPreview() {
             ) {
                 Spacer(modifier = Modifier.height(30.dp))
 
-                // Поисковая строка
                 OutlinedTextField(
                     value = "ИКБО-11-23",
                     onValueChange = {},
@@ -509,7 +509,7 @@ fun ScreenSearchWithHistoryNightPreview() {
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
                         cursorColor = customColors.searchBar,
-                        textColor = white,
+                        textColor = MaterialTheme.customColors.title,
                         backgroundColor = customColors.bg2,
                         trailingIconColor = customColors.searchBar
                     ),
