@@ -39,7 +39,7 @@ public class SaverToMemory {
     }
 
     /**
-     * ПОЛНОЕ ПАКЕТНОЕ СОХРАНЕНИЕ УРОКОВ С ОПТИМИЗАЦИЕЙ N+1
+     * ПОЛНОЕ ПАКЕТНОЕ СОХРАНЕНИЕ УРОКОВ С УСИЛЕННОЙ ДЕДУПЛИКАЦИЕЙ
      */
     @Transactional
     public BatchSaveResult saveLessonsBatch(List<LessonEntity> lessons) {
@@ -53,23 +53,28 @@ public class SaverToMemory {
         long startTime = System.currentTimeMillis();
 
         try {
+            // ЭТАП 0: УСИЛЕННАЯ ДЕДУПЛИКАЦИЯ С ПРОВЕРКОЙ БД
+            log.debug("Этап 0: Усиленная дедупликация занятий");
+            List<LessonEntity> deduplicatedLessons = deduplicateLessonsWithDBCheck(lessons);
+            log.info("После дедупликации: {} -> {} занятий", lessons.size(), deduplicatedLessons.size());
+
             // ОПТИМИЗАЦИЯ N+1: обрабатываем ВСЕ справочники для ВСЕХ уроков пакетно
             log.debug("Этап 1: Пакетная обработка справочников");
-            if (shouldUseParallelProcessing(lessons)) {
+            if (shouldUseParallelProcessing(deduplicatedLessons)) {
                 log.debug("Используется параллельная обработка");
-                processAllReferencesParallel(lessons); // или processAllReferencesParallelWithTimeout
+                processAllReferencesParallel(deduplicatedLessons);
             } else {
                 log.debug("Используется последовательная обработка");
-                processAllReferencesBatch(lessons);
+                processAllReferencesBatch(deduplicatedLessons);
             }
 
             // Сохраняем уроки
-            log.debug("Этап 2: Пакетное сохранение уроков");
-            List<LessonEntity> savedLessons = lessonRepository.saveAll(lessons);
+            log.debug("Этап 2: Пакетное сохранение дедуплицированных уроков");
+            List<LessonEntity> savedLessons = lessonRepository.saveAll(deduplicatedLessons);
 
             long duration = System.currentTimeMillis() - startTime;
-            log.info("Пакетное сохранение завершено за {} мс: успешно={}",
-                    duration, savedLessons.size());
+            log.info("Пакетное сохранение завершено за {} мс: успешно={} (дедуплицировано с {})",
+                    duration, savedLessons.size(), lessons.size());
 
             return new BatchSaveResult(savedLessons.size(), 0, lessons.size(), Collections.emptyList());
 
@@ -77,6 +82,124 @@ public class SaverToMemory {
             log.error("Критическая ошибка при пакетном сохранении: {}", e.getMessage(), e);
             throw new RuntimeException("Не удалось выполнить пакетное сохранение уроков", e);
         }
+    }
+
+    /**
+     * УСИЛЕННАЯ ДЕДУПЛИКАЦИЯ С ПРОВЕРКОЙ БД И ДВУХУРОВНЕВОЙ ПРОВЕРКОЙ
+     */
+    private List<LessonEntity> deduplicateLessonsWithDBCheck(List<LessonEntity> lessons) {
+        log.info("Начало усиленной дедупликации {} занятий", lessons.size());
+
+        List<LessonEntity> result = new ArrayList<>();
+        Set<String> seenKeysInCurrentBatch = new HashSet<>();
+        int duplicatesInBatch = 0;
+        int duplicatesInDB = 0;
+
+        for (LessonEntity lesson : lessons) {
+            if (lesson == null) continue;
+
+            String key = createDeduplicationKey(lesson);
+
+            // Уровень 1: Проверка дубликатов в текущей пачке
+            if (seenKeysInCurrentBatch.contains(key)) {
+                log.debug("Пропуск дубликата в текущей пачке: {}", key);
+                duplicatesInBatch++;
+                continue;
+            }
+
+            // Уровень 2: Проверка дубликатов в БД
+            boolean existsInDB = checkIfLessonExistsInDatabase(lesson);
+            if (existsInDB) {
+                log.debug("Пропуск дубликата (уже есть в БД): {}", key);
+                duplicatesInDB++;
+                continue;
+            }
+
+            // Если не дубликат - добавляем
+            result.add(lesson);
+            seenKeysInCurrentBatch.add(key);
+        }
+
+        log.info("Дедупликация завершена. Оригиналов: {}, дубликатов в пачке: {}, дубликатов в БД: {}",
+                result.size(), duplicatesInBatch, duplicatesInDB);
+
+        return result;
+    }
+
+    /**
+     * СОЗДАЕТ КЛЮЧ ДЕДУПЛИКАЦИИ
+     */
+    private String createDeduplicationKey(LessonEntity lesson) {
+        return String.format("%s|%s|%s|%s|%s|%s",
+                lesson.getDiscipline() != null ? lesson.getDiscipline().trim().toLowerCase() : "",
+                lesson.getLessonType() != null ? lesson.getLessonType().name() : "",
+                lesson.getStartTime() != null ? lesson.getStartTime().toString() : "",
+                lesson.getEndTime() != null ? lesson.getEndTime().toString() : "",
+                normalizeGroups(lesson.getGroupsSummary()),
+                lesson.getTeacher() != null ? lesson.getTeacher().trim().toLowerCase() : "");
+    }
+
+    /**
+     * Нормализует строку групп для корректного сравнения
+     */
+    private String normalizeGroups(String groupsSummary) {
+        if (groupsSummary == null || groupsSummary.trim().isEmpty()) {
+            return "";
+        }
+
+        // Разделяем группы, сортируем и объединяем обратно
+        return Arrays.stream(groupsSummary.split(",\\s*"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .sorted()
+                .collect(Collectors.joining(", "))
+                .toLowerCase();
+    }
+
+    /**
+     * Проверяет существование занятия в БД
+     */
+    private boolean checkIfLessonExistsInDatabase(LessonEntity lesson) {
+        try {
+            // Ищем занятия с такими же основными параметрами
+            List<LessonEntity> existingLessons = lessonRepository.findByDisciplineAndStartTimeAndEndTime(
+                    lesson.getDiscipline(),
+                    lesson.getStartTime(),
+                    lesson.getEndTime()
+            );
+
+            for (LessonEntity existing : existingLessons) {
+                if (isSameLesson(existing, lesson)) {
+                    log.debug("Найден дубликат в БД: ID={}, {}", existing.getId(), createDeduplicationKey(lesson));
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            log.warn("Ошибка при проверке существования занятия в БД: {}", e.getMessage());
+            return false; // В случае ошибки лучше пропустить проверку, чем потерять данные
+        }
+    }
+
+    /**
+     * Сравнивает два занятия на идентичность
+     */
+    private boolean isSameLesson(LessonEntity lesson1, LessonEntity lesson2) {
+        boolean isSame = Objects.equals(lesson1.getDiscipline(), lesson2.getDiscipline()) &&
+                Objects.equals(lesson1.getLessonType(), lesson2.getLessonType()) &&
+                Objects.equals(lesson1.getStartTime(), lesson2.getStartTime()) &&
+                Objects.equals(lesson1.getEndTime(), lesson2.getEndTime()) &&
+                Objects.equals(normalizeGroups(lesson1.getGroupsSummary()), normalizeGroups(lesson2.getGroupsSummary())) &&
+                Objects.equals(
+                        lesson1.getTeacher() != null ? lesson1.getTeacher().trim().toLowerCase() : "",
+                        lesson2.getTeacher() != null ? lesson2.getTeacher().trim().toLowerCase() : ""
+                );
+
+        if (isSame) {
+            log.debug("Занятия идентичны: {}", createDeduplicationKey(lesson1));
+        }
+
+        return isSame;
     }
 
     private boolean shouldUseParallelProcessing(List<LessonEntity> lessons) {
