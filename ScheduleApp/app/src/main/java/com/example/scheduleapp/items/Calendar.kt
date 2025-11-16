@@ -80,13 +80,6 @@ enum class CalendarView {
     MONTH, WEEK
 }
 
-fun getSelectedDayValue(): LocalDate? {
-    return AppState.selectedDate
-}
-
-fun setSelectedDayValue(date: LocalDate?) {
-    AppState.setSelectedDate(date)
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -220,6 +213,8 @@ fun CalendarHeader(
     onToday: () -> Unit,
     onViewToggle: () -> Unit
 ) {
+    val academicWeekNumber = getAcademicWeekNumber(selectedDate)
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -240,7 +235,6 @@ fun CalendarHeader(
             )
         }
 
-
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Row(
                 verticalAlignment = Alignment.CenterVertically
@@ -256,7 +250,7 @@ fun CalendarHeader(
                 Text(
                     text = when (calendarView) {
                         CalendarView.MONTH -> currentMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale("ru")))
-                        CalendarView.WEEK -> getWeekDisplayText(selectedDate ?: currentMonth.atDay(1))
+                        CalendarView.WEEK -> getWeekDisplayText(selectedDate ?: currentMonth.atDay(1), selectedDate)
                     },
                     modifier = Modifier.padding(horizontal = 4.dp),
                     color = MaterialTheme.customColors.title,
@@ -271,15 +265,14 @@ fun CalendarHeader(
                     )
                 }
             }
+
             Text(
-                text = "10 неделя",
+                text = "$academicWeekNumber неделя",
                 color = MaterialTheme.customColors.title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
             )
-
         }
-
 
         IconButton(
             onClick = onViewToggle,
@@ -302,18 +295,6 @@ fun CalendarHeader(
                 tint = MaterialTheme.customColors.title
             )
         }
-    }
-}
-
-private fun getWeekDisplayText(startDate: LocalDate): String {
-    val startOfWeek = startDate.with(java.time.DayOfWeek.MONDAY)
-    val endOfWeek = startOfWeek.plusDays(6)
-
-    return if (startOfWeek.month == endOfWeek.month) {
-        "${startOfWeek.dayOfMonth} - ${endOfWeek.dayOfMonth} ${startOfWeek.format(DateTimeFormatter.ofPattern("MMMM", Locale("ru")))}"
-    } else {
-        "${startOfWeek.dayOfMonth} ${startOfWeek.format(DateTimeFormatter.ofPattern("MMMM", Locale("ru")))} - " +
-                "${endOfWeek.dayOfMonth} ${endOfWeek.format(DateTimeFormatter.ofPattern("MMMM", Locale("ru")))}"
     }
 }
 
@@ -565,6 +546,57 @@ fun CalendarDay(
         )
     }
 }
+
+private fun getAcademicWeekNumber(selectedDate: LocalDate?): Int {
+    if (selectedDate == null) return 1
+
+    val currentYear = selectedDate.year
+    val autumnSemesterStart = LocalDate.of(currentYear, 9, 1) // 1 сентября
+    val springSemesterStart = LocalDate.of(currentYear, 2, 10) // 10 февраля
+
+    // Определяем, в каком семестре находится выбранная дата
+    val semesterStart = when {
+        // Если дата между 1 сентября и концом года - осенний семестр
+        selectedDate.monthValue >= 9 -> autumnSemesterStart
+        // Если дата между 10 февраля и 31 августа - весенний семестр
+        selectedDate.isAfter(springSemesterStart) || selectedDate.isEqual(springSemesterStart) -> springSemesterStart
+        // Если дата до 10 февраля - это осенний семестр предыдущего учебного года
+        else -> LocalDate.of(currentYear - 1, 9, 1)
+    }
+
+    // Вычисляем разницу в неделях
+    val weeksBetween = java.time.temporal.ChronoUnit.WEEKS.between(
+        semesterStart,
+        selectedDate
+    )
+
+    // Нумерация недель с 1
+    var weekNumber = weeksBetween.toInt() + 1
+
+    // Ограничиваем номер недели в зависимости от семестра
+    weekNumber = when {
+        // Осенний семестр (сентябрь-декабрь) - максимум 17 недель
+        semesterStart.monthValue == 9 -> minOf(weekNumber, 17)
+        // Весенний семестр (февраль-июнь) - максимум 20 недель
+        else -> minOf(weekNumber, 20)
+    }
+
+    // Гарантируем, что номер недели не меньше 1
+    return maxOf(1, weekNumber)
+}
+private fun getWeekDisplayText(startDate: LocalDate, selectedDate: LocalDate?): String {
+    val startOfWeek = startDate.with(java.time.DayOfWeek.MONDAY)
+    val endOfWeek = startOfWeek.plusDays(6)
+
+    return if (startOfWeek.month == endOfWeek.month) {
+        "${startOfWeek.dayOfMonth} - ${endOfWeek.dayOfMonth} ${startOfWeek.format(DateTimeFormatter.ofPattern("MMMM", Locale("ru")))}"
+    } else {
+        "${startOfWeek.dayOfMonth} ${startOfWeek.format(DateTimeFormatter.ofPattern("MMMM", Locale("ru")))} - " +
+                "${endOfWeek.dayOfMonth} ${endOfWeek.format(DateTimeFormatter.ofPattern("MMMM", Locale("ru")))}"
+    }
+}
+
+
 
 @Preview(
     name = "Dark Theme",
