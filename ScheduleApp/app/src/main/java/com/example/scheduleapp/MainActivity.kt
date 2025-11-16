@@ -5,11 +5,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.example.scheduleapp.data.AppState
+import com.example.scheduleapp.data.ThemeViewModel
 import com.example.scheduleapp.screens.MainScreen
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 
 class MainActivity : ComponentActivity() {
+    private val themeViewModel: ThemeViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -17,8 +22,9 @@ class MainActivity : ComponentActivity() {
         AppState.initialize(this)
 
         setContent {
-            ScheduleAppTheme {
-                MainScreen()
+            val isDarkTheme by themeViewModel.isDarkTheme.collectAsState()
+            ScheduleAppTheme(darkTheme = isDarkTheme) {
+                MainScreen(themeViewModel = themeViewModel)
             }
         }
     }

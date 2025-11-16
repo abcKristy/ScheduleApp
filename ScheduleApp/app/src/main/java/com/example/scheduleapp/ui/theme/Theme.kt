@@ -13,6 +13,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+// Ваши кастомные цвета
 data class CustomColors(
     val bg1: Color,
     val bg2: Color,
@@ -51,32 +52,45 @@ private val lightCustomColors = CustomColors(
 
 val LocalCustomColors = staticCompositionLocalOf { lightCustomColors }
 
+// Material 3 Color Schemes
+private val DarkColorScheme = darkColorScheme(
+    primary = purple80,
+    secondary = purpleGrey80,
+    tertiary = pink80
+)
+
+private val LightColorScheme = lightColorScheme(
+    primary = purple40,
+    secondary = purpleGrey40,
+    tertiary = pink40
+)
+
 @Composable
 fun ScheduleAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val baseColorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> darkColorScheme()
-        else -> lightColorScheme()
+    val dynamicColor = dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val colorScheme = when {
+        dynamicColor && darkTheme -> dynamicDarkColorScheme(LocalContext.current)
+        dynamicColor && !darkTheme -> dynamicLightColorScheme(LocalContext.current)
+        darkTheme -> DarkColorScheme
+        else -> LightColorScheme
     }
 
     val customColors = if (darkTheme) darkCustomColors else lightCustomColors
 
     MaterialTheme(
-        colorScheme = baseColorScheme,
-        typography = Typography
-    ) {
-        CompositionLocalProvider(
-            LocalCustomColors provides customColors,
-            content = content
-        )
-    }
+        colorScheme = colorScheme,
+        typography = Typography,
+        content = {
+            CompositionLocalProvider(
+                LocalCustomColors provides customColors,
+                content = content
+            )
+        }
+    )
 }
 
 val MaterialTheme.customColors: CustomColors

@@ -1,4 +1,4 @@
-package com.example.scheduleapp
+package com.example.scheduleapp.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.scheduleapp.data.ThemeViewModel
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.screens.profile.LoginScreen
 import com.example.scheduleapp.screens.profile.RegisterScreen
@@ -19,7 +20,7 @@ import com.example.scheduleapp.screens.master.ScreenSearch
 import com.example.scheduleapp.screens.master.WelcomeScreen
 
 @Composable
-fun MainNavGraph(navController: NavHostController) {
+fun MainNavGraph(navController: NavHostController, themeViewModel: ThemeViewModel?) {
     var startDestination by remember {
         mutableStateOf(NavigationRoute.Welcome.route)
     }
@@ -40,7 +41,7 @@ fun MainNavGraph(navController: NavHostController) {
         }
 
         composable(NavigationRoute.Profile.route) {
-            ScreenProfile(navController = navController)
+            ScreenProfile(navController = navController, themeViewModel = themeViewModel)
         }
 
         composable(NavigationRoute.ScheduleList.route) {
@@ -48,7 +49,7 @@ fun MainNavGraph(navController: NavHostController) {
         }
 
         composable(NavigationRoute.Search.route) {
-            ScreenSearch()
+            ScreenSearch(themeViewModel = themeViewModel)
         }
 
         ////////////////////////////////////////////////

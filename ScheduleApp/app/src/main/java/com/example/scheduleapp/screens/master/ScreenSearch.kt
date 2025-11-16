@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,19 +50,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.data.SearchHistoryManager
+import com.example.scheduleapp.data.ThemeViewModel
 import com.example.scheduleapp.logic.getScheduleItems
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.lightGreen
-import com.example.scheduleapp.ui.theme.white
-import com.example.scheduleapp.ui.theme.lightGray
 import kotlinx.coroutines.launch
 
 @Composable
-fun ScreenSearch() {
+fun ScreenSearch(themeViewModel: ThemeViewModel? = null) {
+    // Используем тему из ViewModel, если он передан, иначе системную тему
+    val isDarkTheme = if (themeViewModel != null) {
+        val themeState by themeViewModel.isDarkTheme.collectAsState()
+        themeState
+    } else {
+        isSystemInDarkTheme()
+    }
 
-    ScheduleAppTheme {
+    ScheduleAppTheme(darkTheme = isDarkTheme) {
         val customColors = MaterialTheme.customColors
         val context = LocalContext.current
         var searchQuery by remember { mutableStateOf("") }
@@ -81,7 +88,8 @@ fun ScreenSearch() {
                 .background(customColors.bg2)
         ) {
 
-            if (isSystemInDarkTheme()) {
+            // Используем isDarkTheme из параметра, а не isSystemInDarkTheme()
+            if (isDarkTheme) {
                 ShinyBottom(shiny = blue,200,630)
             } else {
                 ShinyBottom(shiny = lightGreen,180,520)
@@ -212,30 +220,29 @@ fun ScreenSearch() {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HistoryItem(query: String, onClick: () -> Unit) {
-    ScheduleAppTheme {
-        val customColors = androidx.compose.material3.MaterialTheme.customColors
+    // Для HistoryItem используем текущую тему из MaterialTheme
+    val customColors = MaterialTheme.customColors
 
-        Card(
-            onClick = onClick,
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        elevation = 4.dp,
+        shape = RoundedCornerShape(20.dp),
+        backgroundColor = MaterialTheme.customColors.bg2,
+        border = BorderStroke(2.dp, customColors.searchItem)
+    ) {
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            elevation = 4.dp,
-            shape = RoundedCornerShape(20.dp),
-            backgroundColor = MaterialTheme.customColors.bg2,
-            border = BorderStroke(2.dp, customColors.searchItem)
+                .padding(16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = query,
-                    color = MaterialTheme.customColors.title,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            Text(
+                text = query,
+                color = MaterialTheme.customColors.title,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -319,9 +326,7 @@ private fun showToast(context: android.content.Context, message: String) {
 )
 @Composable
 fun ScreenSearchEmptyDayPreview() {
-    ScheduleAppTheme(darkTheme = false) {
-        ScreenSearch()
-    }
+    ScreenSearch()
 }
 
 // Превью для пустой истории (ночная тема)
@@ -331,9 +336,7 @@ fun ScreenSearchEmptyDayPreview() {
 )
 @Composable
 fun ScreenSearchEmptyNightPreview() {
-    ScheduleAppTheme(darkTheme = true) {
-        ScreenSearch()
-    }
+    ScreenSearch()
 }
 
 // Превью с историей (дневная тема)
@@ -352,14 +355,14 @@ fun ScreenSearchWithHistoryDayPreview() {
     )
 
     ScheduleAppTheme(darkTheme = false) {
-        val customColors = androidx.compose.material3.MaterialTheme.customColors
+        val customColors = MaterialTheme.customColors
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(customColors.bg2)
         ) {
-            ShinyBottom(shiny = lightGreen,180,520) // В день используем ночной shiny
+            ShinyBottom(shiny = lightGreen,180,520)
 
             Column(
                 modifier = Modifier
@@ -461,18 +464,14 @@ fun ScreenSearchWithHistoryNightPreview() {
     )
 
     ScheduleAppTheme(darkTheme = true) {
-        val customColors = androidx.compose.material3.MaterialTheme.customColors
+        val customColors = MaterialTheme.customColors
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(customColors.bg2)
         ) {
-            if (isSystemInDarkTheme()) {
-                ShinyBottom(shiny = blue,200,630)
-            } else {
-                ShinyBottom(shiny = lightGreen,180,520)
-            }
+            ShinyBottom(shiny = blue,200,630)
 
             Column(
                 modifier = Modifier
@@ -531,7 +530,7 @@ fun ScreenSearchWithHistoryNightPreview() {
                 Text(
                     text = "Текущая группа: ИКБО-11-23",
                     modifier = Modifier.padding(bottom = 16.dp),
-                    color = white,
+                    color = MaterialTheme.customColors.title,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -540,7 +539,7 @@ fun ScreenSearchWithHistoryNightPreview() {
                 Text(
                     text = "Последние запросы:",
                     modifier = Modifier.padding(bottom = 8.dp),
-                    color = white
+                    color = MaterialTheme.customColors.title
                 )
 
                 LazyColumn {

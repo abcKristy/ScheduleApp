@@ -1,5 +1,6 @@
 package com.example.scheduleapp.screens.master
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.foundation.Image
@@ -30,6 +31,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +52,7 @@ import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.scheduleapp.R
 import com.example.scheduleapp.data.AppState
+import com.example.scheduleapp.data.ThemeViewModel
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
@@ -58,12 +63,15 @@ import com.example.scheduleapp.ui.theme.lightGray
 import com.example.scheduleapp.ui.theme.lightGreen
 import com.example.scheduleapp.ui.theme.white
 
+@SuppressLint("UnrememberedMutableState")
 @Composable
-fun ScreenProfile(navController: NavHostController? = null) {
+fun ScreenProfile(navController: NavHostController? = null,
+                  themeViewModel: ThemeViewModel? = null) {
     val userName = AppState.userName
     val userGroup = AppState.userGroup
     val userEmail = AppState.userEmail
     val userAvatar = AppState.userAvatar
+    val isDarkTheme by themeViewModel?.isDarkTheme?.collectAsState() ?: mutableStateOf(isSystemInDarkTheme())
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -206,7 +214,7 @@ fun ScreenProfile(navController: NavHostController? = null) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp)
-                        .clickable { /* Обработка смены темы */ },
+                        .clickable {themeViewModel?.toggleTheme()},
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Icon(
