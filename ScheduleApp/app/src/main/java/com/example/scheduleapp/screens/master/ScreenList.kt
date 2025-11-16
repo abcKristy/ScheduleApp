@@ -3,6 +3,7 @@ package com.example.scheduleapp.screens.master
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,6 +37,7 @@ import com.example.scheduleapp.logic.filterScheduleByDate
 import com.example.scheduleapp.logic.getScheduleItems
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
+import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.gray
 
 @Composable
@@ -69,7 +71,8 @@ fun ScreenList(navController: NavController? = null) {
         filterScheduleByDate(scheduleItems, selectedDate)
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()
+        .background(MaterialTheme.customColors.bg2)) {
         Column {
             Spacer(modifier = Modifier.height(40.dp))
             Calendar()

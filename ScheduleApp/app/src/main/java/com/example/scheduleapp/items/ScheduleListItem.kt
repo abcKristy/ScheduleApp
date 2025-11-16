@@ -16,11 +16,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
@@ -37,6 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.scheduleapp.data.ScheduleItem
 import com.example.scheduleapp.ui.theme.blue
+import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.deepGreen
 import com.example.scheduleapp.ui.theme.lightGreen
 import java.time.LocalDateTime
@@ -63,7 +66,7 @@ fun ScheduleListItem(
             pressedElevation = 4.dp,
         ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.customColors.bg1
         )
     ) {
 
@@ -71,7 +74,7 @@ fun ScheduleListItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Column(
                 modifier = Modifier.weight(1f),
@@ -87,7 +90,7 @@ fun ScheduleListItem(
                     Text(
                         text = scheduleItem.lessonType,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = colorScheme.onSurfaceVariant,
                         modifier = Modifier
                             .padding(horizontal = 6.dp)
                     )
@@ -96,48 +99,49 @@ fun ScheduleListItem(
                     text = "${scheduleItem.formattedStartTime}-${scheduleItem.formattedEndTime}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = colorScheme.onSurface
                 )
                 Text(
                     text = scheduleItem.room,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = colorScheme.onSurfaceVariant
                 )
             }
-
-            Box(
-                modifier = Modifier
-                    .width(2.dp)
-                    .height(70.dp)
-                    .padding(vertical = 4.dp)
-            ) {
-                Canvas(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    drawLine(
-                        color = deepGreen,
-                        start = Offset(size.width / 2, 0f),
-                        end = Offset(size.width / 2, size.height),
-                        strokeWidth = 2.dp.toPx()
-                    )
-                }
-            }
+//
+//            Box(
+//                modifier = Modifier
+//                    .width(2.dp)
+//                    .height(80.dp)
+//                    .padding(vertical = 4.dp)
+//            ) {
+//                val col = colorScheme.onSurfaceVariant
+//                Canvas(
+//                    modifier = Modifier.fillMaxSize()
+//                ) {
+//                    drawLine(
+//                        color = col,
+//                        start = Offset(size.width / 2, 0f),
+//                        end = Offset(size.width / 2, size.height),
+//                        strokeWidth = 2.dp.toPx()
+//                    )
+//                }
+//            }
 
             Column(
                 modifier = Modifier.weight(2f)
-                    .height(70.dp),
+                    .wrapContentHeight(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = scheduleItem.discipline,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = colorScheme.onSurface
                 )
                 Text(
                     text = scheduleItem.teacher,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = colorScheme.onSurfaceVariant
                 )
             }
         }
