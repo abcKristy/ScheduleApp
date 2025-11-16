@@ -24,13 +24,17 @@ fun isEvenWeek(date: LocalDate): Boolean {
  */
 fun isDateInRecurrence(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean {
     val recurrence = scheduleItem.recurrence ?: return false
+    val startDate = scheduleItem.startTime.toLocalDate()
+
+    // Целевая дата должна быть после или равна начальной дате
+    if (targetDate.isBefore(startDate)) {
+        return false
+    }
 
     // Проверяем until (ограничение по дате окончания повторений)
     if (recurrence.until != null && targetDate.atStartOfDay().isAfter(recurrence.until)) {
         return false
     }
-
-    val startDate = scheduleItem.startTime.toLocalDate()
 
     // Проверяем интервал повторения
     val weeksBetween = java.time.temporal.ChronoUnit.WEEKS.between(startDate, targetDate)
@@ -42,9 +46,8 @@ fun isDateInRecurrence(scheduleItem: ScheduleItem, targetDate: LocalDate): Boole
 
     // Проверяем тип повторения (frequency)
     return when (recurrence.frequency?.uppercase()) {
-        "WEEKLY" -> true // Для WEEKLY проверяем только интервал и until
-        // Можно добавить другие типы повторений: "DAILY", "MONTHLY" и т.д.
-        else -> true // Если тип не указан или неизвестен, считаем что повторяется еженедельно
+        "WEEKLY" -> true
+        else -> true // По умолчанию считаем еженедельным
     }
 }
 
@@ -63,9 +66,14 @@ fun shouldShowOnDate(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean
     val itemDayOfWeek = scheduleItem.startTime.dayOfWeek
     val targetDayOfWeek = targetDate.dayOfWeek
 
+    // Проверяем, не является ли дата исключением
+    if (isDateException(scheduleItem, targetDate)) {
+        return false
+    }
+
     // Если дата совпадает точно с оригинальной датой занятия
     if (itemDate == targetDate) {
-        return !isDateException(scheduleItem, targetDate)
+        return true // Оригинальное занятие всегда показывается (если не исключение)
     }
 
     // Проверяем, совпадает ли день недели
@@ -73,20 +81,14 @@ fun shouldShowOnDate(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean
         return false
     }
 
-    // Проверяем, не является ли дата исключением
-    if (isDateException(scheduleItem, targetDate)) {
-        return false
-    }
-
-    // Проверяем правило повторения
     val recurrence = scheduleItem.recurrence
+
     return if (recurrence != null) {
+        // Для занятий с правилом повторения
         isDateInRecurrence(scheduleItem, targetDate)
     } else {
-        // Если нет правила повторения, проверяем четность недели
-        val itemWeekType = isEvenWeek(itemDate)
-        val targetWeekType = isEvenWeek(targetDate)
-        itemWeekType == targetWeekType
+        // Для занятий без правила повторения - только оригинальная дата
+        false
     }
 }
 

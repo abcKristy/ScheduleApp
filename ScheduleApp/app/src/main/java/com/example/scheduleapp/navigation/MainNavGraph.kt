@@ -44,7 +44,7 @@ fun MainNavGraph(navController: NavHostController) {
         }
 
         composable(NavigationRoute.ScheduleList.route) {
-            ScreenList()
+            ScreenList(navController = navController)
         }
 
         composable(NavigationRoute.Search.route) {

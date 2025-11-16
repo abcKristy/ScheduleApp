@@ -27,17 +27,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.data.TestSchedule
 import com.example.scheduleapp.items.Calendar
 import com.example.scheduleapp.items.ScheduleListItem
 import com.example.scheduleapp.logic.filterScheduleByDate
 import com.example.scheduleapp.logic.getScheduleItems
+import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.gray
 
 @Composable
-fun ScreenList() {
+fun ScreenList(navController: NavController? = null) {
     val context = LocalContext.current
     val scheduleItems = AppState.scheduleItems
     val isLoading = AppState.isLoading
@@ -93,8 +95,8 @@ fun ScreenList() {
                             ScheduleListItem(
                                 scheduleItem = scheduleItem,
                                 onItemClick = {
-                                    // Обработка нажатия на кнопку меню
-                                    // Можно показать детали о повторении и исключениях
+                                    navController?.navigate(NavigationRoute.ScheduleDetail.route)
+                                    // AppState.selectedScheduleItem = scheduleItem
                                 }
                             )
                         }
