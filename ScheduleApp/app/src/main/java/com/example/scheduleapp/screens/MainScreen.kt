@@ -17,7 +17,7 @@ import com.example.scheduleapp.navigation.NavigationRoute
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun MainScreen(themeViewModel: ThemeViewModel? = null) {
+fun MainScreen() {
     val navController = rememberNavController()
     var showBottomNav by remember { mutableStateOf(true) }
 
@@ -39,7 +39,7 @@ fun MainScreen(themeViewModel: ThemeViewModel? = null) {
             }
         }
     ) {
-        MainNavGraph(navController, themeViewModel = themeViewModel)
+        MainNavGraph(navController)
     }
 }
 

@@ -52,6 +52,7 @@ import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.scheduleapp.R
 import com.example.scheduleapp.data.AppState
+import com.example.scheduleapp.data.LocalThemeViewModel
 import com.example.scheduleapp.data.ThemeViewModel
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
@@ -65,13 +66,21 @@ import com.example.scheduleapp.ui.theme.white
 
 @SuppressLint("UnrememberedMutableState")
 @Composable
-fun ScreenProfile(navController: NavHostController? = null,
-                  themeViewModel: ThemeViewModel? = null) {
+fun ScreenProfile(navController: NavHostController? = null) {
+    val themeViewModel = LocalThemeViewModel.current
     val userName = AppState.userName
     val userGroup = AppState.userGroup
     val userEmail = AppState.userEmail
     val userAvatar = AppState.userAvatar
-    val isDarkTheme by themeViewModel?.isDarkTheme?.collectAsState() ?: mutableStateOf(isSystemInDarkTheme())
+
+    val isDarkTheme = if (themeViewModel != null) {
+        val themeState by themeViewModel.isDarkTheme.collectAsState()
+        themeState
+    } else {
+        isSystemInDarkTheme()
+    }
+    println("DEBUG: ScreenProfile - isDarkTheme = $isDarkTheme, themeViewModel = $themeViewModel")
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -215,22 +224,19 @@ fun ScreenProfile(navController: NavHostController? = null,
                         .fillMaxWidth()
                         .padding(bottom = 16.dp)
                         .clickable {
-                            themeViewModel?.toggleTheme()
+                            println("DEBUG: Toggle theme clicked")
+                            themeViewModel?.toggleTheme(context)
                         },
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    // Если тема темная - показываем иконку светлой темы, и наоборот
                     Icon(
-                        painter = painterResource(
-                            if (isDarkTheme) R.drawable.ic_light_mode
-                            else R.drawable.ic_dark_mode
-                        ),
+                        painter = if (isDarkTheme) painterResource(R.drawable.ic_light_mode) else painterResource(R.drawable.ic_dark_mode),
                         contentDescription = "Переключить тему",
                         tint = white,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = if (isDarkTheme) "Cветлая тема" else "Темная тема",
+                        text = if (isDarkTheme) "Переключить на светлую тему" else "Переключить на темную тему",
                         color = white,
                         modifier = Modifier.padding(start = 8.dp),
                         fontWeight = FontWeight.Bold

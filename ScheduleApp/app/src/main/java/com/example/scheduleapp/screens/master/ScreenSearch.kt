@@ -49,6 +49,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scheduleapp.data.AppState
+import com.example.scheduleapp.data.LocalThemeViewModel
 import com.example.scheduleapp.data.SearchHistoryManager
 import com.example.scheduleapp.data.ThemeViewModel
 import com.example.scheduleapp.logic.getScheduleItems
@@ -59,7 +60,10 @@ import com.example.scheduleapp.ui.theme.lightGreen
 import kotlinx.coroutines.launch
 
 @Composable
-fun ScreenSearch(themeViewModel: ThemeViewModel? = null) {
+fun ScreenSearch() {
+    // Получаем themeViewModel через CompositionLocal
+    val themeViewModel = LocalThemeViewModel.current
+
     // Используем тему из ViewModel, если он передан, иначе системную тему
     val isDarkTheme = if (themeViewModel != null) {
         val themeState by themeViewModel.isDarkTheme.collectAsState()

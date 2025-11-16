@@ -13,6 +13,7 @@ object PreferencesManager {
     private const val KEY_USER_GROUP = "user_group"
     private const val KEY_USER_EMAIL = "user_email"
     private const val KEY_USER_AVATAR = "user_avatar"
+    private const val KEY_DARK_THEME = "dark_theme" // Новый ключ для темы
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -66,7 +67,7 @@ object PreferencesManager {
         }
     }
 
-   fun getUserName(context: Context): String {
+    fun getUserName(context: Context): String {
         return getSharedPreferences(context).getString(KEY_USER_NAME, "Задайте в настройках") ?: "Задайте в настройках"
     }
 
@@ -87,5 +88,17 @@ object PreferencesManager {
 
     fun getUserAvatar(context: Context): String? {
         return getSharedPreferences(context).getString(KEY_USER_AVATAR, null)
+    }
+
+    // Новые методы для сохранения и загрузки темы
+    fun saveDarkTheme(context: Context, isDarkTheme: Boolean) {
+        getSharedPreferences(context).edit().apply {
+            putBoolean(KEY_DARK_THEME, isDarkTheme)
+            apply()
+        }
+    }
+
+    fun getDarkTheme(context: Context): Boolean {
+        return getSharedPreferences(context).getBoolean(KEY_DARK_THEME, false)
     }
 }

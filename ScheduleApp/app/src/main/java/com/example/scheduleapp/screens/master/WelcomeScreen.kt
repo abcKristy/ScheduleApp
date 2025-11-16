@@ -3,6 +3,7 @@ package com.example.scheduleapp.screens.master
 import android.content.res.Configuration
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -28,17 +29,31 @@ import com.example.scheduleapp.ui.theme.gray
 import com.example.scheduleapp.ui.theme.lightGreen
 import kotlinx.coroutines.delay
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.example.scheduleapp.data.LocalThemeViewModel
 
 @Composable
 fun WelcomeScreen(
     onNavigateToMain: () -> Unit
 ) {
+    // Получаем themeViewModel через CompositionLocal
+    val themeViewModel = LocalThemeViewModel.current
+
+    // Используем тему из ViewModel
+    val isDarkTheme = if (themeViewModel != null) {
+        val themeState by themeViewModel.isDarkTheme.collectAsState()
+        themeState
+    } else {
+        isSystemInDarkTheme()
+    }
+
     LaunchedEffect(Unit) {
         delay(3000)
         onNavigateToMain()
     }
 
-    ScheduleAppTheme {
+    ScheduleAppTheme(darkTheme = isDarkTheme) {
         val shiny = MaterialTheme.customColors.shiny
         Box(
             modifier = Modifier.fillMaxSize()

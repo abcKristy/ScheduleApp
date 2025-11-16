@@ -8,8 +8,6 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.scheduleapp.data.ThemeViewModel
-import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.screens.profile.LoginScreen
 import com.example.scheduleapp.screens.profile.RegisterScreen
 import com.example.scheduleapp.screens.detail.ScheduleDetailScreen
@@ -20,11 +18,10 @@ import com.example.scheduleapp.screens.master.ScreenSearch
 import com.example.scheduleapp.screens.master.WelcomeScreen
 
 @Composable
-fun MainNavGraph(navController: NavHostController, themeViewModel: ThemeViewModel?) {
+fun MainNavGraph(navController: NavHostController) {
     var startDestination by remember {
         mutableStateOf(NavigationRoute.Welcome.route)
     }
-
 
     NavHost(
         navController = navController,
@@ -41,7 +38,7 @@ fun MainNavGraph(navController: NavHostController, themeViewModel: ThemeViewMode
         }
 
         composable(NavigationRoute.Profile.route) {
-            ScreenProfile(navController = navController, themeViewModel = themeViewModel)
+            ScreenProfile(navController = navController)
         }
 
         composable(NavigationRoute.ScheduleList.route) {
@@ -49,7 +46,7 @@ fun MainNavGraph(navController: NavHostController, themeViewModel: ThemeViewMode
         }
 
         composable(NavigationRoute.Search.route) {
-            ScreenSearch(themeViewModel = themeViewModel)
+            ScreenSearch()
         }
 
         ////////////////////////////////////////////////
@@ -65,7 +62,6 @@ fun MainNavGraph(navController: NavHostController, themeViewModel: ThemeViewMode
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-
 
         composable(NavigationRoute.Login.route) {
             LoginScreen(
