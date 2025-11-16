@@ -551,8 +551,8 @@ private fun getAcademicWeekNumber(selectedDate: LocalDate?): Int {
     if (selectedDate == null) return 1
 
     val currentYear = selectedDate.year
-    val autumnSemesterStart = LocalDate.of(currentYear, 9, 1) // 1 сентября
-    val springSemesterStart = LocalDate.of(currentYear, 2, 10) // 10 февраля
+    val autumnSemesterStart = LocalDate.of(currentYear, 9, 2) // 1 сентября
+    val springSemesterStart = LocalDate.of(currentYear, 2, 11) // 10 февраля
 
     // Определяем, в каком семестре находится выбранная дата
     val semesterStart = when {
