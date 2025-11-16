@@ -183,7 +183,7 @@ fun UserSettingsScreen(
                     Text(
                         text = "Настройки профиля",
                         color = white,
-                        fontSize = 20.sp,
+                        fontSize = 23.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(start = 16.dp)
                     )
@@ -240,13 +240,14 @@ fun UserSettingsScreen(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Сменить аватар",
                         tint = white,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                     Text(
                         text = "Сменить аватар",
                         color = white,
                         modifier = Modifier.padding(start = 8.dp),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
                     )
                 }
 
@@ -404,14 +405,14 @@ fun SettingItem(
             Text(
                 text = title,
                 color = white,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
             )
             Text(
                 text = value,
                 color = white,
                 fontSize = 14.sp,
-                fontWeight = FontWeight.Normal
+                fontWeight = FontWeight.Bold
             )
         }
         Icon(
