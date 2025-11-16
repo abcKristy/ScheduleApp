@@ -214,22 +214,29 @@ fun ScreenProfile(navController: NavHostController? = null,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp)
-                        .clickable {themeViewModel?.toggleTheme()},
+                        .clickable {
+                            themeViewModel?.toggleTheme()
+                        },
                     horizontalArrangement = Arrangement.Center
                 ) {
+                    // Если тема темная - показываем иконку светлой темы, и наоборот
                     Icon(
-                        painter = painterResource(R.drawable.ic_dark_mode),
-                        contentDescription = "Theme",
+                        painter = painterResource(
+                            if (isDarkTheme) R.drawable.ic_light_mode
+                            else R.drawable.ic_dark_mode
+                        ),
+                        contentDescription = "Переключить тему",
                         tint = white,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "Тема: ",
+                        text = if (isDarkTheme) "Cветлая тема" else "Темная тема",
                         color = white,
                         modifier = Modifier.padding(start = 8.dp),
                         fontWeight = FontWeight.Bold
                     )
                 }
+
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
