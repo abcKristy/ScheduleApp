@@ -42,6 +42,9 @@ import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.deepGreen
 import com.example.scheduleapp.ui.theme.lightGreen
+import com.example.scheduleapp.ui.theme.pink40
+import com.example.scheduleapp.ui.theme.purple40
+import com.example.scheduleapp.ui.theme.purple80
 import java.time.LocalDateTime
 
 @Composable
@@ -50,9 +53,9 @@ fun ScheduleListItem(
     onItemClick: (ScheduleItem) -> Unit = {}
 ) {
     val dotColor = when (scheduleItem.lessonType.uppercase()) {
-        "LECTURE", "ЛЕКЦИЯ" -> deepGreen
+        "LK", "LECTURE", "ЛЕКЦИЯ" -> deepGreen
         "PR", "PRACTICE", "ПРАКТИКА" -> blue
-        else -> lightGreen
+        else -> pink40
     }
 
     Card(

@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,69 +25,75 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.scheduleapp.ui.theme.ScheduleAppTheme
+import com.example.scheduleapp.data.LocalThemeViewModel
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.white
-import com.example.scheduleapp.ui.theme.lightGray
 import com.example.scheduleapp.ui.theme.whiteGray
 
 @Composable
 fun BottomNav(
     navController: NavController
 ) {
-    ScheduleAppTheme {
-        val customColors = androidx.compose.material3.MaterialTheme.customColors
+    val themeViewModel = LocalThemeViewModel.current
 
-        Box(
+    val isDarkTheme = if (themeViewModel != null) {
+        val themeState by themeViewModel.isDarkTheme.collectAsState()
+        themeState
+    } else {
+        false
+    }
+
+    val customColors = MaterialTheme.customColors
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 60.dp),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 60.dp),
-            contentAlignment = Alignment.BottomCenter
+                .width(150.dp)
+                .height(60.dp)
+                .clip(CircleShape)
+                .background(customColors.botnav)
+                .padding(2.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .width(150.dp)
-                    .height(60.dp)
-                    .clip(CircleShape)
-                    .background(customColors.botnav)
-                    .padding(2.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val backStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = backStackEntry?.destination?.route
+            val backStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = backStackEntry?.destination?.route
 
-                BottomItem.items.forEach { item ->
-                    val isSelected = currentRoute == item.route
+            BottomItem.items.forEach { item ->
+                val isSelected = currentRoute == item.route
 
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clickable {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
                                 }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            .padding(2.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.padding(1.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(item.iconId),
-                                contentDescription = "button "+item.route,
-                                modifier = Modifier.size(23.dp),
-                                tint = if (isSelected) white else whiteGray
-                            )
                         }
+                        .padding(2.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(1.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(item.iconId),
+                            contentDescription = "button "+item.route,
+                            modifier = Modifier.size(23.dp),
+                            tint = if (isSelected) white else whiteGray
+                        )
                     }
                 }
             }
