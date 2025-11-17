@@ -83,7 +83,7 @@ fun ScheduleAppTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = CustomTypography,
         content = {
             CompositionLocalProvider(
                 LocalCustomColors provides customColors,

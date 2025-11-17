@@ -32,6 +32,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.example.scheduleapp.data.LocalThemeViewModel
+import com.example.scheduleapp.ui.theme.GothicR
 
 @Composable
 fun WelcomeScreen(
@@ -124,24 +125,27 @@ fun WelcomeScreen(
 
             Text(
                 text = "STUDY",
+                style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.customColors.title,
                 fontWeight = FontWeight.Bold,
-                fontSize = 70.sp,
+                fontSize = 60.sp,
                 modifier = Modifier.align(Alignment.Center)
                     .padding(bottom = 100.dp)
             )
             Text(
                 text = "BY KRIS",
+                style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.customColors.subTitle.copy(alpha = 0.55f),
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
+                fontSize = 18.sp,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp)
             )
             Text(
                 text = "2025",
+                style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.customColors.subTitle.copy(alpha = 0.55f),
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
+                fontSize = 18.sp,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 60.dp)
             )
         }
