@@ -1,0 +1,66 @@
+package com.example.scheduleapp.data
+
+import java.time.LocalDate
+import java.time.LocalTime
+
+data class ScheduleDay(
+    val date: LocalDate,
+    val firstLesson: ScheduleItem? = null,    // 9:00-10:30
+    val firstBreak: BreakItem? = null,        // 10:30-10:40 (10 мин)
+    val secondLesson: ScheduleItem? = null,   // 10:40-12:10
+    val secondBreak: BreakItem? = null,       // 12:10-12:40 (30 мин) - большая перемена
+    val thirdLesson: ScheduleItem? = null,    // 12:40-14:10
+    val thirdBreak: BreakItem? = null,        // 14:10-14:20 (10 мин)
+    val fourthLesson: ScheduleItem? = null,   // 14:20-15:50
+    val fourthBreak: BreakItem? = null,       // 15:50-16:00 (10 мин)
+    val fifthLesson: ScheduleItem? = null,    // 16:00-17:30
+    val fifthBreak: BreakItem? = null,        // 17:30-17:40 (10 мин)
+    val sixthLesson: ScheduleItem? = null,    // 17:40-19:10
+    val sixthBreak: BreakItem? = null,        // 19:10-19:20 (10 мин)
+    val seventhLesson: ScheduleItem? = null   // 19:20-20:50
+) {
+    // Список всех элементов дня (пары + перемены) в правильном порядке
+    val allItems: List<DayItem> get() {
+        val items = mutableListOf<DayItem>()
+
+        firstLesson?.let { items.add(DayItem.Lesson(it)) }
+        firstBreak?.let { items.add(DayItem.Break(it)) }
+        secondLesson?.let { items.add(DayItem.Lesson(it)) }
+        secondBreak?.let { items.add(DayItem.Break(it)) }
+        thirdLesson?.let { items.add(DayItem.Lesson(it)) }
+        thirdBreak?.let { items.add(DayItem.Break(it)) }
+        fourthLesson?.let { items.add(DayItem.Lesson(it)) }
+        fourthBreak?.let { items.add(DayItem.Break(it)) }
+        fifthLesson?.let { items.add(DayItem.Lesson(it)) }
+        fifthBreak?.let { items.add(DayItem.Break(it)) }
+        sixthLesson?.let { items.add(DayItem.Lesson(it)) }
+        sixthBreak?.let { items.add(DayItem.Break(it)) }
+        seventhLesson?.let { items.add(DayItem.Lesson(it)) }
+
+        return items
+    }
+
+    // Проверка, есть ли хотя бы одна пара в этот день
+    val hasLessons: Boolean get() {
+        return firstLesson != null || secondLesson != null || thirdLesson != null ||
+                fourthLesson != null || fifthLesson != null || sixthLesson != null || seventhLesson != null
+    }
+}
+
+// Элемент дня - может быть либо парой, либо переменой
+sealed class DayItem {
+    data class Lesson(val scheduleItem: ScheduleItem) : DayItem()
+    data class Break(val breakItem: BreakItem) : DayItem()
+}
+
+// Объект для перемены
+data class BreakItem(
+    val startTime: LocalTime,
+    val endTime: LocalTime,
+    val durationMinutes: Int,
+    val isBig: Boolean = false
+) {
+    val formattedTime: String get() = "$startTime-$endTime"
+    val durationText: String get() = if (isBig) "30 минут" else "10 минут"
+    val typeText: String get() = if (isBig) "Большая перемена" else "Маленькая перемена"
+}

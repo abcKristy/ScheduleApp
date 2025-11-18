@@ -1,6 +1,7 @@
 // ScheduleFilter.kt
 package com.example.scheduleapp.logic
 
+import com.example.scheduleapp.data.ScheduleDay
 import com.example.scheduleapp.data.ScheduleItem
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -98,4 +99,12 @@ fun filterScheduleByDate(scheduleItems: List<ScheduleItem>, selectedDate: LocalD
     return scheduleItems.filter { scheduleItem ->
         shouldShowOnDate(scheduleItem, selectedDate)
     }.sortedBy { it.startTime }
+}
+
+fun createScheduleDayForDate(scheduleItems: List<ScheduleItem>, targetDate: LocalDate): ScheduleDay {
+    val filteredItems = scheduleItems.filter { scheduleItem ->
+        shouldShowOnDate(scheduleItem, targetDate)
+    }
+
+    return ScheduleDayFactory.createScheduleDay(targetDate, filteredItems)
 }

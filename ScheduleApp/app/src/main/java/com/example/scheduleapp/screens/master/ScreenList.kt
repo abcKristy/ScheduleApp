@@ -30,15 +30,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.scheduleapp.data.AppState
+import com.example.scheduleapp.data.DayItem
+import com.example.scheduleapp.data.ScheduleDay
 import com.example.scheduleapp.data.TestSchedule
+import com.example.scheduleapp.items.BreakItemList
 import com.example.scheduleapp.items.Calendar
 import com.example.scheduleapp.items.ScheduleListItem
+import com.example.scheduleapp.logic.createScheduleDayForDate
 import com.example.scheduleapp.logic.filterScheduleByDate
 import com.example.scheduleapp.logic.getScheduleItems
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.gray
+import java.time.LocalDate
 
 @Composable
 fun ScreenList(navController: NavController? = null) {
@@ -68,7 +73,11 @@ fun ScreenList(navController: NavController? = null) {
     }
 
     val filteredSchedule = remember(scheduleItems, selectedDate) {
-        filterScheduleByDate(scheduleItems, selectedDate)
+        if (selectedDate != null) {
+            createScheduleDayForDate(scheduleItems, selectedDate)
+        } else {
+            ScheduleDay(LocalDate.now()) // или null, в зависимости от логики
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()
@@ -87,21 +96,27 @@ fun ScreenList(navController: NavController? = null) {
                     CircularProgressIndicator()
                 }
             } else {
-                if (filteredSchedule.isNotEmpty()) {
+                if (filteredSchedule.hasLessons) {
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
                         contentPadding = PaddingValues(bottom = 120.dp)
                     ) {
-                        items(filteredSchedule) { scheduleItem ->
-                            ScheduleListItem(
-                                scheduleItem = scheduleItem,
-                                onItemClick = {
-                                    navController?.navigate(NavigationRoute.ScheduleDetail.route)
-                                    // AppState.selectedScheduleItem = scheduleItem
+                        items(filteredSchedule.allItems) { dayItem ->
+                            when (dayItem) {
+                                is DayItem.Lesson -> {
+                                    ScheduleListItem(
+                                        scheduleItem = dayItem.scheduleItem,
+                                        onItemClick = {
+                                            navController?.navigate(NavigationRoute.ScheduleDetail.route)
+                                        }
+                                    )
                                 }
-                            )
+                                is DayItem.Break -> {
+                                    BreakItemList(big = dayItem.breakItem.isBig)
+                                }
+                            }
                         }
                     }
                 } else {
