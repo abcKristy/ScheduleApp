@@ -12,12 +12,12 @@ data class ScheduleDay(
     val thirdLesson: ScheduleItem? = null,    // 12:40-14:10
     val thirdBreak: BreakItem? = null,        // 14:10-14:20 (10 мин)
     val fourthLesson: ScheduleItem? = null,   // 14:20-15:50
-    val fourthBreak: BreakItem? = null,       // 15:50-16:00 (10 мин)
-    val fifthLesson: ScheduleItem? = null,    // 16:00-17:30
-    val fifthBreak: BreakItem? = null,        // 17:30-17:40 (10 мин)
-    val sixthLesson: ScheduleItem? = null,    // 17:40-19:10
-    val sixthBreak: BreakItem? = null,        // 19:10-19:20 (10 мин)
-    val seventhLesson: ScheduleItem? = null   // 19:20-20:50
+    val fourthBreak: BreakItem? = null,       // 15:50-16:20 (30 мин)
+    val fifthLesson: ScheduleItem? = null,    // 16:20-17:50
+    val fifthBreak: BreakItem? = null,        // 17:50-18:00 (10 мин)
+    val sixthLesson: ScheduleItem? = null,    // 18:00-19:30
+    val sixthBreak: BreakItem? = null,        // 19:30-19:40 (10 мин)
+    val seventhLesson: ScheduleItem? = null   // 19:40-21:10
 ) {
     // Список всех элементов дня (пары + перемены) в правильном порядке
     val allItems: List<DayItem> get() {

@@ -114,8 +114,7 @@ fun ScreenList(navController: NavController? = null) {
                                     )
                                 }
                                 is DayItem.Break -> {
-                                    BreakItemList(big = dayItem.breakItem.isBig)
-                                }
+                                    BreakItemList(breakItem = dayItem.breakItem)                                }
                             }
                         }
                     }
