@@ -8,7 +8,7 @@ data class ScheduleDay(
     val firstLesson: ScheduleItem? = null,    // 9:00-10:30
     val firstBreak: BreakItem? = null,        // 10:30-10:40 (10 мин)
     val secondLesson: ScheduleItem? = null,   // 10:40-12:10
-    val secondBreak: BreakItem? = null,       // 12:10-12:40 (30 мин) - большая перемена
+    val secondBreak: BreakItem? = null,       // 12:10-12:40 (30 мин)
     val thirdLesson: ScheduleItem? = null,    // 12:40-14:10
     val thirdBreak: BreakItem? = null,        // 14:10-14:20 (10 мин)
     val fourthLesson: ScheduleItem? = null,   // 14:20-15:50
@@ -19,7 +19,6 @@ data class ScheduleDay(
     val sixthBreak: BreakItem? = null,        // 19:30-19:40 (10 мин)
     val seventhLesson: ScheduleItem? = null   // 19:40-21:10
 ) {
-    // Список всех элементов дня (пары + перемены) в правильном порядке
     val allItems: List<DayItem> get() {
         val items = mutableListOf<DayItem>()
 
@@ -40,20 +39,17 @@ data class ScheduleDay(
         return items
     }
 
-    // Проверка, есть ли хотя бы одна пара в этот день
     val hasLessons: Boolean get() {
         return firstLesson != null || secondLesson != null || thirdLesson != null ||
                 fourthLesson != null || fifthLesson != null || sixthLesson != null || seventhLesson != null
     }
 }
 
-// Элемент дня - может быть либо парой, либо переменой
 sealed class DayItem {
     data class Lesson(val scheduleItem: ScheduleItem) : DayItem()
     data class Break(val breakItem: BreakItem) : DayItem()
 }
 
-// Объект для перемены
 data class BreakItem(
     val startTime: LocalTime,
     val endTime: LocalTime,

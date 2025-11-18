@@ -8,10 +8,7 @@ import java.time.LocalDateTime
 import java.time.temporal.WeekFields
 import java.util.Locale
 
-/**
- * Определяет, является ли неделя четной (true) или нечетной (false)
- * Считаем, что неделя с 1 сентября 2025 года - нечетная (false)
- */
+
 fun isEvenWeek(date: LocalDate): Boolean {
     val referenceDate = LocalDate.of(2025, 9, 1)
     val referenceWeek = referenceDate.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear())
@@ -20,24 +17,18 @@ fun isEvenWeek(date: LocalDate): Boolean {
     return (currentWeek - referenceWeek) % 2 == 0
 }
 
-/**
- * Проверяет, попадает ли дата в правило повторения занятия
- */
 fun isDateInRecurrence(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean {
     val recurrence = scheduleItem.recurrence ?: return false
     val startDate = scheduleItem.startTime.toLocalDate()
 
-    // Целевая дата должна быть после или равна начальной дате
     if (targetDate.isBefore(startDate)) {
         return false
     }
 
-    // Проверяем until (ограничение по дате окончания повторений)
     if (recurrence.until != null && targetDate.atStartOfDay().isAfter(recurrence.until)) {
         return false
     }
 
-    // Проверяем интервал повторения
     val weeksBetween = java.time.temporal.ChronoUnit.WEEKS.between(startDate, targetDate)
     if (recurrence.interval != null && recurrence.interval > 0) {
         if (weeksBetween % recurrence.interval != 0L) {
@@ -45,23 +36,16 @@ fun isDateInRecurrence(scheduleItem: ScheduleItem, targetDate: LocalDate): Boole
         }
     }
 
-    // Проверяем тип повторения (frequency)
     return when (recurrence.frequency?.uppercase()) {
         "WEEKLY" -> true
-        else -> true // По умолчанию считаем еженедельным
+        else -> true
     }
 }
 
-/**
- * Проверяет, является ли дата исключением для занятия
- */
 fun isDateException(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean {
     return scheduleItem.exceptions.any { it == targetDate }
 }
 
-/**
- * Проверяет, должно ли занятие отображаться на указанную дату
- */
 fun shouldShowOnDate(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean {
     val itemDate = scheduleItem.startTime.toLocalDate()
     val itemDayOfWeek = scheduleItem.startTime.dayOfWeek

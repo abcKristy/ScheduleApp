@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -73,9 +74,15 @@ fun BreakItemList(
 
     // Цвет прогресс-полоски в зависимости от статуса
     val progressColor = if (isCompleted) {
-        Color(0xFF9E9E9E) // Серый для завершенных
+        MaterialTheme.customColors.bg1.copy(0f)
     } else {
         MaterialTheme.customColors.shiny
+    }
+
+    val baseLineColor = if (isCompleted) {
+        MaterialTheme.customColors.bg1.copy(0f)
+    } else {
+        Color(0xFFE0E0E0)
     }
 
     Card(
@@ -92,7 +99,7 @@ fun BreakItemList(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 0.dp,0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Центральная часть с прогресс-полоской
@@ -100,7 +107,7 @@ fun BreakItemList(
                 modifier = Modifier
                     .weight(2f)
                     .height(24.dp)
-                    .padding(horizontal = 8.dp)
+                    .padding(6.dp)
             ) {
                 // Фоновая полоска (всегда светло-серая)
                 Box(
@@ -109,7 +116,7 @@ fun BreakItemList(
                         .height(2.dp)
                         .align(Alignment.Center)
                         .background(
-                            color = Color(0xFFE0E0E0), // Светло-серая
+                            color = baseLineColor, // Светло-серая
                             shape = RoundedCornerShape(1.dp)
                         )
                 )
@@ -132,6 +139,7 @@ fun BreakItemList(
                 text = durationText,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, // Цвет текста всегда одинаковый
                 fontSize = 12.sp,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
                 fontWeight = FontWeight.Normal
             )
         }
