@@ -34,7 +34,7 @@ private val darkCustomColors = CustomColors(
     searchBar = blue,
     title = white,
     subTitle = white,
-    dialogCont = deepGreen,
+    dialogCont = grayDialog1,
     searchItem = gray
 )
 
@@ -46,7 +46,7 @@ private val lightCustomColors = CustomColors(
     searchBar = deepGreen,
     title = black,
     subTitle = gray,
-    dialogCont = blue,
+    dialogCont = lightGray,
     searchItem = whiteGray
 )
 
