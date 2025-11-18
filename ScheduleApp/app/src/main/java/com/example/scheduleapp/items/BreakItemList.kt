@@ -45,7 +45,6 @@ fun BreakItemList(
     var progress by remember { mutableStateOf(0f) }
     var isCompleted by remember { mutableStateOf(false) }
 
-    // Обновляем время каждую секунду
     LaunchedEffect(Unit) {
         while (true) {
             currentTime = LocalTime.now()
@@ -53,7 +52,6 @@ fun BreakItemList(
         }
     }
 
-    // Вычисляем прогресс и статус завершения
     LaunchedEffect(currentTime, breakItem) {
         val start = breakItem.startTime
         val end = breakItem.endTime
@@ -72,9 +70,8 @@ fun BreakItemList(
 
     val durationText = "${breakItem.durationMinutes} минут"
 
-    // Цвет прогресс-полоски в зависимости от статуса
     val progressColor = if (isCompleted) {
-        MaterialTheme.customColors.bg1.copy(0f)
+        MaterialTheme.customColors.shiny.copy(0.3f)
     } else {
         MaterialTheme.customColors.shiny
     }
@@ -88,7 +85,7 @@ fun BreakItemList(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(40.dp)
+            .wrapContentHeight()
             .padding(horizontal = 16.dp, vertical = 2.dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
@@ -98,30 +95,27 @@ fun BreakItemList(
     ) {
         Row(
             modifier = Modifier
-                .fillMaxSize()
+                .wrapContentHeight()
                 .padding(horizontal = 0.dp,0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Центральная часть с прогресс-полоской
             Box(
                 modifier = Modifier
                     .weight(2f)
                     .height(24.dp)
-                    .padding(6.dp)
+                    .padding(vertical = 3.dp, horizontal = 12.dp)
             ) {
-                // Фоновая полоска (всегда светло-серая)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(2.dp)
                         .align(Alignment.Center)
                         .background(
-                            color = baseLineColor, // Светло-серая
+                            color = baseLineColor,
                             shape = RoundedCornerShape(1.dp)
                         )
                 )
 
-                // Прогресс полоска
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(progress)
@@ -134,14 +128,15 @@ fun BreakItemList(
                 )
             }
 
-            // Время справа
-            Text(
-                text = durationText,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, // Цвет текста всегда одинаковый
-                fontSize = 12.sp,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                fontWeight = FontWeight.Normal
-            )
+            if(!isCompleted){
+                Text(
+                    text = durationText,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 0.dp),
+                    fontWeight = FontWeight.Normal
+                )
+            }
         }
     }
 }

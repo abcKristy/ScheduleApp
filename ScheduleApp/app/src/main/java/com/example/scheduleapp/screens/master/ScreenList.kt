@@ -31,10 +31,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.data.DayItem
+import com.example.scheduleapp.data.EmptySchedule
 import com.example.scheduleapp.data.ScheduleDay
 import com.example.scheduleapp.data.TestSchedule
 import com.example.scheduleapp.items.BreakItemList
 import com.example.scheduleapp.items.Calendar
+import com.example.scheduleapp.items.EmptyScheduleItemCompact
 import com.example.scheduleapp.items.ScheduleListItem
 import com.example.scheduleapp.logic.createScheduleDayForDate
 import com.example.scheduleapp.logic.filterScheduleByDate
@@ -106,12 +108,16 @@ fun ScreenList(navController: NavController? = null) {
                         items(filteredSchedule.allItems) { dayItem ->
                             when (dayItem) {
                                 is DayItem.Lesson -> {
-                                    ScheduleListItem(
-                                        scheduleItem = dayItem.scheduleItem,
-                                        onItemClick = {
-                                            navController?.navigate(NavigationRoute.ScheduleDetail.route)
-                                        }
-                                    )
+                                    if (EmptySchedule.isEmpty(dayItem.scheduleItem)) {
+                                        EmptyScheduleItemCompact(scheduleItem = dayItem.scheduleItem)
+                                    } else {
+                                        ScheduleListItem(
+                                            scheduleItem = dayItem.scheduleItem,
+                                            onItemClick = {
+                                                navController?.navigate(NavigationRoute.ScheduleDetail.route)
+                                            }
+                                        )
+                                    }
                                 }
                                 is DayItem.Break -> {
                                     BreakItemList(breakItem = dayItem.breakItem)                                }

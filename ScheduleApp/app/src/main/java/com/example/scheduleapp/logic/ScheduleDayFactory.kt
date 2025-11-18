@@ -1,3 +1,4 @@
+// ScheduleDayFactory.kt
 package com.example.scheduleapp.logic
 
 import com.example.scheduleapp.data.*
@@ -6,6 +7,7 @@ import java.time.LocalTime
 
 object ScheduleDayFactory {
 
+    // Временные интервалы пар (обновленные согласно комментариям)
     private val lessonTimes = listOf(
         LessonTimeSlot(1, LocalTime.of(9, 0), LocalTime.of(10, 30)),    // 9:00-10:30
         LessonTimeSlot(2, LocalTime.of(10, 40), LocalTime.of(12, 10)),  // 10:40-12:10
@@ -16,6 +18,7 @@ object ScheduleDayFactory {
         LessonTimeSlot(7, LocalTime.of(19, 40), LocalTime.of(21, 10))   // 19:40-21:10
     )
 
+    // Временные интервалы перемен (обновленные согласно комментариям)
     private val breakTimes = listOf(
         BreakTimeSlot(1, LocalTime.of(10, 30), LocalTime.of(10, 40), 10, false),  // 10:30-10:40 (10 мин)
         BreakTimeSlot(2, LocalTime.of(12, 10), LocalTime.of(12, 40), 30, true),   // 12:10-12:40 (30 мин) - большая перемена
@@ -26,14 +29,24 @@ object ScheduleDayFactory {
     )
 
     fun createScheduleDay(date: LocalDate, scheduleItems: List<ScheduleItem>): ScheduleDay {
+        // Сортируем пары по времени начала
         val sortedItems = scheduleItems.sortedBy { it.startTime.toLocalTime() }
 
+        // Создаем мапу для быстрого доступа к паре по номеру
         val lessonMap = mutableMapOf<Int, ScheduleItem>()
 
+        // Распределяем пары по слотам
         sortedItems.forEach { item ->
             val lessonNumber = findLessonNumber(item.startTime.toLocalTime())
             if (lessonNumber != null) {
                 lessonMap[lessonNumber] = item
+            }
+        }
+
+        // Заполняем пустыми парами отсутствующие слоты
+        for (lessonNumber in 1..7) {
+            if (!lessonMap.containsKey(lessonNumber)) {
+                lessonMap[lessonNumber] = EmptySchedule.createEmptyItem(lessonNumber, date)
             }
         }
 
@@ -62,6 +75,7 @@ object ScheduleDayFactory {
         return lessonTimes.find { it.startTime == startTime }?.number
     }
 
+    // Вспомогательные data class для временных слотов
     private data class LessonTimeSlot(
         val number: Int,
         val startTime: LocalTime,
