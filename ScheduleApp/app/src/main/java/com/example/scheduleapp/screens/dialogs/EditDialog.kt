@@ -1,6 +1,7 @@
 package com.example.scheduleapp.screens.dialogs
 
 import android.content.res.Configuration
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,6 +47,7 @@ import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.darkGray
 import com.example.scheduleapp.ui.theme.lightBlue
+import com.example.scheduleapp.ui.theme.lightGreen
 import com.example.scheduleapp.ui.theme.white
 import com.example.scheduleapp.ui.theme.whiteGray
 
