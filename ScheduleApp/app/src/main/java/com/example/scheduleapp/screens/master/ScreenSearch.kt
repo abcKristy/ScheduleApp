@@ -198,7 +198,7 @@ fun ScreenSearch() {
                                         modifier = Modifier.size(28.dp)
                                     )
                                 },
-                                background = pink40
+                                background = MaterialTheme.customColors.shiny
                             )
 
                             SwipeableActionsBox(
