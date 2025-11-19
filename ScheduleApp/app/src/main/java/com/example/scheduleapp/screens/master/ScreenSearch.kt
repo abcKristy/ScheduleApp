@@ -99,8 +99,6 @@ fun ScreenSearch() {
                 .fillMaxSize()
                 .background(customColors.bg2)
         ) {
-
-            // Используем isDarkTheme из параметра, а не isSystemInDarkTheme()
             if (isDarkTheme) {
                 ShinyBottom(shiny = blue,200,630)
             } else {
@@ -218,7 +216,6 @@ fun ScreenSearch() {
                             )
 
                             SwipeableActionsBox(
-                                modifier = Modifier.padding(horizontal = 16.dp ),
                                 endActions = listOf(deleteAction),
                                 swipeThreshold = 100.dp,
                                 backgroundUntilSwipeThreshold = Color.Transparent

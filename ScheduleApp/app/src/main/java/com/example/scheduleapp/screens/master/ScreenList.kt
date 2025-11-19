@@ -1,9 +1,10 @@
-// ScreenList.kt (обновленная версия)
+// ScreenList.kt (исправленная версия)
 package com.example.scheduleapp.screens.master
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,16 +17,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -39,17 +42,14 @@ import com.example.scheduleapp.items.Calendar
 import com.example.scheduleapp.items.EmptyScheduleItemCompact
 import com.example.scheduleapp.items.ScheduleListItem
 import com.example.scheduleapp.logic.createScheduleDayForDate
-import com.example.scheduleapp.logic.filterScheduleByDate
 import com.example.scheduleapp.logic.getScheduleItems
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
-import com.example.scheduleapp.ui.theme.gray
 import java.time.LocalDate
 
 @Composable
 fun ScreenList(navController: NavController? = null) {
-    val context = LocalContext.current
     val scheduleItems = AppState.scheduleItems
     val isLoading = AppState.isLoading
     val errorMessage = AppState.errorMessage
@@ -78,7 +78,7 @@ fun ScreenList(navController: NavController? = null) {
         if (selectedDate != null) {
             createScheduleDayForDate(scheduleItems, selectedDate)
         } else {
-            ScheduleDay(LocalDate.now()) // или null, в зависимости от логики
+            ScheduleDay(LocalDate.now())
         }
     }
 
@@ -99,47 +99,45 @@ fun ScreenList(navController: NavController? = null) {
                 }
             } else {
                 if (filteredSchedule.hasLessons) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        contentPadding = PaddingValues(bottom = 120.dp)
-                    ) {
-                        items(filteredSchedule.allItems) { dayItem ->
-                            when (dayItem) {
-                                is DayItem.Lesson -> {
-                                    if (EmptySchedule.isEmpty(dayItem.scheduleItem)) {
-                                        EmptyScheduleItemCompact(scheduleItem = dayItem.scheduleItem)
-                                    } else {
-                                        ScheduleListItem(
-                                            scheduleItem = dayItem.scheduleItem,
-                                            onItemClick = {
-                                                navController?.navigate(NavigationRoute.ScheduleDetail.route)
-                                            }
-                                        )
-                                    }
-                                }
-                                is DayItem.Break -> {
-                                    BreakItemList(breakItem = dayItem.breakItem)                                }
+                    SwipeableScheduleList(
+                        filteredSchedule = filteredSchedule,
+                        navController = navController,
+                        onSwipeLeft = {
+                            // Свайп влево - следующий день от выбранной даты
+                            val currentDate = AppState.selectedDate
+                            if (currentDate != null) {
+                                val newDate = currentDate.plusDays(1)
+                                AppState.setSelectedDate(newDate)
+                            }
+                        },
+                        onSwipeRight = {
+                            // Свайп вправо - предыдущий день от выбранной даты
+                            val currentDate = AppState.selectedDate
+                            if (currentDate != null) {
+                                val newDate = currentDate.minusDays(1)
+                                AppState.setSelectedDate(newDate)
                             }
                         }
-                    }
+                    )
                 } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = when {
-                                selectedDate != null && scheduleItems.isNotEmpty() -> "На выбранную дату занятий нет!"
-                                selectedDate != null -> "Нет данных о занятиях"
-                                else -> "Выберите дату"
-                            },
-                            color = Color.Gray
-                        )
-                    }
+                    SwipeableEmptyState(
+                        selectedDate = selectedDate,
+                        scheduleItems = scheduleItems,
+                        onSwipeLeft = {
+                            val currentDate = AppState.selectedDate
+                            if (currentDate != null) {
+                                val newDate = currentDate.plusDays(1)
+                                AppState.setSelectedDate(newDate)
+                            }
+                        },
+                        onSwipeRight = {
+                            val currentDate = AppState.selectedDate
+                            if (currentDate != null) {
+                                val newDate = currentDate.minusDays(1)
+                                AppState.setSelectedDate(newDate)
+                            }
+                        }
+                    )
                 }
 
                 if (errorMessage != null) {
@@ -151,6 +149,117 @@ fun ScreenList(navController: NavController? = null) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SwipeableScheduleList(
+    filteredSchedule: ScheduleDay,
+    navController: NavController?,
+    onSwipeLeft: () -> Unit,
+    onSwipeRight: () -> Unit
+) {
+    var swipeHandled by remember { mutableStateOf(false) }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragStart = {
+                        swipeHandled = false
+                    },
+                    onHorizontalDrag = { change, dragAmount ->
+                        if (!swipeHandled) {
+                            when {
+                                dragAmount > 50 -> { // Порог свайпа вправо
+                                    onSwipeRight()
+                                    swipeHandled = true
+                                }
+                                dragAmount < -50 -> { // Порог свайпа влево
+                                    onSwipeLeft()
+                                    swipeHandled = true
+                                }
+                            }
+                        }
+                        change.consume()
+                    },
+                    onDragEnd = {
+                        swipeHandled = false
+                    }
+                )
+            },
+        contentPadding = PaddingValues(bottom = 120.dp)
+    ) {
+        items(filteredSchedule.allItems) { dayItem ->
+            when (dayItem) {
+                is DayItem.Lesson -> {
+                    if (EmptySchedule.isEmpty(dayItem.scheduleItem)) {
+                        EmptyScheduleItemCompact(scheduleItem = dayItem.scheduleItem)
+                    } else {
+                        ScheduleListItem(
+                            scheduleItem = dayItem.scheduleItem,
+                            onItemClick = {
+                                navController?.navigate(NavigationRoute.ScheduleDetail.route)
+                            }
+                        )
+                    }
+                }
+                is DayItem.Break -> {
+                    BreakItemList(breakItem = dayItem.breakItem)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SwipeableEmptyState(
+    selectedDate: LocalDate?,
+    scheduleItems: List<com.example.scheduleapp.data.ScheduleItem>,
+    onSwipeLeft: () -> Unit,
+    onSwipeRight: () -> Unit
+) {
+    var swipeHandled by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragStart = {
+                        swipeHandled = false
+                    },
+                    onHorizontalDrag = { change, dragAmount ->
+                        if (!swipeHandled) {
+                            when {
+                                dragAmount > 50 -> {
+                                    onSwipeRight()
+                                    swipeHandled = true
+                                }
+                                dragAmount < -50 -> {
+                                    onSwipeLeft()
+                                    swipeHandled = true
+                                }
+                            }
+                        }
+                        change.consume()
+                    },
+                    onDragEnd = {
+                        swipeHandled = false
+                    }
+                )
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = when {
+                selectedDate != null && scheduleItems.isNotEmpty() -> "На выбранную дату занятий нет!"
+                selectedDate != null -> "Нет данных о занятиях"
+                else -> "Выберите дату"
+            },
+            color = Color.Gray
+        )
     }
 }
 

@@ -43,7 +43,6 @@ data class GroupsResponse(
     val groups: List<String>
 )
 
-// Retrofit интерфейс для API
 interface ScheduleApiService {
     @GET("schedule/final/{group}")
     @Headers(
@@ -53,7 +52,6 @@ interface ScheduleApiService {
     suspend fun getSchedule(@Path("group") group: String): List<ScheduleItemResponse>
 }
 
-// Создание Retrofit клиента
 private fun createApiService(): ScheduleApiService {
     val retrofit = Retrofit.Builder()
         .baseUrl("http://10.150.247.211:8080/")
