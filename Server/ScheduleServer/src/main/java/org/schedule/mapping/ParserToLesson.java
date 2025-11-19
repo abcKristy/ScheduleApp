@@ -240,7 +240,6 @@ public class ParserToLesson {
             return Arrays.stream(words)
                     .allMatch(word -> !word.isEmpty() && Character.isUpperCase(word.charAt(0)));
         }
-
         return false;
     }
 
@@ -250,7 +249,7 @@ public class ParserToLesson {
         for (Map.Entry<String, String> entry : properties.entrySet()) {
             if (entry.getKey().startsWith("X-META-GROUP") && !entry.getValue().trim().isEmpty()) {
                 String groupName = entry.getValue().trim();
-                if (groupName.matches("[А-ЯA-Z]{2,10}-[\\d-]+")) {
+                if (groupName.matches("[А-ЯA-Z0-9]{2,4}-\\d{2}-\\d{2}")) {
                     GroupEntity group = new GroupEntity();
                     group.setGroupName(groupName);
                     groups.add(group);

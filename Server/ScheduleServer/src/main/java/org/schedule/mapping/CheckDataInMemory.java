@@ -55,7 +55,7 @@ public class CheckDataInMemory {
 
         String cleanName = entityName.trim();
 
-        if (cleanName.matches("[А-ЯA-Z]{2,10}-[\\d-]+")) {
+        if (cleanName.matches("[А-ЯA-Z0-9]{2,4}-\\d{2}-\\d{2}")) {
             return EntityType.GROUP;
         }
 
