@@ -10,6 +10,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +26,7 @@ import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.ModalDrawer
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
@@ -191,17 +194,31 @@ fun ScreenSearch() {
                                     SearchHistoryManager.removeFromHistory(context, historyItem)
                                 },
                                 icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_del),
-                                        contentDescription = "Удалить",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(28.dp)
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .height(48.dp)
+                                            .fillMaxWidth()
+                                            .offset((-30).dp)
+                                            .background(MaterialTheme.customColors.searchBar,
+                                                RoundedCornerShape(20.dp)),
+                                        contentAlignment = Alignment.CenterStart
+                                    ) {
+                                        Row{
+                                            Spacer(modifier = Modifier.width(35.dp))
+                                            Icon(
+                                                painter = painterResource(R.drawable.ic_del),
+                                                contentDescription = "Удалить",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        }
+                                    }
                                 },
-                                background = MaterialTheme.customColors.shiny
+                                background = Color.Transparent
                             )
 
                             SwipeableActionsBox(
+                                modifier = Modifier.padding(horizontal = 16.dp ),
                                 endActions = listOf(deleteAction),
                                 swipeThreshold = 100.dp,
                                 backgroundUntilSwipeThreshold = Color.Transparent
@@ -219,7 +236,6 @@ fun ScreenSearch() {
                         }
                     }
                 } else {
-                    // Сообщение когда история пуста
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
