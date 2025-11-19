@@ -73,8 +73,8 @@ fun BreakItemList(
 
     val gradientColors = if (isCompleted) {
         listOf(
-            MaterialTheme.customColors.shiny.copy(0.35f),
-            MaterialTheme.customColors.shiny.copy(0.35f)
+            MaterialTheme.customColors.shiny.copy(0.2f),
+            MaterialTheme.customColors.shiny.copy(0.2f)
         )
     } else {
         listOf(
@@ -86,7 +86,7 @@ fun BreakItemList(
     val baseLineColor = if (isCompleted) {
         MaterialTheme.customColors.bg1.copy(0f)
     } else {
-        Color(0xFFE0E0E0)
+        MaterialTheme.customColors.dialogCont.copy(0.5f)
     }
 
     Card(

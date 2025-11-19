@@ -28,10 +28,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
@@ -45,19 +51,49 @@ import com.example.scheduleapp.ui.theme.lightGreen
 import com.example.scheduleapp.ui.theme.pink40
 import com.example.scheduleapp.ui.theme.purple40
 import com.example.scheduleapp.ui.theme.purple80
+import kotlinx.coroutines.delay
+import java.time.Duration
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Composable
 fun ScheduleListItem(
     scheduleItem: ScheduleItem,
     onItemClick: (ScheduleItem) -> Unit = {}
 ) {
+    var currentTime by remember { mutableStateOf(LocalTime.now()) }
+    var progress by remember { mutableStateOf(0f) }
+    var isLessonActive by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentTime = LocalTime.now()
+            delay(1000)
+        }
+    }
+
+    LaunchedEffect(currentTime, scheduleItem) {
+        val start = scheduleItem.startTime.toLocalTime()
+        val end = scheduleItem.endTime.toLocalTime()
+
+        isLessonActive = currentTime.isAfter(start) && currentTime.isBefore(end)
+
+        progress = when {
+            currentTime.isBefore(start) -> 0f
+            currentTime.isAfter(end) -> 1f
+            else -> {
+                val totalSeconds = Duration.between(start, end).seconds.toFloat()
+                val elapsedSeconds = Duration.between(start, currentTime).seconds.toFloat()
+                (elapsedSeconds / totalSeconds).coerceIn(0f, 1f)
+            }
+        }
+    }
+
     val dotColor = when (scheduleItem.lessonType.uppercase()) {
         "LK", "LECTURE", "ЛЕКЦИЯ" -> deepGreen
         "PR", "PRACTICE", "ПРАКТИКА" -> blue
         else -> pink40
     }
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -72,96 +108,110 @@ fun ScheduleListItem(
             containerColor = MaterialTheme.customColors.bg1
         )
     ) {
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .clip(CircleShape)
-                            .background(dotColor)
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(CircleShape)
+                                .background(dotColor)
+                        )
+                        Text(
+                            text = scheduleItem.lessonType,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .padding(horizontal = 6.dp)
+                        )
+                    }
+                    Text(
+                        text = "${scheduleItem.formattedStartTime}-${scheduleItem.formattedEndTime}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = colorScheme.onSurface
                     )
                     Text(
-                        text = scheduleItem.lessonType,
+                        text = scheduleItem.room,
                         style = MaterialTheme.typography.bodySmall,
-                        color = colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .padding(horizontal = 6.dp)
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
-                Text(
-                    text = "${scheduleItem.formattedStartTime}-${scheduleItem.formattedEndTime}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = colorScheme.onSurface
-                )
-                Text(
-                    text = scheduleItem.room,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant
-                )
-            }
-//
-//            Box(
-//                modifier = Modifier
-//                    .width(2.dp)
-//                    .height(80.dp)
-//                    .padding(vertical = 4.dp)
-//            ) {
-//                val col = colorScheme.onSurfaceVariant
-//                Canvas(
-//                    modifier = Modifier.fillMaxSize()
-//                ) {
-//                    drawLine(
-//                        color = col,
-//                        start = Offset(size.width / 2, 0f),
-//                        end = Offset(size.width / 2, size.height),
-//                        strokeWidth = 2.dp.toPx()
-//                    )
-//                }
-//            }
 
-            Column(
-                modifier = Modifier.weight(2f)
-                    .wrapContentHeight(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = scheduleItem.discipline,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurface
+                Column(
+                    modifier = Modifier.weight(2f)
+                        .wrapContentHeight(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = scheduleItem.discipline,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface
+                    )
+                    Text(
+                        text = scheduleItem.teacher,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Прогресс-бар для активной пары
+            if (isLessonActive) {
+                val gradientColors = listOf(
+                    MaterialTheme.customColors.shiny.copy(0.9f),
+                    MaterialTheme.customColors.searchBar.copy(0.8f)
                 )
-                Text(
-                    text = scheduleItem.teacher,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.onSurfaceVariant
-                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                        .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
+                        .background(
+                            color = MaterialTheme.customColors.bg1.copy(0f)
+                        )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progress)
+                            .height(3.dp)
+                            .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = gradientColors,
+                                    startX = 0f,
+                                    endX = Float.POSITIVE_INFINITY
+                                )
+                            )
+                    )
+                }
             }
         }
     }
 }
 
-@Preview(showBackground = true, name = "Light Theme - Lecture")
+@Preview(showBackground = true, name = "Light Theme - Active Lesson")
 @Composable
-fun ScheduleItemPreviewLightLecture() {
+fun ScheduleItemPreviewActiveLesson() {
     MaterialTheme(colorScheme = lightColorScheme()) {
         Surface {
             ScheduleListItem(
                 scheduleItem = ScheduleItem(
                     discipline = "Разработка баз данных",
-                    lessonType = "LECTURE", // Лекция - зеленый кружок
-                    startTime = LocalDateTime.of(2025, 9, 6, 9, 0),
-                    endTime = LocalDateTime.of(2025, 9, 6, 10, 30),
+                    lessonType = "LECTURE",
+                    startTime = LocalDateTime.now().minusMinutes(30), // Началась 30 минут назад
+                    endTime = LocalDateTime.now().plusMinutes(60), // Закончится через 60 минут
                     room = "А-15 (В-78)",
                     teacher = "Иванов Петр Сергеевич",
                     groups = listOf("ИКБО-60-23"),
@@ -176,17 +226,17 @@ fun ScheduleItemPreviewLightLecture() {
     }
 }
 
-@Preview(showBackground = true, name = "Light Theme - Practice")
+@Preview(showBackground = true, name = "Light Theme - Not Started")
 @Composable
-fun ScheduleItemPreviewLightPractice() {
+fun ScheduleItemPreviewNotStarted() {
     MaterialTheme(colorScheme = lightColorScheme()) {
         Surface {
             ScheduleListItem(
                 scheduleItem = ScheduleItem(
                     discipline = "Программирование",
-                    lessonType = "PR", // Практика - синий кружок
-                    startTime = LocalDateTime.of(2025, 9, 6, 11, 0),
-                    endTime = LocalDateTime.of(2025, 9, 6, 12, 30),
+                    lessonType = "PR",
+                    startTime = LocalDateTime.now().plusMinutes(30), // Начнется через 30 минут
+                    endTime = LocalDateTime.now().plusMinutes(120),
                     room = "Б-24 (В-78)",
                     teacher = "Сидорова Мария Ивановна",
                     groups = listOf("ИКБО-60-23"),
@@ -201,47 +251,47 @@ fun ScheduleItemPreviewLightPractice() {
     }
 }
 
-@Preview(showBackground = true, name = "Dark Theme - Lecture")
+@Preview(showBackground = true, name = "Light Theme - Finished")
 @Composable
-fun ScheduleItemPreviewDarkLecture() {
+fun ScheduleItemPreviewFinished() {
+    MaterialTheme(colorScheme = lightColorScheme()) {
+        Surface {
+            ScheduleListItem(
+                scheduleItem = ScheduleItem(
+                    discipline = "Математика",
+                    lessonType = "LK",
+                    startTime = LocalDateTime.now().minusMinutes(120), // Началась 2 часа назад
+                    endTime = LocalDateTime.now().minusMinutes(30), // Закончилась 30 минут назад
+                    room = "В-10 (В-78)",
+                    teacher = "Петров Алексей Владимирович",
+                    groups = listOf("ИКБО-60-23"),
+                    groupsSummary = "ИКБО-60-23",
+                    description = "Линейная алгебра",
+                    recurrence = null,
+                    exceptions = emptyList()
+                ),
+                onItemClick = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Dark Theme - Active Lesson")
+@Composable
+fun ScheduleItemPreviewDarkActive() {
     MaterialTheme(colorScheme = darkColorScheme()) {
         Surface {
             ScheduleListItem(
                 scheduleItem = ScheduleItem(
                     discipline = "Разработка баз данных",
                     lessonType = "LECTURE",
-                    startTime = LocalDateTime.of(2025, 9, 6, 9, 0),
-                    endTime = LocalDateTime.of(2025, 9, 6, 10, 30),
+                    startTime = LocalDateTime.now().minusMinutes(30),
+                    endTime = LocalDateTime.now().plusMinutes(60),
                     room = "А-15 (В-78)",
                     teacher = "Иванов Петр Сергеевич",
                     groups = listOf("ИКБО-60-23"),
                     groupsSummary = "ИКБО-60-23",
                     description = "Введение в базы данных",
-                    recurrence = null,
-                    exceptions = emptyList()
-                ),
-                onItemClick = {}
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true, name = "Dark Theme - Practice")
-@Composable
-fun ScheduleItemPreviewDarkPractice() {
-    MaterialTheme(colorScheme = darkColorScheme()) {
-        Surface {
-            ScheduleListItem(
-                scheduleItem = ScheduleItem(
-                    discipline = "Программирование",
-                    lessonType = "PR",
-                    startTime = LocalDateTime.of(2025, 9, 6, 11, 0),
-                    endTime = LocalDateTime.of(2025, 9, 6, 12, 30),
-                    room = "Б-24 (В-78)",
-                    teacher = "Сидорова Мария Ивановна",
-                    groups = listOf("ИКБО-60-23"),
-                    groupsSummary = "ИКБО-60-23",
-                    description = "Практика по Java",
                     recurrence = null,
                     exceptions = emptyList()
                 ),
