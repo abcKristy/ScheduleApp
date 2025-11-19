@@ -50,6 +50,8 @@ dependencies {
 
     implementation("io.coil-kt:coil-compose:2.7.0")
 
+    implementation("me.saket.swipe:swipe:1.0.0")
+
 
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("com.google.accompanist:accompanist-pager:0.28.0")

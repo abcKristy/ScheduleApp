@@ -33,4 +33,9 @@ object SearchHistoryManager {
         _historyList.clear()
         PreferencesManager.saveSearchHistory(context, emptyList())
     }
+
+    fun removeFromHistory(context: Context, query: String) {
+        _historyList.remove(query)
+        PreferencesManager.saveSearchHistory(context, _historyList)
+    }
 }

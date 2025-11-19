@@ -44,10 +44,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.scheduleapp.R
 import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.data.LocalThemeViewModel
 import com.example.scheduleapp.data.SearchHistoryManager
@@ -57,7 +59,10 @@ import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.lightGreen
+import com.example.scheduleapp.ui.theme.pink40
 import kotlinx.coroutines.launch
+import me.saket.swipe.SwipeAction
+import me.saket.swipe.SwipeableActionsBox
 
 @Composable
 fun ScreenSearch() {
@@ -181,15 +186,36 @@ fun ScreenSearch() {
 
                     LazyColumn {
                         items(searchHistory) { historyItem ->
-                            HistoryItem(
-                                query = historyItem,
-                                onClick = {
-                                    AppState.setCurrentGroup(historyItem)
-                                    coroutineScope.launch {
-                                        loadScheduleData(context, historyItem)
-                                    }
-                                }
+                            val deleteAction = SwipeAction(
+                                onSwipe = {
+                                    SearchHistoryManager.removeFromHistory(context, historyItem)
+                                },
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_del),
+                                        contentDescription = "Удалить",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                },
+                                background = pink40
                             )
+
+                            SwipeableActionsBox(
+                                endActions = listOf(deleteAction),
+                                swipeThreshold = 100.dp,
+                                backgroundUntilSwipeThreshold = Color.Transparent
+                            ) {
+                                HistoryItem(
+                                    query = historyItem,
+                                    onClick = {
+                                        AppState.setCurrentGroup(historyItem)
+                                        coroutineScope.launch {
+                                            loadScheduleData(context, historyItem)
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
                 } else {
