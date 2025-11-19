@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,8 +62,8 @@ fun BreakItemList(
             currentTime.isBefore(start) -> 0f
             currentTime.isAfter(end) -> 1f
             else -> {
-                val totalDuration = Duration.between(start, end).toMinutes()
-                val elapsedDuration = Duration.between(start, currentTime).toMinutes()
+                val totalDuration = Duration.between(start, end).seconds.toFloat()
+                val elapsedDuration = Duration.between(start, currentTime).seconds.toFloat()
                 (elapsedDuration.toFloat() / totalDuration.toFloat()).coerceIn(0f, 1f)
             }
         }
@@ -70,10 +71,16 @@ fun BreakItemList(
 
     val durationText = "${breakItem.durationMinutes} минут"
 
-    val progressColor = if (isCompleted) {
-        MaterialTheme.customColors.shiny.copy(0.3f)
+    val gradientColors = if (isCompleted) {
+        listOf(
+            MaterialTheme.customColors.shiny.copy(0.35f),
+            MaterialTheme.customColors.shiny.copy(0.35f)
+        )
     } else {
-        MaterialTheme.customColors.shiny
+        listOf(
+            MaterialTheme.customColors.shiny.copy(0.9f),
+            MaterialTheme.customColors.searchBar.copy(0.8f)
+        )
     }
 
     val baseLineColor = if (isCompleted) {
@@ -123,7 +130,11 @@ fun BreakItemList(
                         .align(Alignment.CenterStart)
                         .clip(RoundedCornerShape(2.dp))
                         .background(
-                            color = progressColor
+                            brush = Brush.horizontalGradient(
+                                colors = gradientColors,
+                                startX = 0f,
+                                endX = Float.POSITIVE_INFINITY
+                            )
                         )
                 )
             }
