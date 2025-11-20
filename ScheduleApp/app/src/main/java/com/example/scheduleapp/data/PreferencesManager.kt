@@ -1,4 +1,3 @@
-// PreferencesManager.kt
 package com.example.scheduleapp.data
 
 import android.content.Context
@@ -13,7 +12,7 @@ object PreferencesManager {
     private const val KEY_USER_GROUP = "user_group"
     private const val KEY_USER_EMAIL = "user_email"
     private const val KEY_USER_AVATAR = "user_avatar"
-    private const val KEY_DARK_THEME = "dark_theme" // Новый ключ для темы
+    private const val KEY_DARK_THEME = "dark_theme"
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -90,7 +89,6 @@ object PreferencesManager {
         return getSharedPreferences(context).getString(KEY_USER_AVATAR, null)
     }
 
-    // Новые методы для сохранения и загрузки темы
     fun saveDarkTheme(context: Context, isDarkTheme: Boolean) {
         getSharedPreferences(context).edit().apply {
             putBoolean(KEY_DARK_THEME, isDarkTheme)

@@ -11,7 +11,7 @@ import java.time.LocalDate
 @TypeConverters(Converters::class)
 data class ScheduleEntity(
     @PrimaryKey
-    val id: String, // group + startTime.toString()
+    val id: String,
     val group: String,
     val discipline: String,
     val lessonType: String,

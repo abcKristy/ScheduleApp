@@ -27,8 +27,6 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun ScheduleDetailScreen(onNavigateBack: () -> Boolean) {
-    // Временные данные для демонстрации
-    // В реальном приложении здесь нужно получать данные из состояния или параметров навигации
     val scheduleItem = TestSchedule().firstOrNull() ?: ScheduleItem(
         discipline = "Разработка баз данных",
         lessonType = "LECTURE",
@@ -51,7 +49,6 @@ fun ScheduleDetailScreen(onNavigateBack: () -> Boolean) {
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            // Заголовок
             Text(
                 text = scheduleItem.discipline,
                 style = MaterialTheme.typography.headlineMedium,
@@ -62,7 +59,6 @@ fun ScheduleDetailScreen(onNavigateBack: () -> Boolean) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ОСНОВНАЯ ИНФОРМАЦИЯ
             Text(
                 text = "Основная информация",
                 style = MaterialTheme.typography.titleMedium,
@@ -78,7 +74,6 @@ fun ScheduleDetailScreen(onNavigateBack: () -> Boolean) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ВРЕМЯ И ДАТА
             Text(
                 text = "Время и дата",
                 style = MaterialTheme.typography.titleMedium,
@@ -95,7 +90,6 @@ fun ScheduleDetailScreen(onNavigateBack: () -> Boolean) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ГРУППЫ
             Text(
                 text = "Группы",
                 style = MaterialTheme.typography.titleMedium,
@@ -109,7 +103,6 @@ fun ScheduleDetailScreen(onNavigateBack: () -> Boolean) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ
             Text(
                 text = "Дополнительная информация",
                 style = MaterialTheme.typography.titleMedium,
@@ -123,7 +116,6 @@ fun ScheduleDetailScreen(onNavigateBack: () -> Boolean) {
                 value = scheduleItem.description ?: "Описание отсутствует"
             )
 
-            // ИНФОРМАЦИЯ О ПОВТОРЕНИИ
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Повторение",

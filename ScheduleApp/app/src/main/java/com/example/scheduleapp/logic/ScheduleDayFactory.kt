@@ -1,4 +1,3 @@
-// ScheduleDayFactory.kt
 package com.example.scheduleapp.logic
 
 import com.example.scheduleapp.data.*
@@ -29,13 +28,10 @@ object ScheduleDayFactory {
     )
 
     fun createScheduleDay(date: LocalDate, scheduleItems: List<ScheduleItem>): ScheduleDay {
-        // Сортируем пары по времени начала
         val sortedItems = scheduleItems.sortedBy { it.startTime.toLocalTime() }
 
-        // Создаем мапу для быстрого доступа к паре по номеру
         val lessonMap = mutableMapOf<Int, ScheduleItem>()
 
-        // Распределяем пары по слотам
         sortedItems.forEach { item ->
             val lessonNumber = findLessonNumber(item.startTime.toLocalTime())
             if (lessonNumber != null) {
@@ -43,14 +39,12 @@ object ScheduleDayFactory {
             }
         }
 
-        // Заполняем пустыми парами отсутствующие слоты
         for (lessonNumber in 1..7) {
             if (!lessonMap.containsKey(lessonNumber)) {
                 lessonMap[lessonNumber] = EmptySchedule.createEmptyItem(lessonNumber, date)
             }
         }
 
-        // Создаем перемены
         val breakMap = breakTimes.associateBy { it.number }
 
         return ScheduleDay(
@@ -74,8 +68,6 @@ object ScheduleDayFactory {
     private fun findLessonNumber(startTime: LocalTime): Int? {
         return lessonTimes.find { it.startTime == startTime }?.number
     }
-
-    // Вспомогательные data class для временных слотов
     private data class LessonTimeSlot(
         val number: Int,
         val startTime: LocalTime,

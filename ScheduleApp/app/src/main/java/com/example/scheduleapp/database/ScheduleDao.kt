@@ -16,7 +16,7 @@ interface ScheduleDao {
 
     @Query("SELECT COUNT(*) FROM schedule_items WHERE `group` = :group")
     suspend fun hasCachedSchedule(group: String): Int
-    // ДОБАВИТЬ: метод для отладки
+
     @Query("SELECT * FROM schedule_items")
     suspend fun getAllScheduleItems(): List<ScheduleEntity>
 }

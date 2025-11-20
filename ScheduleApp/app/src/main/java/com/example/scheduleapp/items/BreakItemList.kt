@@ -96,7 +96,7 @@ fun BreakItemList(
             .padding(horizontal = 16.dp, vertical = 2.dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.customColors.bg1.copy(0.9f) // Фон карточки всегда одинаковый
+            containerColor = MaterialTheme.customColors.bg1.copy(0.9f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -158,7 +158,6 @@ fun BreakItemList(
 fun BreakItemListPreview() {
     MaterialTheme {
         Column {
-            // Большая перемена (30 минут) - в процессе
             BreakItemList(
                 breakItem = BreakItem(
                     startTime = LocalTime.now().minusMinutes(10), // началась 10 минут назад
@@ -168,7 +167,6 @@ fun BreakItemListPreview() {
                 )
             )
 
-            // Маленькая перемена (10 минут) - еще не началась
             BreakItemList(
                 breakItem = BreakItem(
                     startTime = LocalTime.now().plusMinutes(5), // начнется через 5 минут
@@ -178,7 +176,6 @@ fun BreakItemListPreview() {
                 )
             )
 
-            // Большая перемена (30 минут) - завершена
             BreakItemList(
                 breakItem = BreakItem(
                     startTime = LocalTime.now().minusMinutes(40), // началась 40 минут назад

@@ -1,4 +1,3 @@
-// ThemeViewModel.kt
 package com.example.scheduleapp.data
 
 import android.content.Context
@@ -15,7 +14,6 @@ class ThemeViewModel : ViewModel() {
     private val _isDarkTheme = MutableStateFlow(false)
     val isDarkTheme: StateFlow<Boolean> = _isDarkTheme
 
-    // Функция для инициализации темы из SharedPreferences
     fun initializeTheme(context: Context) {
         viewModelScope.launch {
             val savedTheme = PreferencesManager.getDarkTheme(context)
@@ -27,7 +25,6 @@ class ThemeViewModel : ViewModel() {
         viewModelScope.launch {
             val newTheme = !_isDarkTheme.value
             _isDarkTheme.value = newTheme
-            // Сохраняем тему в SharedPreferences
             PreferencesManager.saveDarkTheme(context, newTheme)
         }
     }
@@ -35,7 +32,6 @@ class ThemeViewModel : ViewModel() {
     fun setDarkTheme(context: Context, isDark: Boolean) {
         viewModelScope.launch {
             _isDarkTheme.value = isDark
-            // Сохраняем тему в SharedPreferences
             PreferencesManager.saveDarkTheme(context, isDark)
         }
     }

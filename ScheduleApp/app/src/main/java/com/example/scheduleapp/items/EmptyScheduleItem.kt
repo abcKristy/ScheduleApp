@@ -57,7 +57,7 @@ fun EmptyScheduleItemCompact(
             )
 
             Text(
-                text = "$lessonNumber пара", // Вместо "○ Окно" теперь "1 пара", "2 пара" и т.д.
+                text = "$lessonNumber пара",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)

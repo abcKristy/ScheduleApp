@@ -1,7 +1,5 @@
-// ScreenList.kt (исправленная версия)
 package com.example.scheduleapp.screens.master
 
-import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -42,7 +40,6 @@ import com.example.scheduleapp.items.Calendar
 import com.example.scheduleapp.items.EmptyScheduleItemCompact
 import com.example.scheduleapp.items.ScheduleListItem
 import com.example.scheduleapp.logic.createScheduleDayForDate
-import com.example.scheduleapp.logic.getScheduleItems
 import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
@@ -113,7 +110,6 @@ fun ScreenList(navController: NavController? = null) {
                             }
                         },
                         onSwipeRight = {
-                            // Свайп вправо - предыдущий день от выбранной даты
                             val currentDate = AppState.selectedDate
                             if (currentDate != null) {
                                 val newDate = currentDate.minusDays(1)
@@ -180,11 +176,11 @@ fun SwipeableScheduleList(
                     onHorizontalDrag = { change, dragAmount ->
                         if (!swipeHandled) {
                             when {
-                                dragAmount > 50 -> { // Порог свайпа вправо
+                                dragAmount > 50 -> {
                                     onSwipeRight()
                                     swipeHandled = true
                                 }
-                                dragAmount < -50 -> { // Порог свайпа влево
+                                dragAmount < -50 -> {
                                     onSwipeLeft()
                                     swipeHandled = true
                                 }

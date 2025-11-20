@@ -1,4 +1,3 @@
-// ScheduleFilter.kt
 package com.example.scheduleapp.logic
 
 import com.example.scheduleapp.data.ScheduleDay
@@ -7,15 +6,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.WeekFields
 import java.util.Locale
-
-
-fun isEvenWeek(date: LocalDate): Boolean {
-    val referenceDate = LocalDate.of(2025, 9, 1)
-    val referenceWeek = referenceDate.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear())
-    val currentWeek = date.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear())
-
-    return (currentWeek - referenceWeek) % 2 == 0
-}
 
 fun isDateInRecurrence(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean {
     val recurrence = scheduleItem.recurrence ?: return false
@@ -75,14 +65,6 @@ fun shouldShowOnDate(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean
         // Для занятий без правила повторения - только оригинальная дата
         false
     }
-}
-
-fun filterScheduleByDate(scheduleItems: List<ScheduleItem>, selectedDate: LocalDate?): List<ScheduleItem> {
-    if (selectedDate == null) return emptyList()
-
-    return scheduleItems.filter { scheduleItem ->
-        shouldShowOnDate(scheduleItem, selectedDate)
-    }.sortedBy { it.startTime }
 }
 
 fun createScheduleDayForDate(scheduleItems: List<ScheduleItem>, targetDate: LocalDate): ScheduleDay {

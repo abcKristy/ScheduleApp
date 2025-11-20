@@ -130,7 +130,6 @@ fun AvatarPickerDialog(
                     }
                 }
 
-                // Gallery button
                 OutlinedButton(
                     onClick = onGallerySelected,
                     colors = ButtonDefaults.outlinedButtonColors(

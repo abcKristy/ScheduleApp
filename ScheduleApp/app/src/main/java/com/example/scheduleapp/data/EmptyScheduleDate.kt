@@ -5,7 +5,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 object EmptySchedule {
-    // Функция для создания пустой пары по номеру
     fun createEmptyItem(lessonNumber: Int, date: LocalDate): ScheduleItem {
         val (startTime, endTime) = getTimeByLessonNumber(lessonNumber)
         val startDateTime = LocalDateTime.of(date, startTime)
@@ -39,7 +38,6 @@ object EmptySchedule {
         }
     }
 
-    // Получить номер пары по времени начала
     fun getLessonNumber(scheduleItem: ScheduleItem): Int {
         val startTime = scheduleItem.startTime.toLocalTime()
         return when (startTime) {
@@ -54,7 +52,6 @@ object EmptySchedule {
         }
     }
 
-    // Проверка, является ли пара пустой
     fun isEmpty(scheduleItem: ScheduleItem): Boolean {
         return scheduleItem.lessonType == "EMPTY"
     }

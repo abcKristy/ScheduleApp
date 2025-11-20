@@ -34,14 +34,6 @@ import com.example.scheduleapp.ui.theme.whiteGray
 fun BottomNav(
     navController: NavController
 ) {
-    val themeViewModel = LocalThemeViewModel.current
-
-    val isDarkTheme = if (themeViewModel != null) {
-        val themeState by themeViewModel.isDarkTheme.collectAsState()
-        themeState
-    } else {
-        false
-    }
 
     val customColors = MaterialTheme.customColors
 

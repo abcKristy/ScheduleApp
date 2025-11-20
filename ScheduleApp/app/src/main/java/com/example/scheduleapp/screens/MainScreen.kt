@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
-import com.example.scheduleapp.data.ThemeViewModel
 import com.example.scheduleapp.navigation.MainNavGraph
 import com.example.scheduleapp.navigation.bottom_navigation.BottomNav
 import com.example.scheduleapp.navigation.NavigationRoute

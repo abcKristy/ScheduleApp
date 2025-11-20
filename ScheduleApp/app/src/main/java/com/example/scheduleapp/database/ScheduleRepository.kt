@@ -22,7 +22,6 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         dao.insertScheduleItems(entities)
         Log.d("REPOSITORY", "Successfully cached items for group: $group")
 
-        // Логируем ID для отладки
         entities.forEachIndexed { index, entity ->
             Log.d("REPOSITORY", "Cached item $index: ${entity.id}")
         }
@@ -65,7 +64,7 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
 
     private fun ScheduleItem.toScheduleEntity(group: String): ScheduleEntity {
         return ScheduleEntity(
-            id = "${group}_${startTime}_${discipline}", // Уникальный ID
+            id = "${group}_${startTime}_${discipline}",
             group = group,
             discipline = discipline,
             lessonType = lessonType,

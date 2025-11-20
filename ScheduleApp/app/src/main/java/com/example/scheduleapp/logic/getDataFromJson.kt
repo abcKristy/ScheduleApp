@@ -19,7 +19,6 @@ import java.time.format.DateTimeFormatter
 private val dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
-// Data classes для парсинга JSON
 data class ScheduleItemResponse(
     val discipline: String,
     val lessonType: String,
@@ -40,9 +39,6 @@ data class RecurrenceRuleResponse(
     val until: String? = null
 )
 
-data class GroupsResponse(
-    val groups: List<String>
-)
 
 interface ScheduleApiService {
     @GET("schedule/final/{group}")
@@ -62,7 +58,6 @@ private fun createApiService(): ScheduleApiService {
     return retrofit.create(ScheduleApiService::class.java)
 }
 
-// Функции преобразования из Response в Domain модель
 fun parseScheduleFromResponse(response: List<ScheduleItemResponse>): List<ScheduleItem> {
     return response.map { parseScheduleItem(it) }
 }
@@ -87,32 +82,6 @@ fun parseScheduleItem(response: ScheduleItemResponse): ScheduleItem {
         },
         exceptions = response.exceptions?.map { LocalDate.parse(it, dateFormatter) } ?: emptyList()
     )
-}
-
-suspend fun getScheduleItems(
-    group: String,
-    onSuccess: (List<ScheduleItem>) -> Unit,
-    onError: (String) -> Unit
-) {
-    try {
-        Log.d("API_DEBUG", "Fetching schedule for group: $group")
-        val apiService = createApiService()
-        val response = apiService.getSchedule(group)
-
-        Log.d("API_DEBUG", "Received ${response.size} items")
-        val scheduleItems = parseScheduleFromResponse(response)
-        Log.d("API_DEBUG", "Parsed ${scheduleItems.size} items")
-
-        scheduleItems.forEachIndexed { index, item ->
-            Log.d("API_DEBUG", "Item $index: ${item.discipline}, recurrence: ${item.recurrence}, exceptions: ${item.exceptions.size}")
-        }
-
-        onSuccess(scheduleItems)
-
-    } catch (e: Exception) {
-        Log.e("API_ERROR", "Error: ${e.message}", e)
-        onError("Ошибка: ${e.message}")
-    }
 }
 
 suspend fun getScheduleItemsWithCache(

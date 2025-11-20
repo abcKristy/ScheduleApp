@@ -85,10 +85,8 @@ fun UserSettingsScreen(
     val context = LocalContext.current
     val imagePickerManager = rememberImagePickerManager()
 
-    // Объявляем tempFile здесь
     var tempFile by remember { mutableStateOf<File?>(null) }
 
-    // Лаунчер для галереи
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -99,7 +97,6 @@ fun UserSettingsScreen(
         showAvatarPicker = false
     }
 
-    // Лаунчер для камеры
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
@@ -111,7 +108,6 @@ fun UserSettingsScreen(
         showAvatarPicker = false
     }
 
-    // Функция для проверки разрешения камеры
     fun checkCameraPermission(): Boolean {
         return androidx.core.content.ContextCompat.checkSelfPermission(
             context,
@@ -123,12 +119,10 @@ fun UserSettingsScreen(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            // Разрешение получено - запускаем камеру
             val file = imagePickerManager.createImageFile()
             tempFile = file
             cameraLauncher.launch(Uri.fromFile(file))
         } else {
-            // Разрешение отклонено - показываем сообщение
             showCameraPermissionDialog = true
         }
     }
@@ -204,7 +198,6 @@ fun UserSettingsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     if (currentAvatar != null) {
-                        // Показываем выбранное фото
                         Image(
                             painter = rememberImagePainter(
                                 ImageRequest.Builder(LocalContext.current)
@@ -218,7 +211,6 @@ fun UserSettingsScreen(
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        // Показываем иконку по умолчанию
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = "User Icon",
@@ -228,7 +220,6 @@ fun UserSettingsScreen(
                     }
                 }
 
-                // Кнопка смены аватара
                 Row(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
@@ -263,7 +254,6 @@ fun UserSettingsScreen(
                         onClick = {  showNameDialog = true  }
                     )
 
-                    // Смена группы
                     SettingItem(
                         icon = Icons.Default.DateRange,
                         title = "Группа",
@@ -271,7 +261,6 @@ fun UserSettingsScreen(
                         onClick = {showGroupDialog = true }
                     )
 
-                    // Смена почты
                     SettingItem(
                         icon = Icons.Default.Email,
                         title = "Почта",
@@ -287,16 +276,13 @@ fun UserSettingsScreen(
                 onDismiss = { showAvatarPicker = false },
                 onCameraSelected = {
                     if (checkCameraPermission()) {
-                        // Разрешение уже есть - запускаем камеру
                         val file = imagePickerManager.createImageFile()
                         tempFile = file
 
-                        // Используем FileProvider для получения URI
                         val photoUri = imagePickerManager.getUriForFile(file)
 
                         cameraLauncher.launch(photoUri)
                     } else {
-                        // Запрашиваем разрешение
                         cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
                     }
                 },
@@ -435,7 +421,6 @@ fun saveImageFromUri(context: Context, uri: Uri): String {
         }
     } catch (e: Exception) {
         e.printStackTrace()
-        // В случае ошибки создаем пустой файл
         file.createNewFile()
     }
 

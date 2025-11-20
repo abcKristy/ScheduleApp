@@ -1,4 +1,3 @@
-// AppState.kt
 package com.example.scheduleapp.data
 
 import android.annotation.SuppressLint
@@ -16,7 +15,6 @@ object AppState {
     val selectedDate: LocalDate? get() = _selectedDate
     fun setSelectedDate(date: LocalDate?) { _selectedDate = date }
 
-    // Группа для отображения расписания - при запуске берется из userGroup
     private var _currentGroup by mutableStateOf<String>("")
     val currentGroup: String get() = _currentGroup
     fun setCurrentGroup(group: String) {
@@ -25,8 +23,6 @@ object AppState {
             PreferencesManager.saveCurrentGroup(it, group)
         }
     }
-
-    // Группа пользователя в профиле
     private var _userGroup by mutableStateOf<String>("не задано")
     val userGroup: String get() = _userGroup
     fun setUserGroup(group: String) {
@@ -59,7 +55,6 @@ object AppState {
     }
 
     private fun loadSavedData(context: Context) {
-        // Сначала загружаем пользовательские данные
         _userName = PreferencesManager.getUserName(context)
         _userGroup = PreferencesManager.getUserGroup(context)
         _userEmail = PreferencesManager.getUserEmail(context)
@@ -105,7 +100,4 @@ object AppState {
     val errorMessage: String? get() = _errorMessage
     fun setErrorMessage(message: String?) { _errorMessage = message }
 
-    fun isTestData(): Boolean {
-        return _scheduleItems == TestSchedule()
-    }
 }

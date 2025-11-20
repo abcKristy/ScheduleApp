@@ -26,7 +26,7 @@ class ImagePickerManager(private val context: Context) {
     fun getUriForFile(file: File): Uri {
         return FileProvider.getUriForFile(
             context,
-            "com.example.scheduleapp.fileprovider", // Должно совпадать с authorities в манифесте
+            "com.example.scheduleapp.fileprovider",
             file
         )
     }

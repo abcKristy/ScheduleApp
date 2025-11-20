@@ -1,4 +1,3 @@
-// MainActivity.kt
 package com.example.scheduleapp
 
 import android.os.Bundle

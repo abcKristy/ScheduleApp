@@ -38,10 +38,8 @@ import com.example.scheduleapp.ui.theme.GothicR
 fun WelcomeScreen(
     onNavigateToMain: () -> Unit
 ) {
-    // Получаем themeViewModel через CompositionLocal
     val themeViewModel = LocalThemeViewModel.current
 
-    // Используем тему из ViewModel
     val isDarkTheme = if (themeViewModel != null) {
         val themeState by themeViewModel.isDarkTheme.collectAsState()
         themeState

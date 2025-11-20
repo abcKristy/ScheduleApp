@@ -1,9 +1,7 @@
 package com.example.scheduleapp.screens.master
 
 import android.content.res.Configuration
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -27,7 +25,6 @@ import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.ModalDrawer
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
@@ -57,24 +54,19 @@ import com.example.scheduleapp.R
 import com.example.scheduleapp.data.AppState
 import com.example.scheduleapp.data.LocalThemeViewModel
 import com.example.scheduleapp.data.SearchHistoryManager
-import com.example.scheduleapp.data.ThemeViewModel
-import com.example.scheduleapp.logic.getScheduleItems
 import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.lightGreen
-import com.example.scheduleapp.ui.theme.pink40
 import kotlinx.coroutines.launch
 import me.saket.swipe.SwipeAction
 import me.saket.swipe.SwipeableActionsBox
 
 @Composable
 fun ScreenSearch() {
-    // Получаем themeViewModel через CompositionLocal
     val themeViewModel = LocalThemeViewModel.current
 
-    // Используем тему из ViewModel, если он передан, иначе системную тему
     val isDarkTheme = if (themeViewModel != null) {
         val themeState by themeViewModel.isDarkTheme.collectAsState()
         themeState
@@ -89,7 +81,6 @@ fun ScreenSearch() {
         val searchHistory = SearchHistoryManager.historyList
         val coroutineScope = rememberCoroutineScope()
 
-        // Принудительно обновляем currentGroup из userGroup при входе на экран
         LaunchedEffect(Unit) {
             val userGroup = AppState.userGroup
             AppState.repository?.getAllCachedGroups()
@@ -180,7 +171,6 @@ fun ScreenSearch() {
                     )
                 }
 
-                // История поиска
                 if (searchHistory.isNotEmpty()) {
                     Text(
                         text = "Последние запросы:",
@@ -266,7 +256,6 @@ fun ScreenSearch() {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HistoryItem(query: String, onClick: () -> Unit) {
-    // Для HistoryItem используем текущую тему из MaterialTheme
     val customColors = MaterialTheme.customColors
 
     Card(
@@ -338,19 +327,16 @@ private suspend fun loadScheduleData(context: android.content.Context, group: St
     AppState.setLoading(true)
     AppState.setErrorMessage(null)
 
-    // ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ С КЭШИРОВАНИЕМ
     getScheduleItemsWithCache(
         group = group,
         repository = AppState.repository,
         onSuccess = { items ->
             AppState.setLoading(false)
             if (items.isNotEmpty()) {
-                // Группа найдена - сохраняем данные и добавляем в историю поиска
                 AppState.setScheduleItems(items)
                 SearchHistoryManager.addToHistory(context, group)
                 Log.d("SCREEN_SEARCH", "Successfully loaded schedule for group: $group")
             } else {
-                // Группа не найдена - показываем тост
                 showToast(context, "Группа '$group' не найдена")
                 AppState.setCurrentGroup("")
                 Log.d("SCREEN_SEARCH", "No schedule found for group: $group")
@@ -360,7 +346,6 @@ private suspend fun loadScheduleData(context: android.content.Context, group: St
             AppState.setLoading(false)
             AppState.setErrorMessage(error)
 
-            // Показываем более информативное сообщение
             val errorMessage = if (error.contains("Нет данных в кэше")) {
                 "Сервер недоступен и нет сохраненных данных для группы '$group'"
             } else {
@@ -473,7 +458,6 @@ fun ScreenSearchWithHistoryDayPreview() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Текущая группа
                 Text(
                     text = "Текущая группа: ИКБО-11-23",
                     modifier = Modifier.padding(bottom = 16.dp),
@@ -482,7 +466,6 @@ fun ScreenSearchWithHistoryDayPreview() {
                     fontSize = 20.sp
                 )
 
-                // История поиска
                 Text(
                     text = "Последние запросы:",
                     modifier = Modifier.padding(bottom = 8.dp),
@@ -502,14 +485,12 @@ fun ScreenSearchWithHistoryDayPreview() {
     }
 }
 
-// Превью с историей (ночная тема)
 @Preview(
     name = "С историей - Ночь",
     uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
 fun ScreenSearchWithHistoryNightPreview() {
-    // Временно добавляем тестовые данные в историю для превью
     val testHistory = listOf(
         "ИКБО-11-23",
         "ИКБО-12-23",
@@ -581,7 +562,6 @@ fun ScreenSearchWithHistoryNightPreview() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Текущая группа
                 Text(
                     text = "Текущая группа: ИКБО-11-23",
                     modifier = Modifier.padding(bottom = 16.dp),
@@ -590,7 +570,6 @@ fun ScreenSearchWithHistoryNightPreview() {
                     fontSize = 20.sp
                 )
 
-                // История поиска
                 Text(
                     text = "Последние запросы:",
                     modifier = Modifier.padding(bottom = 8.dp),
