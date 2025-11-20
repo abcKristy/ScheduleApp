@@ -63,14 +63,16 @@ fun ScreenList(navController: NavController? = null) {
 
         getScheduleItemsWithCache(
             group = currentGroup,
+            repository = AppState.repository,
             onSuccess = { items ->
                 AppState.setScheduleItems(items)
                 AppState.setLoading(false)
+                AppState.setErrorMessage(null)
             },
             onError = { error ->
                 AppState.setErrorMessage(error)
                 AppState.setScheduleItems(TestSchedule())
-                AppState.setLoading(false)
+                AppState.setScheduleItems(TestSchedule())
             }
         )
     }
@@ -104,7 +106,6 @@ fun ScreenList(navController: NavController? = null) {
                         filteredSchedule = filteredSchedule,
                         navController = navController,
                         onSwipeLeft = {
-                            // Свайп влево - следующий день от выбранной даты
                             val currentDate = AppState.selectedDate
                             if (currentDate != null) {
                                 val newDate = currentDate.plusDays(1)
@@ -141,10 +142,16 @@ fun ScreenList(navController: NavController? = null) {
                     )
                 }
 
-                if (errorMessage != null) {
+                if (errorMessage != null && scheduleItems == TestSchedule()) {
                     Text(
                         text = "Используются тестовые данные: $errorMessage",
                         color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                } else if (errorMessage != null) {
+                    Text(
+                        text = "Информация: $errorMessage",
+                        color = Color.Gray,
                         modifier = Modifier.padding(16.dp)
                     )
                 }

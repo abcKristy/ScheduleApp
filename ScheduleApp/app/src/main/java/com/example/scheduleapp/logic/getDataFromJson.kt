@@ -122,34 +122,21 @@ suspend fun getScheduleItemsWithCache(
     onError: (String) -> Unit
 ) {
     try {
-        // Сначала проверяем локальную базу
+        // 1. СНАЧАЛА проверяем локальную базу
         if (repository != null && repository.hasCachedSchedule(group)) {
             Log.d("SCHEDULE_CACHE", "Loading schedule from database for group: $group")
             val cachedItems = repository.getSchedule(group)
             onSuccess(cachedItems)
-
-            // ДОПОЛНИТЕЛЬНО: обновляем данные с сервера в фоне
-            try {
-                val apiService = createApiService()
-                val response = apiService.getSchedule(group)
-                val scheduleItems = parseScheduleFromResponse(response)
-                if (scheduleItems.isNotEmpty()) {
-                    repository.cacheScheduleItems(group, scheduleItems)
-                    Log.d("SCHEDULE_CACHE", "Background update for group: $group")
-                }
-            } catch (e: Exception) {
-                Log.d("SCHEDULE_CACHE", "Background update failed, using cached data")
-            }
             return
         }
 
-        // Если нет в базе, загружаем с сервера
-        Log.d("SCHEDULE_CACHE", "Loading schedule from server for group: $group")
+        // 2. ПОТОМ загружаем с сервера (только если нет в БД)
+        Log.d("SCHEDULE_CACHE", "No cache found, loading from server for group: $group")
         val apiService = createApiService()
         val response = apiService.getSchedule(group)
         val scheduleItems = parseScheduleFromResponse(response)
 
-        // Сохраняем в базу данных (накапливаем)
+        // Сохраняем в базу данных
         if (repository != null && scheduleItems.isNotEmpty()) {
             repository.cacheScheduleItems(group, scheduleItems)
             Log.d("SCHEDULE_CACHE", "Saved ${scheduleItems.size} items to database")
@@ -160,15 +147,15 @@ suspend fun getScheduleItemsWithCache(
     } catch (e: Exception) {
         Log.e("API_ERROR", "Error: ${e.message}", e)
 
-        // Пробуем загрузить из базы данных даже при ошибке сети
+        // 3. В САМОМ ХУДШЕМ СЛУЧАЕ - проверяем еще раз БД на случай race condition
         if (repository != null && repository.hasCachedSchedule(group)) {
             Log.d("SCHEDULE_CACHE", "Server failed, using database cache for group: $group")
             val cachedItems = repository.getSchedule(group)
             onSuccess(cachedItems)
         } else {
-            // Если нет в БД и сервер недоступен
+            // Нет ни в БД, ни доступа к серверу - передаем ошибку
             Log.e("SCHEDULE_CACHE", "No cached data for group: $group and server unavailable")
-            onError("Ошибка: ${e.message}. Нет данных в кэше.")
+            onError("Сервер недоступен и нет сохраненных данных для группы '$group'")
         }
     }
 }

@@ -104,4 +104,8 @@ object AppState {
     private var _errorMessage by mutableStateOf<String?>(null)
     val errorMessage: String? get() = _errorMessage
     fun setErrorMessage(message: String?) { _errorMessage = message }
+
+    fun isTestData(): Boolean {
+        return _scheduleItems == TestSchedule()
+    }
 }
