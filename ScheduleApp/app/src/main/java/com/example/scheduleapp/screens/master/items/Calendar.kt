@@ -1,15 +1,12 @@
-package com.example.scheduleapp.items
+package com.example.scheduleapp.screens.master.items
 
 import android.content.res.Configuration
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -22,19 +19,13 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
@@ -58,22 +48,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scheduleapp.R
-import com.example.scheduleapp.data.AppState
-import com.example.scheduleapp.screens.master.ScreenProfile
+import com.example.scheduleapp.data.state.AppState
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
-import com.example.scheduleapp.ui.theme.black
 import com.example.scheduleapp.ui.theme.customColors
-import com.example.scheduleapp.ui.theme.darkBlue
-import com.example.scheduleapp.ui.theme.darkGray
-import com.example.scheduleapp.ui.theme.deepGreen
-import com.example.scheduleapp.ui.theme.gray
-import com.example.scheduleapp.ui.theme.lightBlue
-import com.example.scheduleapp.ui.theme.lightGray
-import com.example.scheduleapp.ui.theme.white
-import com.example.scheduleapp.ui.theme.whiteGray
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 enum class CalendarView {
@@ -447,7 +429,7 @@ fun WeekViewContent(
 }
 
 private fun getWeekDays(startDate: LocalDate): List<LocalDate> {
-    val startOfWeek = startDate.with(java.time.DayOfWeek.MONDAY)
+    val startOfWeek = startDate.with(DayOfWeek.MONDAY)
     return (0..6).map { startOfWeek.plusDays(it.toLong()) }
 }
 
@@ -565,7 +547,7 @@ private fun getAcademicWeekNumber(selectedDate: LocalDate?): Int {
     }
 
     // Вычисляем разницу в неделях
-    val weeksBetween = java.time.temporal.ChronoUnit.WEEKS.between(
+    val weeksBetween = ChronoUnit.WEEKS.between(
         semesterStart,
         selectedDate
     )
@@ -585,7 +567,7 @@ private fun getAcademicWeekNumber(selectedDate: LocalDate?): Int {
     return maxOf(1, weekNumber)
 }
 private fun getWeekDisplayText(startDate: LocalDate, selectedDate: LocalDate?): String {
-    val startOfWeek = startDate.with(java.time.DayOfWeek.MONDAY)
+    val startOfWeek = startDate.with(DayOfWeek.MONDAY)
     val endOfWeek = startOfWeek.plusDays(6)
 
     return if (startOfWeek.month == endOfWeek.month) {

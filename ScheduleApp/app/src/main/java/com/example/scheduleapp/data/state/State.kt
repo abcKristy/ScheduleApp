@@ -1,12 +1,13 @@
-package com.example.scheduleapp.data
+package com.example.scheduleapp.data.state
 
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.scheduleapp.database.ScheduleDatabase
-import com.example.scheduleapp.database.ScheduleRepository
+import com.example.scheduleapp.data.entity.ScheduleItem
+import com.example.scheduleapp.data.database.ScheduleDatabase
+import com.example.scheduleapp.data.database.ScheduleRepository
 import java.time.LocalDate
 
 @SuppressLint("StaticFieldLeak")

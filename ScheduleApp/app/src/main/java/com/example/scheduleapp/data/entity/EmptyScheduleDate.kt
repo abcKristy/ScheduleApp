@@ -1,4 +1,4 @@
-package com.example.scheduleapp.data
+package com.example.scheduleapp.data.entity
 
 import java.time.LocalDate
 import java.time.LocalDateTime

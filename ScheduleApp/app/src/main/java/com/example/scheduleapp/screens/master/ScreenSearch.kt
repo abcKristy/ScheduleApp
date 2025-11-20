@@ -51,9 +51,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scheduleapp.R
-import com.example.scheduleapp.data.AppState
-import com.example.scheduleapp.data.LocalThemeViewModel
-import com.example.scheduleapp.data.SearchHistoryManager
+import com.example.scheduleapp.data.state.AppState
+import com.example.scheduleapp.logic.LocalThemeViewModel
+import com.example.scheduleapp.data.state.SearchHistoryManager
 import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue

@@ -1,4 +1,4 @@
-package com.example.scheduleapp.data
+package com.example.scheduleapp.data.entity
 
 import java.time.LocalDateTime
 import java.time.LocalDate
@@ -12,7 +12,14 @@ fun TestSchedule(): List<ScheduleItem> {
             endTime = LocalDateTime.of(2025, 9, 1, 14, 10),
             room = "А-9 (В-78)",
             teacher = "Карамышев Антон Николаевич",
-            groups = listOf("ИКБО-52-23", "ИКБО-62-23", "ИКБО-50-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
+            groups = listOf(
+                "ИКБО-52-23",
+                "ИКБО-62-23",
+                "ИКБО-50-23",
+                "ИКБО-51-23",
+                "ИКБО-61-23",
+                "ИКБО-60-23"
+            ),
             groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
             description = null,
             recurrence = RecurrenceRule(
@@ -46,7 +53,14 @@ fun TestSchedule(): List<ScheduleItem> {
             endTime = LocalDateTime.of(2025, 9, 8, 14, 10),
             room = "А-9 (В-78)",
             teacher = "Семыкина Наталья Александровна",
-            groups = listOf("ИКБО-52-23", "ИКБО-62-23", "ИКБО-50-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
+            groups = listOf(
+                "ИКБО-52-23",
+                "ИКБО-62-23",
+                "ИКБО-50-23",
+                "ИКБО-51-23",
+                "ИКБО-61-23",
+                "ИКБО-60-23"
+            ),
             groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
             description = null,
             recurrence = RecurrenceRule(
@@ -97,7 +111,14 @@ fun TestSchedule(): List<ScheduleItem> {
             endTime = LocalDateTime.of(2025, 9, 5, 10, 30),
             room = "А-18 (В-78)",
             teacher = "Петренко Александр Анатольевич",
-            groups = listOf("ИКБО-52-23", "ИКБО-62-23", "ИКБО-50-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
+            groups = listOf(
+                "ИКБО-52-23",
+                "ИКБО-62-23",
+                "ИКБО-50-23",
+                "ИКБО-51-23",
+                "ИКБО-61-23",
+                "ИКБО-60-23"
+            ),
             groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
             description = null,
             recurrence = RecurrenceRule(
@@ -199,7 +220,14 @@ fun TestSchedule(): List<ScheduleItem> {
             endTime = LocalDateTime.of(2025, 9, 11, 14, 10),
             room = "А-17 (В-78)",
             teacher = "Образцов Владимир Михайлович",
-            groups = listOf("ИКБО-52-23", "ИКБО-62-23", "ИКБО-50-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
+            groups = listOf(
+                "ИКБО-52-23",
+                "ИКБО-62-23",
+                "ИКБО-50-23",
+                "ИКБО-51-23",
+                "ИКБО-61-23",
+                "ИКБО-60-23"
+            ),
             groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
             description = null,
             recurrence = RecurrenceRule(
@@ -464,7 +492,14 @@ fun TestSchedule(): List<ScheduleItem> {
             endTime = LocalDateTime.of(2025, 9, 5, 12, 10),
             room = "А-16 (В-78)",
             teacher = "Заботкина Екатерина Михайловна",
-            groups = listOf("ИКБО-52-23", "ИКБО-62-23", "ИКБО-50-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
+            groups = listOf(
+                "ИКБО-52-23",
+                "ИКБО-62-23",
+                "ИКБО-50-23",
+                "ИКБО-51-23",
+                "ИКБО-61-23",
+                "ИКБО-60-23"
+            ),
             groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
             description = null,
             recurrence = RecurrenceRule(
@@ -498,7 +533,14 @@ fun TestSchedule(): List<ScheduleItem> {
             endTime = LocalDateTime.of(2025, 9, 12, 10, 30),
             room = "А-18 (В-78)",
             teacher = "Синицын Анатолий Васильевич",
-            groups = listOf("ИКБО-52-23", "ИКБО-62-23", "ИКБО-50-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
+            groups = listOf(
+                "ИКБО-52-23",
+                "ИКБО-62-23",
+                "ИКБО-50-23",
+                "ИКБО-51-23",
+                "ИКБО-61-23",
+                "ИКБО-60-23"
+            ),
             groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
             description = null,
             recurrence = RecurrenceRule(
@@ -626,7 +668,14 @@ fun TestSchedule(): List<ScheduleItem> {
             endTime = LocalDateTime.of(2025, 9, 12, 12, 10),
             room = "А-16 (В-78)",
             teacher = "Заботкина Екатерина Михайловна",
-            groups = listOf("ИКБО-52-23", "ИКБО-62-23", "ИКБО-50-23", "ИКБО-51-23", "ИКБО-61-23", "ИКБО-60-23"),
+            groups = listOf(
+                "ИКБО-52-23",
+                "ИКБО-62-23",
+                "ИКБО-50-23",
+                "ИКБО-51-23",
+                "ИКБО-61-23",
+                "ИКБО-60-23"
+            ),
             groupsSummary = "ИКБО-50-23, ИКБО-51-23, ИКБО-52-23, ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
             description = null,
             recurrence = RecurrenceRule(

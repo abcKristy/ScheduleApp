@@ -1,9 +1,8 @@
-package com.example.scheduleapp.database
+package com.example.scheduleapp.data.database
 
 import android.util.Log
-import com.example.scheduleapp.data.RecurrenceRule
-import com.example.scheduleapp.data.ScheduleItem
-import kotlin.compareTo
+import com.example.scheduleapp.data.entity.RecurrenceRule
+import com.example.scheduleapp.data.entity.ScheduleItem
 
 class ScheduleRepository(private val database: ScheduleDatabase) {
 

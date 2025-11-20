@@ -1,4 +1,4 @@
-package com.example.scheduleapp.data
+package com.example.scheduleapp.data.state
 
 import android.content.Context
 import androidx.compose.runtime.mutableStateListOf

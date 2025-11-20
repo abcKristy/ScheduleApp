@@ -9,9 +9,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.example.scheduleapp.data.AppState
-import com.example.scheduleapp.data.LocalThemeViewModel
-import com.example.scheduleapp.data.ThemeViewModel
+import com.example.scheduleapp.data.state.AppState
+import com.example.scheduleapp.logic.LocalThemeViewModel
+import com.example.scheduleapp.logic.ThemeViewModel
 import com.example.scheduleapp.screens.MainScreen
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 

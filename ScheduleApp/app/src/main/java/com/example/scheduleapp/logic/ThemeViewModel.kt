@@ -1,9 +1,10 @@
-package com.example.scheduleapp.data
+package com.example.scheduleapp.logic
 
 import android.content.Context
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.scheduleapp.data.state.PreferencesManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

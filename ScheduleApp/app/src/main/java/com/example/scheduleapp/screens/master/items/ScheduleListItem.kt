@@ -1,4 +1,4 @@
-package com.example.scheduleapp.items
+package com.example.scheduleapp.screens.master.items
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,7 +34,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.scheduleapp.data.ScheduleItem
+import com.example.scheduleapp.data.entity.ScheduleItem
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.deepGreen

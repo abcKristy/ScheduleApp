@@ -10,8 +10,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.scheduleapp.screens.profile.LoginScreen
 import com.example.scheduleapp.screens.profile.RegisterScreen
-import com.example.scheduleapp.screens.detail.ScheduleDetailScreen
-import com.example.scheduleapp.screens.detail.UserSettingsScreen
+import com.example.scheduleapp.screens.master.detail.ScheduleDetailScreen
+import com.example.scheduleapp.screens.master.detail.UserSettingsScreen
 import com.example.scheduleapp.screens.master.ScreenList
 import com.example.scheduleapp.screens.master.ScreenProfile
 import com.example.scheduleapp.screens.master.ScreenSearch

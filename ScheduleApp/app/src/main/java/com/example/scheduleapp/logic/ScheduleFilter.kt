@@ -1,11 +1,9 @@
 package com.example.scheduleapp.logic
 
-import com.example.scheduleapp.data.ScheduleDay
-import com.example.scheduleapp.data.ScheduleItem
+import com.example.scheduleapp.data.entity.ScheduleDay
+import com.example.scheduleapp.data.entity.ScheduleDayFactory
+import com.example.scheduleapp.data.entity.ScheduleItem
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.temporal.WeekFields
-import java.util.Locale
 
 fun isDateInRecurrence(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean {
     val recurrence = scheduleItem.recurrence ?: return false

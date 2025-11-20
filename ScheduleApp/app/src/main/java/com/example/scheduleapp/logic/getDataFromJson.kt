@@ -1,12 +1,9 @@
 package com.example.scheduleapp.logic
 
 import android.util.Log
-import com.example.scheduleapp.data.ScheduleItem
-import com.example.scheduleapp.data.RecurrenceRule
-import com.example.scheduleapp.database.ScheduleRepository
-import kotlinx.coroutines.suspendCancellableCoroutine
-import org.json.JSONArray
-import org.json.JSONObject
+import com.example.scheduleapp.data.entity.ScheduleItem
+import com.example.scheduleapp.data.entity.RecurrenceRule
+import com.example.scheduleapp.data.database.ScheduleRepository
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET

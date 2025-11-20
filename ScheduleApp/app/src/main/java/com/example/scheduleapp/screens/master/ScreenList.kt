@@ -30,15 +30,16 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.scheduleapp.data.AppState
-import com.example.scheduleapp.data.DayItem
-import com.example.scheduleapp.data.EmptySchedule
-import com.example.scheduleapp.data.ScheduleDay
-import com.example.scheduleapp.data.TestSchedule
-import com.example.scheduleapp.items.BreakItemList
-import com.example.scheduleapp.items.Calendar
-import com.example.scheduleapp.items.EmptyScheduleItemCompact
-import com.example.scheduleapp.items.ScheduleListItem
+import com.example.scheduleapp.data.state.AppState
+import com.example.scheduleapp.data.entity.DayItem
+import com.example.scheduleapp.data.entity.EmptySchedule
+import com.example.scheduleapp.data.entity.ScheduleDay
+import com.example.scheduleapp.data.entity.TestSchedule
+import com.example.scheduleapp.data.entity.ScheduleItem
+import com.example.scheduleapp.screens.master.items.BreakItemList
+import com.example.scheduleapp.screens.master.items.Calendar
+import com.example.scheduleapp.screens.master.items.EmptyScheduleItemCompact
+import com.example.scheduleapp.screens.master.items.ScheduleListItem
 import com.example.scheduleapp.logic.createScheduleDayForDate
 import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.navigation.NavigationRoute
@@ -220,7 +221,7 @@ fun SwipeableScheduleList(
 @Composable
 fun SwipeableEmptyState(
     selectedDate: LocalDate?,
-    scheduleItems: List<com.example.scheduleapp.data.ScheduleItem>,
+    scheduleItems: List<ScheduleItem>,
     onSwipeLeft: () -> Unit,
     onSwipeRight: () -> Unit
 ) {

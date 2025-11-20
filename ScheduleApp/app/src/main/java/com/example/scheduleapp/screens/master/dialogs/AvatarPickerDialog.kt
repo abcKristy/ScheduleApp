@@ -1,5 +1,6 @@
-package com.example.scheduleapp.screens.dialogs
+package com.example.scheduleapp.screens.master.dialogs
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -14,10 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ModalDrawer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,9 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.scheduleapp.R
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
-import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
-import com.example.scheduleapp.ui.theme.deepGreen
 import com.example.scheduleapp.ui.theme.lightGreen
 import com.example.scheduleapp.ui.theme.white
 
@@ -189,7 +186,7 @@ fun AvatarPickerDialogPreviewLight() {
 @Preview(
     name = "Dark Theme",
     showBackground = true,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES
+    uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
 fun AvatarPickerDialogPreviewDark() {
@@ -233,7 +230,7 @@ fun AvatarPickerDialogPreviewLightWithBackground() {
 @Preview(
     name = "Dark Theme with Background",
     showBackground = true,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES
+    uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
 fun AvatarPickerDialogPreviewDarkWithBackground() {

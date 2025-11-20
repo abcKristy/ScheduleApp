@@ -1,5 +1,6 @@
-package com.example.scheduleapp.data
+package com.example.scheduleapp.data.entity
 
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -19,7 +20,7 @@ data class ScheduleItem(
 ){
     val duration: String
         get() {
-            val durationMinutes = java.time.Duration.between(startTime,endTime).toMinutes()
+            val durationMinutes = Duration.between(startTime,endTime).toMinutes()
             val hours = durationMinutes/60
             val minutes = durationMinutes%60
             return if (hours>0){

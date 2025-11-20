@@ -33,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,14 +50,12 @@ import androidx.navigation.NavHostController
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.scheduleapp.R
-import com.example.scheduleapp.data.AppState
-import com.example.scheduleapp.data.LocalThemeViewModel
-import com.example.scheduleapp.data.ThemeViewModel
+import com.example.scheduleapp.data.state.AppState
+import com.example.scheduleapp.logic.LocalThemeViewModel
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
-import com.example.scheduleapp.ui.theme.darkBlue
 import com.example.scheduleapp.ui.theme.lightBlue
 import com.example.scheduleapp.ui.theme.lightGray
 import com.example.scheduleapp.ui.theme.lightGreen

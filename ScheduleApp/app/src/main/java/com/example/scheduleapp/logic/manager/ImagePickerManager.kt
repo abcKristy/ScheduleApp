@@ -1,4 +1,4 @@
-package com.example.scheduleapp.logic
+package com.example.scheduleapp.logic.manager
 
 import android.content.Context
 import android.net.Uri
@@ -29,20 +29,6 @@ class ImagePickerManager(private val context: Context) {
             "com.example.scheduleapp.fileprovider",
             file
         )
-    }
-
-    fun getGalleryIntent(): android.content.Intent {
-        return android.content.Intent(android.content.Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
-            type = "image/*"
-        }
-    }
-
-    fun getCameraIntent(outputUri: Uri): android.content.Intent {
-        return android.content.Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
-            putExtra(android.provider.MediaStore.EXTRA_OUTPUT, outputUri)
-            addFlags(android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
     }
 }
 

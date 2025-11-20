@@ -1,6 +1,5 @@
-package com.example.scheduleapp.logic
+package com.example.scheduleapp.data.entity
 
-import com.example.scheduleapp.data.*
 import java.time.LocalDate
 import java.time.LocalTime
 

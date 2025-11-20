@@ -1,6 +1,8 @@
-package com.example.scheduleapp.screens.detail
+package com.example.scheduleapp.screens.master.detail
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -46,18 +48,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
-import com.example.scheduleapp.data.AppState
-import com.example.scheduleapp.logic.rememberImagePickerManager
-import com.example.scheduleapp.screens.dialogs.AvatarPickerDialog
-import com.example.scheduleapp.screens.dialogs.EditDialog
+import com.example.scheduleapp.data.state.AppState
+import com.example.scheduleapp.logic.manager.rememberImagePickerManager
+import com.example.scheduleapp.screens.master.dialogs.AvatarPickerDialog
+import com.example.scheduleapp.screens.master.dialogs.EditDialog
 import com.example.scheduleapp.screens.master.ShinyBottom
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
@@ -109,10 +113,10 @@ fun UserSettingsScreen(
     }
 
     fun checkCameraPermission(): Boolean {
-        return androidx.core.content.ContextCompat.checkSelfPermission(
+        return ContextCompat.checkSelfPermission(
             context,
-            android.Manifest.permission.CAMERA
-        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
@@ -283,7 +287,7 @@ fun UserSettingsScreen(
 
                         cameraLauncher.launch(photoUri)
                     } else {
-                        cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                     }
                 },
                 onGallerySelected = {
@@ -366,7 +370,7 @@ fun UserSettingsScreen(
 
 @Composable
 fun SettingItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     value: String,
     onClick: () -> Unit

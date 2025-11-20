@@ -22,17 +22,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
-import com.example.scheduleapp.ui.theme.black
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
-import com.example.scheduleapp.ui.theme.gray
 import com.example.scheduleapp.ui.theme.lightGreen
 import kotlinx.coroutines.delay
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.example.scheduleapp.data.LocalThemeViewModel
-import com.example.scheduleapp.ui.theme.GothicR
+import com.example.scheduleapp.logic.LocalThemeViewModel
 
 @Composable
 fun WelcomeScreen(

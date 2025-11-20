@@ -1,4 +1,4 @@
-package com.example.scheduleapp.database
+package com.example.scheduleapp.data.database
 
 
 import androidx.room.Entity
