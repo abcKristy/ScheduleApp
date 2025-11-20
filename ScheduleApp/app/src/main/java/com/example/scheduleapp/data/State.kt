@@ -6,6 +6,8 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.example.scheduleapp.database.ScheduleDatabase
+import com.example.scheduleapp.database.ScheduleRepository
 import java.time.LocalDate
 
 @SuppressLint("StaticFieldLeak")
@@ -46,9 +48,13 @@ object AppState {
     }
 
     private var context: Context? = null
+    private var _repository: ScheduleRepository? = null
+    val repository: ScheduleRepository? get() = _repository
 
     fun initialize(context: Context) {
         this.context = context
+        val database = ScheduleDatabase.getInstance(context)
+        _repository = ScheduleRepository(database)
         loadSavedData(context)
     }
 

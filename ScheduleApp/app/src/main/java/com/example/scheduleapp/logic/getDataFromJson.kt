@@ -3,6 +3,7 @@ package com.example.scheduleapp.logic
 import android.util.Log
 import com.example.scheduleapp.data.ScheduleItem
 import com.example.scheduleapp.data.RecurrenceRule
+import com.example.scheduleapp.database.ScheduleRepository
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONArray
 import org.json.JSONObject
@@ -88,7 +89,6 @@ fun parseScheduleItem(response: ScheduleItemResponse): ScheduleItem {
     )
 }
 
-// Основная функция с использованием Retrofit
 suspend fun getScheduleItems(
     group: String,
     onSuccess: (List<ScheduleItem>) -> Unit,
@@ -103,7 +103,6 @@ suspend fun getScheduleItems(
         val scheduleItems = parseScheduleFromResponse(response)
         Log.d("API_DEBUG", "Parsed ${scheduleItems.size} items")
 
-        // Логируем для отладки
         scheduleItems.forEachIndexed { index, item ->
             Log.d("API_DEBUG", "Item $index: ${item.discipline}, recurrence: ${item.recurrence}, exceptions: ${item.exceptions.size}")
         }
@@ -113,5 +112,48 @@ suspend fun getScheduleItems(
     } catch (e: Exception) {
         Log.e("API_ERROR", "Error: ${e.message}", e)
         onError("Ошибка: ${e.message}")
+    }
+}
+
+suspend fun getScheduleItemsWithCache(
+    group: String,
+    repository: ScheduleRepository? = null,
+    onSuccess: (List<ScheduleItem>) -> Unit,
+    onError: (String) -> Unit
+) {
+    try {
+        // Сначала проверяем локальную базу
+        if (repository != null && repository.hasCachedSchedule(group)) {
+            Log.d("SCHEDULE_CACHE", "Loading schedule from database for group: $group")
+            val cachedItems = repository.getSchedule(group)
+            onSuccess(cachedItems)
+            return
+        }
+
+        // Если нет в базе, загружаем с сервера
+        Log.d("SCHEDULE_CACHE", "Loading schedule from server for group: $group")
+        val apiService = createApiService()
+        val response = apiService.getSchedule(group)
+        val scheduleItems = parseScheduleFromResponse(response)
+
+        // Сохраняем в базу данных (накапливаем)
+        if (repository != null && scheduleItems.isNotEmpty()) {
+            repository.cacheScheduleItems(group, scheduleItems)
+            Log.d("SCHEDULE_CACHE", "Saved ${scheduleItems.size} items to database")
+        }
+
+        onSuccess(scheduleItems)
+
+    } catch (e: Exception) {
+        Log.e("API_ERROR", "Error: ${e.message}", e)
+
+        // Пробуем загрузить из базы данных даже при ошибке сети
+        if (repository != null && repository.hasCachedSchedule(group)) {
+            Log.d("SCHEDULE_CACHE", "Server failed, using database cache")
+            val cachedItems = repository.getSchedule(group)
+            onSuccess(cachedItems)
+        } else {
+            onError("Ошибка: ${e.message}")
+        }
     }
 }

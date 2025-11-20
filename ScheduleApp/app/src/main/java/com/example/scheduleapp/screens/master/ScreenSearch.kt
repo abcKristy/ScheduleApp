@@ -58,6 +58,7 @@ import com.example.scheduleapp.data.LocalThemeViewModel
 import com.example.scheduleapp.data.SearchHistoryManager
 import com.example.scheduleapp.data.ThemeViewModel
 import com.example.scheduleapp.logic.getScheduleItems
+import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
@@ -335,16 +336,18 @@ private suspend fun loadScheduleData(context: android.content.Context, group: St
     AppState.setLoading(true)
     AppState.setErrorMessage(null)
 
-    getScheduleItems(
+    // ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ С КЭШИРОВАНИЕМ
+    getScheduleItemsWithCache(
         group = group,
+        repository = AppState.repository, // Передаем репозиторий для работы с БД
         onSuccess = { items ->
             AppState.setLoading(false)
             if (items.isNotEmpty()) {
-                // Группа найдена - сохраняем данные и добавляем в историю
+                // Группа найдена - сохраняем данные и добавляем в историю поиска
                 AppState.setScheduleItems(items)
                 SearchHistoryManager.addToHistory(context, group)
             } else {
-                // Группа не найдена - показываем тост и НЕ добавляем в историю
+                // Группа не найдена - показываем тост
                 showToast(context, "Группа '$group' не найдена")
                 AppState.setCurrentGroup("")
             }
@@ -357,12 +360,10 @@ private suspend fun loadScheduleData(context: android.content.Context, group: St
     )
 }
 
-// Функция для показа тоста
 private fun showToast(context: android.content.Context, message: String) {
     android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
 }
 
-// Превью для пустой истории (дневная тема)
 @Preview(
     name = "Пустая история - День",
     uiMode = Configuration.UI_MODE_NIGHT_NO
@@ -372,7 +373,6 @@ fun ScreenSearchEmptyDayPreview() {
     ScreenSearch()
 }
 
-// Превью для пустой истории (ночная тема)
 @Preview(
     name = "Пустая история - Ночь",
     uiMode = Configuration.UI_MODE_NIGHT_YES
@@ -382,7 +382,6 @@ fun ScreenSearchEmptyNightPreview() {
     ScreenSearch()
 }
 
-// Превью с историей (дневная тема)
 @Preview(
     name = "С историей - День",
     uiMode = Configuration.UI_MODE_NIGHT_NO

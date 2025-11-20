@@ -2,23 +2,15 @@ package com.example.scheduleapp.database
 
 import com.example.scheduleapp.data.RecurrenceRule
 import com.example.scheduleapp.data.ScheduleItem
-
+import kotlin.compareTo
 
 class ScheduleRepository(private val database: ScheduleDatabase) {
 
     private val dao = database.scheduleDao()
 
     suspend fun getSchedule(group: String): List<ScheduleItem> {
-        // Сначала проверяем локальную базу
         val cachedItems = dao.getScheduleByGroup(group)
-
-        return if (cachedItems.isNotEmpty()) {
-            // Конвертируем Entity в Domain модель
-            cachedItems.map { it.toScheduleItem() }
-        } else {
-            // Если нет в кэше, загружаем с сервера
-            emptyList() // Серверная загрузка будет отдельно
-        }
+        return cachedItems.map { it.toScheduleItem() }
     }
 
     suspend fun cacheScheduleItems(group: String, items: List<ScheduleItem>) {
@@ -28,14 +20,6 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
 
     suspend fun hasCachedSchedule(group: String): Boolean {
         return dao.hasCachedSchedule(group) > 0
-    }
-
-    suspend fun getCachedGroups(): List<String> {
-        return dao.getAllCachedGroups()
-    }
-
-    suspend fun clearCacheForGroup(group: String) {
-        dao.deleteScheduleForGroup(group)
     }
 
     private fun ScheduleEntity.toScheduleItem(): ScheduleItem {
@@ -62,7 +46,7 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
 
     private fun ScheduleItem.toScheduleEntity(group: String): ScheduleEntity {
         return ScheduleEntity(
-            id = "${group}_${startTime}",
+            id = "${group}_${startTime}_${discipline}", // Уникальный ID
             group = group,
             discipline = discipline,
             lessonType = lessonType,
