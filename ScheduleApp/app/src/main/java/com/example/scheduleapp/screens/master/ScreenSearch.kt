@@ -2,6 +2,7 @@ package com.example.scheduleapp.screens.master
 
 import android.content.res.Configuration
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -91,6 +92,7 @@ fun ScreenSearch() {
         // Принудительно обновляем currentGroup из userGroup при входе на экран
         LaunchedEffect(Unit) {
             val userGroup = AppState.userGroup
+            AppState.repository?.getAllCachedGroups()
             if (userGroup != "не задано" && userGroup.isNotBlank() && AppState.currentGroup != userGroup) {
                 AppState.setCurrentGroup(userGroup)
             }
@@ -339,23 +341,34 @@ private suspend fun loadScheduleData(context: android.content.Context, group: St
     // ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ С КЭШИРОВАНИЕМ
     getScheduleItemsWithCache(
         group = group,
-        repository = AppState.repository, // Передаем репозиторий для работы с БД
+        repository = AppState.repository,
         onSuccess = { items ->
             AppState.setLoading(false)
             if (items.isNotEmpty()) {
                 // Группа найдена - сохраняем данные и добавляем в историю поиска
                 AppState.setScheduleItems(items)
                 SearchHistoryManager.addToHistory(context, group)
+                Log.d("SCREEN_SEARCH", "Successfully loaded schedule for group: $group")
             } else {
                 // Группа не найдена - показываем тост
                 showToast(context, "Группа '$group' не найдена")
                 AppState.setCurrentGroup("")
+                Log.d("SCREEN_SEARCH", "No schedule found for group: $group")
             }
         },
         onError = { error ->
             AppState.setLoading(false)
             AppState.setErrorMessage(error)
-            showToast(context, "Ошибка поиска: $error")
+
+            // Показываем более информативное сообщение
+            val errorMessage = if (error.contains("Нет данных в кэше")) {
+                "Сервер недоступен и нет сохраненных данных для группы '$group'"
+            } else {
+                "Ошибка поиска: $error"
+            }
+
+            showToast(context, errorMessage)
+            Log.e("SCREEN_SEARCH", "Error loading schedule: $error")
         }
     )
 }

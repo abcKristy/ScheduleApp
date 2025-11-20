@@ -127,6 +127,19 @@ suspend fun getScheduleItemsWithCache(
             Log.d("SCHEDULE_CACHE", "Loading schedule from database for group: $group")
             val cachedItems = repository.getSchedule(group)
             onSuccess(cachedItems)
+
+            // ДОПОЛНИТЕЛЬНО: обновляем данные с сервера в фоне
+            try {
+                val apiService = createApiService()
+                val response = apiService.getSchedule(group)
+                val scheduleItems = parseScheduleFromResponse(response)
+                if (scheduleItems.isNotEmpty()) {
+                    repository.cacheScheduleItems(group, scheduleItems)
+                    Log.d("SCHEDULE_CACHE", "Background update for group: $group")
+                }
+            } catch (e: Exception) {
+                Log.d("SCHEDULE_CACHE", "Background update failed, using cached data")
+            }
             return
         }
 
@@ -149,11 +162,13 @@ suspend fun getScheduleItemsWithCache(
 
         // Пробуем загрузить из базы данных даже при ошибке сети
         if (repository != null && repository.hasCachedSchedule(group)) {
-            Log.d("SCHEDULE_CACHE", "Server failed, using database cache")
+            Log.d("SCHEDULE_CACHE", "Server failed, using database cache for group: $group")
             val cachedItems = repository.getSchedule(group)
             onSuccess(cachedItems)
         } else {
-            onError("Ошибка: ${e.message}")
+            // Если нет в БД и сервер недоступен
+            Log.e("SCHEDULE_CACHE", "No cached data for group: $group and server unavailable")
+            onError("Ошибка: ${e.message}. Нет данных в кэше.")
         }
     }
 }

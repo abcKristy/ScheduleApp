@@ -43,6 +43,7 @@ import com.example.scheduleapp.items.EmptyScheduleItemCompact
 import com.example.scheduleapp.items.ScheduleListItem
 import com.example.scheduleapp.logic.createScheduleDayForDate
 import com.example.scheduleapp.logic.getScheduleItems
+import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
@@ -60,7 +61,7 @@ fun ScreenList(navController: NavController? = null) {
         AppState.setLoading(true)
         AppState.setErrorMessage(null)
 
-        getScheduleItems(
+        getScheduleItemsWithCache(
             group = currentGroup,
             onSuccess = { items ->
                 AppState.setScheduleItems(items)
