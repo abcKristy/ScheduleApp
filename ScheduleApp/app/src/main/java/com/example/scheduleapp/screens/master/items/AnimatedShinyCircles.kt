@@ -47,10 +47,10 @@ fun AnimatedShinyTop(
         val newX = currentX + cos(angle) * distance
         val newY = currentY + sin(angle) * distance
 
-        // Ограничиваем позиции для верхнего круга (больше движения в верхней части)
+        // X: по всей ширине экрана (-400 до 400), Y: только верхняя половина (-400 до 0)
         return Pair(
-            newX.coerceIn(-200f, 400f),
-            newY.coerceIn(-150f, 300f)  // Верхний круг двигается выше
+            newX.coerceIn(-200f, 500f),   // Вся ширина экрана
+            newY.coerceIn(-400f, 0f)      // Только верхняя половина (отрицательные значения)
         )
     }
 
@@ -74,7 +74,6 @@ fun AnimatedShinyBottom(
     initialX: Float,
     initialY: Float
 ) {
-    // Анимированные позиции для нижнего круга
     var targetX by remember { mutableStateOf(initialX) }
     var targetY by remember { mutableStateOf(initialY) }
 
@@ -97,9 +96,10 @@ fun AnimatedShinyBottom(
         val newX = currentX + cos(angle) * distance
         val newY = currentY + sin(angle) * distance
 
+        // X: по всей ширине экрана (-400 до 400), Y: только нижняя половина (0 до 600)
         return Pair(
-            newX.coerceIn(-200f, 400f),
-            newY.coerceIn(400f, 800f)
+            newX.coerceIn(-300f, 200f),   // Вся ширина экрана
+            newY.coerceIn(0f, 400f)       // Только нижняя половина (положительные значения)
         )
     }
 

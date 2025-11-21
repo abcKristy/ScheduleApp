@@ -51,7 +51,7 @@ fun WelcomeScreen(
             modifier = Modifier.fillMaxSize()
                 .background(MaterialTheme.customColors.bg1)
         ) {
-            AnimatedShinyTop(shiny = shiny, initialX = 0f, initialY = 0f)
+            AnimatedShinyTop(shiny = shiny, initialX = -70f, initialY =-40f)
             AnimatedShinyBottom(shiny = lightGreen, initialX = 180f, initialY = 520f)
 
             Text(
