@@ -62,7 +62,8 @@ import com.example.scheduleapp.data.state.AppState
 import com.example.scheduleapp.logic.manager.rememberImagePickerManager
 import com.example.scheduleapp.screens.master.dialogs.AvatarPickerDialog
 import com.example.scheduleapp.screens.master.dialogs.EditDialog
-import com.example.scheduleapp.screens.master.ShinyBottom
+import com.example.scheduleapp.screens.master.items.AnimatedShinyBottom
+import com.example.scheduleapp.screens.master.items.AnimatedShinyTop
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
@@ -138,11 +139,11 @@ fun UserSettingsScreen(
         contentAlignment = Alignment.Center
     ) {
         if (isSystemInDarkTheme()){
-            ShinyBottom(lightGreen,100,-370)
-            ShinyBottom(blue,-190,400)
+            AnimatedShinyTop(lightGreen,100f,-370f)
+            AnimatedShinyBottom(blue,-190f,400f)
         }else{
-            ShinyBottom(blue,120,-370)
-            ShinyBottom(lightGreen,-100,300)
+            AnimatedShinyTop(blue,120f,-370f)
+            AnimatedShinyBottom(lightGreen,-100f,300f)
         }
 
         Box(

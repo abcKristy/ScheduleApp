@@ -8,14 +8,12 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.scheduleapp.screens.profile.LoginScreen
-import com.example.scheduleapp.screens.profile.RegisterScreen
 import com.example.scheduleapp.screens.master.detail.ScheduleDetailScreen
-import com.example.scheduleapp.screens.master.detail.UserSettingsScreen
 import com.example.scheduleapp.screens.master.ScreenList
 import com.example.scheduleapp.screens.master.ScreenProfile
 import com.example.scheduleapp.screens.master.ScreenSearch
 import com.example.scheduleapp.screens.master.WelcomeScreen
+import com.example.scheduleapp.screens.master.detail.UserSettingsScreen
 
 @Composable
 fun MainNavGraph(navController: NavHostController) {
@@ -59,31 +57,6 @@ fun MainNavGraph(navController: NavHostController) {
 
         composable(NavigationRoute.ScheduleDetail.route) {
             ScheduleDetailScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(NavigationRoute.Login.route) {
-            LoginScreen(
-                onLoginSuccess = {
-                    navController.navigate(NavigationRoute.Profile.route) {
-                        popUpTo(NavigationRoute.Welcome.route) { inclusive = true }
-                    }
-                },
-                onNavigateToRegister = {
-                    navController.navigate(NavigationRoute.Register.route)
-                },
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(NavigationRoute.Register.route) {
-            RegisterScreen(
-                onRegisterSuccess = {
-                    navController.navigate(NavigationRoute.Profile.route) {
-                        popUpTo(NavigationRoute.Welcome.route) { inclusive = true }
-                    }
-                },
                 onNavigateBack = { navController.popBackStack() }
             )
         }

@@ -53,6 +53,8 @@ import com.example.scheduleapp.R
 import com.example.scheduleapp.data.state.AppState
 import com.example.scheduleapp.logic.LocalThemeViewModel
 import com.example.scheduleapp.navigation.NavigationRoute
+import com.example.scheduleapp.screens.master.items.AnimatedShinyBottom
+import com.example.scheduleapp.screens.master.items.AnimatedShinyTop
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
@@ -84,12 +86,12 @@ fun ScreenProfile(navController: NavHostController? = null) {
             .background(MaterialTheme.customColors.bg1),
         contentAlignment = Alignment.Center
     ) {
-        if (isSystemInDarkTheme()){
-            ShinyBottom(lightGreen,120,320)
-            ShinyBottom(blue,-190,-400)
-        }else{
-            ShinyBottom(blue,100,300)
-            ShinyBottom(lightGreen,-100,-300)
+        if (isDarkTheme) {
+            AnimatedShinyTop(shiny = lightGreen, initialX = -190f, initialY = -400f)
+            AnimatedShinyBottom(shiny = blue, initialX = 120f, initialY = 320f)
+        } else {
+            AnimatedShinyTop(shiny = lightGreen, initialX = -100f, initialY = -300f)
+            AnimatedShinyBottom(shiny = blue, initialX = 100f, initialY = 300f)
         }
         Box(
             modifier = Modifier

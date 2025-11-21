@@ -3,7 +3,6 @@ package com.example.scheduleapp.screens.master
 import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -42,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -55,6 +53,7 @@ import com.example.scheduleapp.data.state.AppState
 import com.example.scheduleapp.logic.LocalThemeViewModel
 import com.example.scheduleapp.data.state.SearchHistoryManager
 import com.example.scheduleapp.logic.getScheduleItemsWithCache
+import com.example.scheduleapp.screens.master.items.AnimatedShinyBottom
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
@@ -94,9 +93,9 @@ fun ScreenSearch() {
                 .background(customColors.bg2)
         ) {
             if (isDarkTheme) {
-                ShinyBottom(shiny = blue,200,630)
+                AnimatedShinyBottom(shiny = blue,200f,630f)
             } else {
-                ShinyBottom(shiny = lightGreen,180,520)
+                AnimatedShinyBottom(shiny = lightGreen,180f,520f)
             }
 
             Column(
@@ -282,47 +281,6 @@ fun HistoryItem(query: String, onClick: () -> Unit) {
     }
 }
 
-@Composable
-fun ShinyBottom(shiny: Color,x:Int, y:Int){
-    Canvas(
-        modifier = Modifier
-            .size(320.dp)
-            .offset(x = (x).dp, y = (y).dp)
-    ) {
-        val radius = 320.dp.toPx()
-        val colorList = if (shiny == blue) {
-            listOf(
-                shiny,
-                shiny.copy(alpha = 0.95f),
-                shiny.copy(alpha = 0.9f),
-                shiny.copy(alpha = 0.8f),
-                shiny.copy(alpha = 0.65f),
-                shiny.copy(alpha = 0.42f),
-                shiny.copy(alpha = 0.2f),
-                Color.Transparent
-            )
-        } else {
-            listOf(
-                shiny,
-                shiny.copy(alpha = 0.9f),
-                shiny.copy(alpha = 0.8f),
-                shiny.copy(alpha = 0.6f),
-                shiny.copy(alpha = 0.4f),
-                shiny.copy(alpha = 0.3f),
-                shiny.copy(alpha = 0.15f),
-                shiny.copy(alpha = 0.05f),
-                Color.Transparent
-            )
-        }
-        val brush = Brush.radialGradient(
-            colors = colorList,
-            center = center,
-            radius = radius,
-        )
-        drawCircle(brush = brush, radius = radius)
-    }
-}
-
 private suspend fun loadScheduleData(context: android.content.Context, group: String) {
     AppState.setLoading(true)
     AppState.setErrorMessage(null)
@@ -402,7 +360,7 @@ fun ScreenSearchWithHistoryDayPreview() {
                 .fillMaxSize()
                 .background(customColors.bg2)
         ) {
-            ShinyBottom(shiny = lightGreen,180,520)
+            AnimatedShinyBottom(shiny = lightGreen,180f,520f)
 
             Column(
                 modifier = Modifier
@@ -507,7 +465,7 @@ fun ScreenSearchWithHistoryNightPreview() {
                 .fillMaxSize()
                 .background(customColors.bg2)
         ) {
-            ShinyBottom(shiny = blue,200,630)
+            AnimatedShinyBottom(shiny = blue,200f,630f)
 
             Column(
                 modifier = Modifier
