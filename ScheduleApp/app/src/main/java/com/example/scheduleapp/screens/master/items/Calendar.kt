@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,14 +66,20 @@ enum class CalendarView {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Calendar() {
-    var currentMonth by remember { mutableStateOf(YearMonth.now()) }
+fun Calendar(
+    currentMonth: YearMonth,
+    onMonthChange: (YearMonth) -> Unit
+) {
+    var localCurrentMonth by remember { mutableStateOf(currentMonth) }
     var swipeInProgress by remember { mutableStateOf(false) }
     var calendarView by remember { mutableStateOf(CalendarView.WEEK) }
 
     val customColors = MaterialTheme.customColors
-
     val selectedDate = AppState.selectedDate
+
+    LaunchedEffect(currentMonth) {
+        localCurrentMonth = currentMonth
+    }
 
     Box(
         modifier = Modifier
@@ -94,30 +101,44 @@ fun Calendar() {
             }
 
             CalendarHeader(
-                currentMonth = currentMonth,
+                currentMonth = localCurrentMonth,
                 selectedDate = selectedDate,
                 calendarView = calendarView,
                 onPrevious = {
                     when (calendarView) {
-                        CalendarView.MONTH -> currentMonth = currentMonth.minusMonths(1)
+                        CalendarView.MONTH -> {
+                            val newMonth = localCurrentMonth.minusMonths(1)
+                            localCurrentMonth = newMonth
+                            onMonthChange(newMonth)
+                        }
                         CalendarView.WEEK -> {
                             AppState.setSelectedDate(selectedDate?.minusWeeks(1))
-                            currentMonth = YearMonth.from(AppState.selectedDate ?: currentMonth.atDay(1))
+                            val newMonth = YearMonth.from(AppState.selectedDate ?: localCurrentMonth.atDay(1))
+                            localCurrentMonth = newMonth
+                            onMonthChange(newMonth)
                         }
                     }
                 },
                 onNext = {
                     when (calendarView) {
-                        CalendarView.MONTH -> currentMonth = currentMonth.plusMonths(1)
+                        CalendarView.MONTH -> {
+                            val newMonth = localCurrentMonth.plusMonths(1)
+                            localCurrentMonth = newMonth
+                            onMonthChange(newMonth)
+                        }
                         CalendarView.WEEK -> {
                             AppState.setSelectedDate(selectedDate?.plusWeeks(1))
-                            currentMonth = YearMonth.from(AppState.selectedDate ?: currentMonth.atDay(1))
+                            val newMonth = YearMonth.from(AppState.selectedDate ?: localCurrentMonth.atDay(1))
+                            localCurrentMonth = newMonth
+                            onMonthChange(newMonth)
                         }
                     }
                 },
                 onToday = {
-                    currentMonth = YearMonth.now()
-                    AppState.setSelectedDate(LocalDate.now())
+                    val today = LocalDate.now()
+                    localCurrentMonth = YearMonth.now()
+                    onMonthChange(localCurrentMonth)
+                    AppState.setSelectedDate(today)
                 },
                 onViewToggle = {
                     calendarView = when (calendarView) {
@@ -136,21 +157,29 @@ fun Calendar() {
             when (calendarView) {
                 CalendarView.MONTH -> {
                     SwipeableCalendarGrid(
-                        currentMonth = currentMonth,
+                        currentMonth = localCurrentMonth,
                         onDateSelected = { date ->
                             AppState.setSelectedDate(date)
+                            // Обновляем месяц при выборе даты
+                            val newMonth = YearMonth.from(date)
+                            localCurrentMonth = newMonth
+                            onMonthChange(newMonth)
                         },
                         onSwipeLeft = {
                             if (!swipeInProgress) {
                                 swipeInProgress = true
-                                currentMonth = currentMonth.plusMonths(1)
+                                val newMonth = localCurrentMonth.plusMonths(1)
+                                localCurrentMonth = newMonth
+                                onMonthChange(newMonth)
                                 swipeInProgress = false
                             }
                         },
                         onSwipeRight = {
                             if (!swipeInProgress) {
                                 swipeInProgress = true
-                                currentMonth = currentMonth.minusMonths(1)
+                                val newMonth = localCurrentMonth.minusMonths(1)
+                                localCurrentMonth = newMonth
+                                onMonthChange(newMonth)
                                 swipeInProgress = false
                             }
                         }
@@ -158,15 +187,21 @@ fun Calendar() {
                 }
                 CalendarView.WEEK -> {
                     SwipeableWeekView(
-                        currentMonth = currentMonth,
+                        currentMonth = localCurrentMonth,
                         onDateSelected = { date ->
                             AppState.setSelectedDate(date)
+                            // Обновляем месяц при выборе даты
+                            val newMonth = YearMonth.from(date)
+                            localCurrentMonth = newMonth
+                            onMonthChange(newMonth)
                         },
                         onSwipeLeft = {
                             if (!swipeInProgress) {
                                 swipeInProgress = true
                                 AppState.setSelectedDate(AppState.selectedDate?.plusWeeks(1))
-                                currentMonth = YearMonth.from(AppState.selectedDate ?: currentMonth.atDay(1))
+                                val newMonth = YearMonth.from(AppState.selectedDate ?: localCurrentMonth.atDay(1))
+                                localCurrentMonth = newMonth
+                                onMonthChange(newMonth)
                                 swipeInProgress = false
                             }
                         },
@@ -174,7 +209,9 @@ fun Calendar() {
                             if (!swipeInProgress) {
                                 swipeInProgress = true
                                 AppState.setSelectedDate(AppState.selectedDate?.minusWeeks(1))
-                                currentMonth = YearMonth.from(AppState.selectedDate ?: currentMonth.atDay(1))
+                                val newMonth = YearMonth.from(AppState.selectedDate ?: localCurrentMonth.atDay(1))
+                                localCurrentMonth = newMonth
+                                onMonthChange(newMonth)
                                 swipeInProgress = false
                             }
                         }
@@ -581,7 +618,7 @@ private fun getWeekDisplayText(startDate: LocalDate, selectedDate: LocalDate?): 
 
 
 @Preview(
-    name = "Dark Theme",
+    name = "Light Theme",
     showBackground = true,
     uiMode = Configuration.UI_MODE_NIGHT_NO
 )
@@ -592,10 +629,14 @@ fun CalendarPreviewL() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            Calendar()
+            Calendar(
+                currentMonth = YearMonth.now(),
+                onMonthChange = {}
+            )
         }
     }
 }
+
 @Preview(
     name = "Dark Theme",
     showBackground = true,
@@ -608,7 +649,10 @@ fun CalendarPreviewN() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            Calendar()
+            Calendar(
+                currentMonth = YearMonth.now(),
+                onMonthChange = {}
+            )
         }
     }
 }

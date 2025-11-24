@@ -50,6 +50,7 @@ import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
 import java.time.LocalDate
+import java.time.YearMonth
 
 @Composable
 fun ScreenList(navController: NavController? = null) {
@@ -59,6 +60,16 @@ fun ScreenList(navController: NavController? = null) {
     val currentGroup = AppState.currentGroup
     val selectedDate = AppState.selectedDate
     val showEmptyLessons = AppState.showEmptyLessons
+
+    // Добавляем состояние для текущего месяца в календаре
+    var currentMonth by remember { mutableStateOf(YearMonth.now()) }
+
+    // Синхронизируем currentMonth с selectedDate
+    LaunchedEffect(selectedDate) {
+        selectedDate?.let { date ->
+            currentMonth = YearMonth.from(date)
+        }
+    }
 
     LaunchedEffect(currentGroup) {
         AppState.setLoading(true)
@@ -95,6 +106,8 @@ fun ScreenList(navController: NavController? = null) {
         if (currentDate != null) {
             val newDate = currentDate.plusDays(1)
             AppState.setSelectedDate(newDate)
+            // Обновляем currentMonth при свайпе
+            currentMonth = YearMonth.from(newDate)
         }
     }
 
@@ -103,6 +116,7 @@ fun ScreenList(navController: NavController? = null) {
         if (currentDate != null) {
             val newDate = currentDate.minusDays(1)
             AppState.setSelectedDate(newDate)
+            currentMonth = YearMonth.from(newDate)
         }
     }
 
@@ -110,7 +124,12 @@ fun ScreenList(navController: NavController? = null) {
         .background(MaterialTheme.customColors.bg2)) {
         Column {
             Spacer(modifier = Modifier.height(40.dp))
-            Calendar()
+            Calendar(
+                currentMonth = currentMonth,
+                onMonthChange = { newMonth ->
+                    currentMonth = newMonth
+                }
+            )
 
             if (isLoading) {
                 Box(
