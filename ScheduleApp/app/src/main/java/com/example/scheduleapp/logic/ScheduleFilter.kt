@@ -1,5 +1,7 @@
 package com.example.scheduleapp.logic
 
+import com.example.scheduleapp.data.entity.DynamicScheduleDay
+import com.example.scheduleapp.data.entity.DynamicScheduleDayFactory
 import com.example.scheduleapp.data.entity.ScheduleDay
 import com.example.scheduleapp.data.entity.ScheduleDayFactory
 import com.example.scheduleapp.data.entity.ScheduleItem
@@ -65,10 +67,14 @@ fun shouldShowOnDate(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean
     }
 }
 
-fun createScheduleDayForDate(scheduleItems: List<ScheduleItem>, targetDate: LocalDate): ScheduleDay {
+fun createScheduleDayForDate(
+    scheduleItems: List<ScheduleItem>,
+    targetDate: LocalDate,
+    showEmptyLessons: Boolean = true
+): DynamicScheduleDay {
     val filteredItems = scheduleItems.filter { scheduleItem ->
         shouldShowOnDate(scheduleItem, targetDate)
     }
 
-    return ScheduleDayFactory.createScheduleDay(targetDate, filteredItems)
+    return DynamicScheduleDayFactory.createDynamicScheduleDay(targetDate, filteredItems, showEmptyLessons)
 }
