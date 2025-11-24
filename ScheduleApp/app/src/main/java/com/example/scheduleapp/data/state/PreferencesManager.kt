@@ -13,6 +13,18 @@ object PreferencesManager {
     private const val KEY_USER_EMAIL = "user_email"
     private const val KEY_USER_AVATAR = "user_avatar"
     private const val KEY_DARK_THEME = "dark_theme"
+    private const val KEY_SHOW_EMPTY_LESSONS = "show_empty_lessons"
+
+    fun saveShowEmptyLessons(context: Context, showEmpty: Boolean) {
+        getSharedPreferences(context).edit().apply {
+            putBoolean(KEY_SHOW_EMPTY_LESSONS, showEmpty)
+            apply()
+        }
+    }
+
+    fun getShowEmptyLessons(context: Context): Boolean {
+        return getSharedPreferences(context).getBoolean(KEY_SHOW_EMPTY_LESSONS, true)
+    }
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

@@ -71,6 +71,7 @@ fun ScreenProfile(navController: NavHostController? = null) {
     val userGroup = AppState.userGroup
     val userEmail = AppState.userEmail
     val userAvatar = AppState.userAvatar
+    val showEmptyLessons = AppState.showEmptyLessons
 
     val isDarkTheme = if (themeViewModel != null) {
         val themeState by themeViewModel.isDarkTheme.collectAsState()
@@ -215,15 +216,42 @@ fun ScreenProfile(navController: NavHostController? = null) {
                     )
                 }
 
-                Spacer(modifier = Modifier.height(50.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = 6.dp)
                         .clickable {
-                            println("DEBUG: Toggle theme clicked")
+                            AppState.toggleShowEmptyLessons()
+                        },
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (showEmptyLessons) R.drawable.ic_visible
+                            else R.drawable.ic_invisible
+                        ),
+                        contentDescription = "Пустые пары",
+                        tint = white,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = if (showEmptyLessons) "Скрыть пустые пары" else "Показать пустые пары",
+                        color = white,
+                        modifier = Modifier.padding(start = 8.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 6.dp)
+                        .clickable {
                             themeViewModel?.toggleTheme(context)
                         },
                     horizontalArrangement = Arrangement.Center

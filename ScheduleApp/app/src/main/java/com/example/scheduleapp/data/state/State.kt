@@ -54,6 +54,19 @@ object AppState {
         _repository = ScheduleRepository(database)
         loadSavedData(context)
     }
+    private var _showEmptyLessons by mutableStateOf(true)
+    val showEmptyLessons: Boolean get() = _showEmptyLessons
+
+    fun setShowEmptyLessons(showEmpty: Boolean) {
+        _showEmptyLessons = showEmpty
+        context?.let {
+            PreferencesManager.saveShowEmptyLessons(it, showEmpty)
+        }
+    }
+
+    fun toggleShowEmptyLessons() {
+        setShowEmptyLessons(!_showEmptyLessons)
+    }
 
     private fun loadSavedData(context: Context) {
         _userName = PreferencesManager.getUserName(context)
@@ -69,6 +82,8 @@ object AppState {
 
         val history = PreferencesManager.getSearchHistory(context)
         SearchHistoryManager.initialize(history)
+
+        _showEmptyLessons = PreferencesManager.getShowEmptyLessons(context)
     }
 
     private var _userName by mutableStateOf<String>("Настройте параметры профиля")
