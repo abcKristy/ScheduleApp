@@ -2,7 +2,6 @@ package com.example.scheduleapp.screens.master.detail
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,10 +40,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.scheduleapp.R
 import com.example.scheduleapp.data.entity.ScheduleItem
 import com.example.scheduleapp.data.entity.TestSchedule
 import com.example.scheduleapp.data.state.AppState
+import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -52,7 +53,8 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleDetailScreen(
-    onNavigateBack: () -> Boolean
+    onNavigateBack: () -> Boolean,
+    navController: NavController? = null // Добавляем navController
 ) {
     val selectedScheduleItem = AppState.selectedScheduleItem
     val scheduleItem = selectedScheduleItem ?: getDefaultScheduleItem()
@@ -118,7 +120,7 @@ fun ScheduleDetailScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center // Добавляем центрирование по горизонтали
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
             ) {
                 Box(
                     modifier = Modifier
@@ -161,12 +163,20 @@ fun ScheduleDetailScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {
-                // Аудитория
-                Text(
-                    text = scheduleItem.room,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                // Аудитория - КЛИКАБЕЛЬНАЯ КНОПКА
+                RoomButton(
+                    room = scheduleItem.room,
+                    onClick = {
+                        // Устанавливаем аудиторию как currentGroup
+                        AppState.setCurrentGroupAndNavigate(scheduleItem.room)
+                        // Переходим на экран списка
+                        navController?.navigate(NavigationRoute.ScheduleList.route) {
+                            // Очищаем back stack до корня
+                            popUpTo(NavigationRoute.ScheduleList.route) {
+                                inclusive = true
+                            }
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -206,6 +216,46 @@ fun ScheduleDetailScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+// Новая компонента - кнопка аудитории
+@Composable
+fun RoomButton(
+    room: String,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = room,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Icon(
+                painter = painterResource(id = R.drawable.ic_search), // Иконка поиска
+                contentDescription = "Поиск по аудитории",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }

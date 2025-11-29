@@ -55,7 +55,8 @@ fun MainNavGraph(navController: NavHostController) {
 
         composable(NavigationRoute.ScheduleDetail.route) {
             ScheduleDetailScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                navController = navController
             )
         }
     }

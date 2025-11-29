@@ -117,4 +117,8 @@ object AppState {
     val errorMessage: String? get() = _errorMessage
     fun setErrorMessage(message: String?) { _errorMessage = message }
 
+    fun setCurrentGroupAndNavigate(group: String) {
+        setCurrentGroup(group)
+        setSelectedDate(LocalDate.now())
+    }
 }
