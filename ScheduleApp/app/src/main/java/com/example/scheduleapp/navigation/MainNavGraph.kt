@@ -8,11 +8,11 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.scheduleapp.screens.master.detail.ScheduleDetailScreen
 import com.example.scheduleapp.screens.master.ScreenList
 import com.example.scheduleapp.screens.master.ScreenProfile
 import com.example.scheduleapp.screens.master.ScreenSearch
 import com.example.scheduleapp.screens.master.WelcomeScreen
+import com.example.scheduleapp.screens.master.detail.ScheduleDetailScreen
 import com.example.scheduleapp.screens.master.detail.UserSettingsScreen
 
 @Composable

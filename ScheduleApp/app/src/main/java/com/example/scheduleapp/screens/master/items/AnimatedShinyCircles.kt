@@ -23,7 +23,8 @@ import kotlinx.coroutines.delay
 fun AnimatedShinyTop(
     shiny: Color,
     initialX: Float,
-    initialY: Float
+    initialY: Float,
+    shouldMove: Boolean = true // ДОБАВЛЕНО: булевая константа для управления движением
 ) {
     var targetX by remember { mutableStateOf(initialX) }
     var targetY by remember { mutableStateOf(initialY) }
@@ -54,14 +55,17 @@ fun AnimatedShinyTop(
         )
     }
 
-    LaunchedEffect(Unit) {
-        delay(1000)
+    // ИЗМЕНЕНО: Запускаем анимацию только если shouldMove = true
+    LaunchedEffect(shouldMove) {
+        if (shouldMove) {
+            delay(1000)
 
-        while (true) {
-            val (newX, newY) = getNextTopPosition(targetX, targetY)
-            targetX = newX
-            targetY = newY
-            delay(2800)
+            while (true) {
+                val (newX, newY) = getNextTopPosition(targetX, targetY)
+                targetX = newX
+                targetY = newY
+                delay(2800)
+            }
         }
     }
 
@@ -72,7 +76,8 @@ fun AnimatedShinyTop(
 fun AnimatedShinyBottom(
     shiny: Color,
     initialX: Float,
-    initialY: Float
+    initialY: Float,
+    shouldMove: Boolean = true // ДОБАВЛЕНО: булевая константа для управления движением
 ) {
     var targetX by remember { mutableStateOf(initialX) }
     var targetY by remember { mutableStateOf(initialY) }
@@ -103,14 +108,17 @@ fun AnimatedShinyBottom(
         )
     }
 
-    LaunchedEffect(Unit) {
-        delay(1500)
+    // ИЗМЕНЕНО: Запускаем анимацию только если shouldMove = true
+    LaunchedEffect(shouldMove) {
+        if (shouldMove) {
+            delay(1500)
 
-        while (true) {
-            val (newX, newY) = getNextBottomPosition(targetX, targetY)
-            targetX = newX
-            targetY = newY
-            delay(3300)
+            while (true) {
+                val (newX, newY) = getNextBottomPosition(targetX, targetY)
+                targetX = newX
+                targetY = newY
+                delay(3300)
+            }
         }
     }
 

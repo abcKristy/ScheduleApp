@@ -9,26 +9,22 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,15 +36,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.scheduleapp.R
 import com.example.scheduleapp.data.entity.ScheduleItem
 import com.example.scheduleapp.data.entity.TestSchedule
 import com.example.scheduleapp.data.state.AppState
-import com.example.scheduleapp.navigation.NavigationRoute
+import com.example.scheduleapp.screens.master.items.AnimatedShinyBottom
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
+import com.example.scheduleapp.ui.theme.blue
+import com.example.scheduleapp.ui.theme.customColors
+import com.example.scheduleapp.ui.theme.lightGray
+import com.example.scheduleapp.ui.theme.lightGreen
+import com.example.scheduleapp.ui.theme.pink40
+import com.example.scheduleapp.ui.theme.pink80
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,20 +61,18 @@ fun ScheduleDetailScreen(
     val selectedScheduleItem = AppState.selectedScheduleItem
     val scheduleItem = selectedScheduleItem ?: getDefaultScheduleItem()
 
-    // Определяем картинку в зависимости от типа занятия
     val backgroundImage = when (scheduleItem.lessonType.uppercase()) {
-        "LECTURE", "ЛЕКЦИЯ" -> R.drawable.bg_lk
+        "LECTURE", "ЛЕКЦИЯ", "LK" -> R.drawable.bg_lk
         else -> R.drawable.bg_pr
     }
 
-    // Определяем номер пары по времени начала
     val lessonNumber = getLessonNumber(scheduleItem.startTime)
     val lessonTypeText = getLessonTypeText(scheduleItem.lessonType)
     val circleColor = when (scheduleItem.lessonType.uppercase()) {
-        "LECTURE", "ЛЕКЦИЯ" -> Color(0xFF4CAF50) // Зеленый для лекций
-        "PRACTICE", "ПРАКТИКА" -> Color(0xFF2196F3) // Синий для практик
-        "LAB", "ЛАБОРАТОРНАЯ" -> Color(0xFFFF9800) // Оранжевый для лаб
-        else -> Color(0xFF9C27B0) // Фиолетовый для остальных
+        "LECTURE", "ЛЕКЦИЯ", "LK" -> lightGreen
+        "PRACTICE", "ПРАКТИКА","PR" -> blue
+        "LAB", "ЛАБОРАТОРНАЯ" -> pink40
+        else -> pink80
     }
 
     Box(
@@ -88,32 +88,42 @@ fun ScheduleDetailScreen(
                 .height(280.dp)
         )
 
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 255.dp)
                 .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .background(MaterialTheme.colorScheme.background)
+        )
+
+        when (scheduleItem.lessonType.uppercase()) {
+            "LECTURE", "ЛЕКЦИЯ", "LK" -> AnimatedShinyBottom(shiny = lightGreen, 180f, 650f, shouldMove = false)
+            "PRACTICE", "ПРАКТИКА","PR" -> AnimatedShinyBottom(shiny = blue, 200f, 630f, shouldMove = false)
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 255.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Название пары по центру
             Text(
                 text = scheduleItem.discipline,
-                style = MaterialTheme.typography.headlineLarge,
+                fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                lineHeight = 32.sp,
+                color = MaterialTheme.customColors.title,
                 textAlign = TextAlign.Center,
                 maxLines = 3,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = 16.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Строка с типом занятия, временем и номером пары - ПО ЦЕНТРУ
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -132,43 +142,34 @@ fun ScheduleDetailScreen(
 
                 Text(
                     text = lessonTypeText,
-                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = lightGray
                 )
 
                 Spacer(modifier = Modifier.size(16.dp))
 
                 Text(
                     text = "${scheduleItem.formattedStartTime}-${scheduleItem.formattedEndTime}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.customColors.title
                 )
 
                 Spacer(modifier = Modifier.size(16.dp))
 
                 Text(
                     text = "$lessonNumber пара",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontWeight = FontWeight.Medium,
+                    color = lightGray
                 )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Остальная информация
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {
-                // Аудитория - КЛИКАБЕЛЬНАЯ КНОПКА
-                Text(
-                    text = "Аудитория",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
                 OutlineButton(
                     text = scheduleItem.room,
                     onClick = {
@@ -179,13 +180,6 @@ fun ScheduleDetailScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Преподаватель - КЛИКАБЕЛЬНАЯ КНОПКА
-                Text(
-                    text = "Преподаватель",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
                 OutlineButton(
                     text = scheduleItem.teacher,
                     onClick = {
@@ -196,13 +190,6 @@ fun ScheduleDetailScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Группы - КНОПКИ В РЯД
-                Text(
-                    text = "Группы",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
                 GroupsRow(
                     groups = scheduleItem.groups,
                     onGroupClick = { group ->
@@ -214,11 +201,9 @@ fun ScheduleDetailScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Дополнительная информация (если есть)
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
-                // Описание
                 scheduleItem.description?.let { description ->
                     if (description.isNotBlank()) {
                         InfoCard(
@@ -235,7 +220,6 @@ fun ScheduleDetailScreen(
     }
 }
 
-// Компонент для кнопки с серой обводкой
 @Composable
 fun OutlineButton(
     text: String,
@@ -244,39 +228,49 @@ fun OutlineButton(
     OutlinedCard(
         onClick = onClick,
         modifier = Modifier
-            .fillMaxWidth(),
+            .wrapContentWidth(),
         colors = CardDefaults.outlinedCardColors(
-            containerColor = Color.Transparent,
+            containerColor = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        shape = RoundedCornerShape(20.dp) // Большее закругление
+        shape = RoundedCornerShape(50.dp)
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             modifier = Modifier
-                .padding(horizontal = 20.dp, vertical = 14.dp)
-                .fillMaxWidth(),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             textAlign = TextAlign.Center
         )
     }
 }
 
-// Компонент для строки с группами
 @Composable
 fun GroupsRow(
     groups: List<String>,
     onGroupClick: (String) -> Unit
 ) {
+    val rows = groups.chunked(3)
+
     Column {
-        groups.forEach { group ->
-            OutlineButton(
-                text = group,
-                onClick = { onGroupClick(group) }
-            )
-            if (group != groups.last()) {
-                Spacer(modifier = Modifier.height(8.dp))
+        rows.forEach { rowGroups ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Start
+            ) {
+                rowGroups.forEach { group ->
+                    OutlineButton(
+                        text = group,
+                        onClick = { onGroupClick(group) }
+                    )
+                    if (group != rowGroups.last()) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.weight(1f))
             }
         }
     }
@@ -314,7 +308,6 @@ fun InfoCard(
     }
 }
 
-// Функция для определения номера пары по времени
 private fun getLessonNumber(startTime: LocalDateTime): Int {
     val hour = startTime.hour
     return when (hour) {
@@ -328,7 +321,6 @@ private fun getLessonNumber(startTime: LocalDateTime): Int {
     }
 }
 
-// Функция для преобразования типа занятия в читаемый текст
 private fun getLessonTypeText(lessonType: String): String {
     return when (lessonType.uppercase()) {
         "LECTURE", "ЛЕКЦИЯ" -> "Лекция"

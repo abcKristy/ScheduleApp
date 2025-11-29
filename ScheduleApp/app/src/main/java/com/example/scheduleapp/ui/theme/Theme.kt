@@ -13,7 +13,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-// Ваши кастомные цвета
 data class CustomColors(
     val bg1: Color,
     val bg2: Color,
