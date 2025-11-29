@@ -187,9 +187,9 @@ private fun SundayContent() {
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_light_mode),
+            painter = painterResource(id = R.drawable.rabbit_sun),
             contentDescription = "Воскресенье - выходной",
-            modifier = Modifier.size(200.dp)
+            modifier = Modifier.size(600.dp)
         )
     }
 }
