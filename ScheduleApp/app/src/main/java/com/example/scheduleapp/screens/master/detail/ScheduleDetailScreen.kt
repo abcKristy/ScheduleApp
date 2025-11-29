@@ -8,6 +8,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +67,7 @@ import com.example.scheduleapp.ui.theme.lightGray
 import com.example.scheduleapp.ui.theme.lightGreen
 import com.example.scheduleapp.ui.theme.pink40
 import com.example.scheduleapp.ui.theme.pink80
+import kotlinx.coroutines.delay
 import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,9 +94,20 @@ fun ScheduleDetailScreen(
         else -> pink80
     }
 
+    var swipeHandled by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .pointerInput(Unit) {
+                detectVerticalDragGestures { change, dragAmount ->
+                    if (!swipeHandled && dragAmount > 30) {
+                        swipeHandled = true
+                        onNavigateBack()
+                    }
+                    change.consume()
+                }
+            }
     ) {
         Image(
             painter = painterResource(id = backgroundImage),
@@ -121,7 +135,6 @@ fun ScheduleDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 255.dp)
-                .verticalScroll(rememberScrollState())
         ) {
             Box(
                 modifier = Modifier
@@ -142,6 +155,8 @@ fun ScheduleDetailScreen(
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = scheduleItem.discipline,
