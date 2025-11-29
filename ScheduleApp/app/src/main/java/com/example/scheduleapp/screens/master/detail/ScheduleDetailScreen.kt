@@ -129,6 +129,8 @@ fun ScheduleDetailScreen(
         when (scheduleItem.lessonType.uppercase()) {
             "LECTURE", "ЛЕКЦИЯ", "LK" -> AnimatedShinyBottom(shiny = lightGreen, 180f, 650f, shouldMove = false)
             "PRACTICE", "ПРАКТИКА","PR" -> AnimatedShinyBottom(shiny = blue, 200f, 630f, shouldMove = false)
+            "LAB", "ЛАБОРАТОРНАЯ" -> AnimatedShinyBottom(shiny = pink40, 200f, 630f, shouldMove = false)
+            else ->  AnimatedShinyBottom(shiny = pink80, 200f, 630f, shouldMove = false)
         }
 
         Column(
