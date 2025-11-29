@@ -93,7 +93,7 @@ fun ScheduleListItem(
             pressedElevation = 4.dp,
         ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.customColors.bg1
+            containerColor = MaterialTheme.customColors.cardles
         )
     ) {
         Column {

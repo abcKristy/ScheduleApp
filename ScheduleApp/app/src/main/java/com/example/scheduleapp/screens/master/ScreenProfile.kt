@@ -263,7 +263,7 @@ fun ScreenProfile(navController: NavHostController? = null) {
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = if (isDarkTheme) "Переключить на светлую тему" else "Переключить на темную тему",
+                        text = if (isDarkTheme) "Светлая тема" else "Тёмная тема",
                         color = white,
                         modifier = Modifier.padding(start = 8.dp),
                         fontWeight = FontWeight.Bold

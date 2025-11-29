@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 data class CustomColors(
+    val cardles: Color,
     val bg1: Color,
     val bg2: Color,
     val shiny: Color,
@@ -26,6 +27,7 @@ data class CustomColors(
 )
 
 private val darkCustomColors = CustomColors(
+    cardles = carddark,
     bg1 = gray,
     bg2 = darkGray,
     shiny = lightGreen,
@@ -38,6 +40,7 @@ private val darkCustomColors = CustomColors(
 )
 
 private val lightCustomColors = CustomColors(
+    cardles = white,
     bg1 = white,
     bg2 = white,
     shiny = blue,

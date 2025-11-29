@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -320,12 +321,16 @@ fun OutlineButton(
             containerColor = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        shape = RoundedCornerShape(50.dp)
+        shape = RoundedCornerShape(50.dp),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.customColors.subTitle
+        )
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .padding(horizontal = 14.dp, vertical = 12.dp),
             textAlign = TextAlign.Center
