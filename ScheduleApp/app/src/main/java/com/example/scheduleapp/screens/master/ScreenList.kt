@@ -49,6 +49,7 @@ import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
+import com.google.gson.Gson
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -61,10 +62,8 @@ fun ScreenList(navController: NavController? = null) {
     val selectedDate = AppState.selectedDate
     val showEmptyLessons = AppState.showEmptyLessons
 
-    // Добавляем состояние для текущего месяца в календаре
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
 
-    // Синхронизируем currentMonth с selectedDate
     LaunchedEffect(selectedDate) {
         selectedDate?.let { date ->
             currentMonth = YearMonth.from(date)
@@ -106,7 +105,6 @@ fun ScreenList(navController: NavController? = null) {
         if (currentDate != null) {
             val newDate = currentDate.plusDays(1)
             AppState.setSelectedDate(newDate)
-            // Обновляем currentMonth при свайпе
             currentMonth = YearMonth.from(newDate)
         }
     }
@@ -213,6 +211,7 @@ private fun ScheduleListContent(
                         ScheduleListItem(
                             scheduleItem = dayItem.scheduleItem,
                             onItemClick = {
+                                AppState.selectedScheduleItem = dayItem.scheduleItem
                                 navController?.navigate(NavigationRoute.ScheduleDetail.route)
                             }
                         )

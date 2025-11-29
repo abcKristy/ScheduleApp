@@ -15,31 +15,29 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.scheduleapp.data.entity.ScheduleItem
 import com.example.scheduleapp.data.entity.TestSchedule
+import com.example.scheduleapp.data.state.AppState
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun ScheduleDetailScreen(onNavigateBack: () -> Boolean) {
-    val scheduleItem = TestSchedule().firstOrNull() ?: ScheduleItem(
-        discipline = "Разработка баз данных",
-        lessonType = "LECTURE",
-        startTime = LocalDateTime.of(2025, 9, 6, 9, 0),
-        endTime = LocalDateTime.of(2025, 9, 6, 10, 30),
-        room = "А-15 (В-78)",
-        teacher = "Иванов Петр Сергеевич",
-        groups = listOf("ИКБО-60-23", "ИКБО-61-23"),
-        groupsSummary = "ИКБО-60-23, ИКБО-61-23",
-        description = "Введение в базы данных. Основные понятия и принципы работы с реляционными базами данных.",
-        recurrence = null,
-        exceptions = emptyList()
-    )
+fun ScheduleDetailScreen(
+    onNavigateBack: () -> Boolean
+) {
+    val selectedScheduleItem = AppState.selectedScheduleItem
+
+    val scheduleItem = selectedScheduleItem ?: getDefaultScheduleItem()
 
     Scaffold { innerPadding ->
         Column(
@@ -157,38 +155,24 @@ fun ScheduleDetailScreen(onNavigateBack: () -> Boolean) {
             } else {
                 InfoCard(title = "Исключения", value = "Исключения отсутствуют")
             }
-
-            // ВСЕ СВОЙСТВА ОБЪЕКТА (для отладки)
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Все свойства объекта",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            InfoCard(
-                title = "Полная информация",
-                value = """
-                    |Discipline: ${scheduleItem.discipline}
-                    |LessonType: ${scheduleItem.lessonType}
-                    |StartTime: ${scheduleItem.startTime}
-                    |EndTime: ${scheduleItem.endTime}
-                    |Room: ${scheduleItem.room}
-                    |Teacher: ${scheduleItem.teacher}
-                    |Groups: ${scheduleItem.groups}
-                    |GroupsSummary: ${scheduleItem.groupsSummary}
-                    |Description: ${scheduleItem.description}
-                    |Duration: ${scheduleItem.duration}
-                    |FormattedStartTime: ${scheduleItem.formattedStartTime}
-                    |FormattedEndTime: ${scheduleItem.formattedEndTime}
-                    |Recurrence: ${scheduleItem.recurrence}
-                    |Exceptions: ${scheduleItem.exceptions}
-                """.trimMargin()
-            )
         }
     }
+}
+
+private fun getDefaultScheduleItem(): ScheduleItem {
+    return TestSchedule().firstOrNull() ?: ScheduleItem(
+        discipline = "Разработка баз данных",
+        lessonType = "LECTURE",
+        startTime = LocalDateTime.of(2025, 9, 6, 9, 0),
+        endTime = LocalDateTime.of(2025, 9, 6, 10, 30),
+        room = "А-15 (В-78)",
+        teacher = "Иванов Петр Сергеевич",
+        groups = listOf("ИКБО-60-23", "ИКБО-61-23"),
+        groupsSummary = "ИКБО-60-23, ИКБО-61-23",
+        description = "Введение в базы данных. Основные понятия и принципы работы с реляционными базами данных.",
+        recurrence = null,
+        exceptions = emptyList()
+    )
 }
 
 @Composable

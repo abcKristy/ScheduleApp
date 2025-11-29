@@ -15,6 +15,7 @@ object AppState {
     private var _selectedDate by mutableStateOf<LocalDate?>(LocalDate.now())
     val selectedDate: LocalDate? get() = _selectedDate
     fun setSelectedDate(date: LocalDate?) { _selectedDate = date }
+    var selectedScheduleItem: ScheduleItem? by mutableStateOf(null)
 
     private var _currentGroup by mutableStateOf<String>("")
     val currentGroup: String get() = _currentGroup

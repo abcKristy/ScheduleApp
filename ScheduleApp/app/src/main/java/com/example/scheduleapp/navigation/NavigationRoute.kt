@@ -26,7 +26,4 @@ sealed class NavigationRoute(val route: String){
             }
         }
     }
-
-
-
 }

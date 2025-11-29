@@ -47,8 +47,6 @@ fun MainNavGraph(navController: NavHostController) {
             ScreenSearch()
         }
 
-        ////////////////////////////////////////////////
-
         composable(NavigationRoute.UserSettings.route) {
             UserSettingsScreen(
                 onNavigateBack = { navController.popBackStack() }
