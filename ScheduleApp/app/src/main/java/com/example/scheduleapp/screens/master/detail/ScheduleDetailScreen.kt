@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -54,7 +54,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ScheduleDetailScreen(
     onNavigateBack: () -> Boolean,
-    navController: NavController? = null // Добавляем navController
+    navController: NavController? = null
 ) {
     val selectedScheduleItem = AppState.selectedScheduleItem
     val scheduleItem = selectedScheduleItem ?: getDefaultScheduleItem()
@@ -79,7 +79,6 @@ fun ScheduleDetailScreen(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        // Фоновая картинка (верхняя 1/3)
         Image(
             painter = painterResource(id = backgroundImage),
             contentDescription = "Фон занятия",
@@ -155,47 +154,61 @@ fun ScheduleDetailScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // Остальная информация - ПО ЛЕВОМУ КРАЮ
+            // Остальная информация
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {
                 // Аудитория - КЛИКАБЕЛЬНАЯ КНОПКА
-                RoomButton(
-                    room = scheduleItem.room,
+                Text(
+                    text = "Аудитория",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlineButton(
+                    text = scheduleItem.room,
                     onClick = {
-                        // Устанавливаем аудиторию как currentGroup
                         AppState.setCurrentGroupAndNavigate(scheduleItem.room)
-                        // Переходим на экран списка
-                        navController?.navigate(NavigationRoute.ScheduleList.route) {
-                            // Очищаем back stack до корня
-                            popUpTo(NavigationRoute.ScheduleList.route) {
-                                inclusive = true
-                            }
-                        }
+                        navController?.popBackStack()
                     }
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-                // Преподаватель
+                // Преподаватель - КЛИКАБЕЛЬНАЯ КНОПКА
                 Text(
+                    text = "Преподаватель",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlineButton(
                     text = scheduleItem.teacher,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+                    onClick = {
+                        AppState.setCurrentGroupAndNavigate(scheduleItem.teacher)
+                        navController?.popBackStack()
+                    }
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-                // Группы
+                // Группы - КНОПКИ В РЯД
                 Text(
-                    text = scheduleItem.groups.joinToString(", "),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.fillMaxWidth()
+                    text = "Группы",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                GroupsRow(
+                    groups = scheduleItem.groups,
+                    onGroupClick = { group ->
+                        AppState.setCurrentGroupAndNavigate(group)
+                        navController?.popBackStack()
+                    }
                 )
             }
 
@@ -216,46 +229,55 @@ fun ScheduleDetailScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
-// Новая компонента - кнопка аудитории
+// Компонент для кнопки с серой обводкой
 @Composable
-fun RoomButton(
-    room: String,
+fun OutlineButton(
+    text: String,
     onClick: () -> Unit
 ) {
-    Card(
+    OutlinedCard(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(20.dp) // Большее закругление
     ) {
-        Row(
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
             modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = room,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+                .padding(horizontal = 20.dp, vertical = 14.dp)
+                .fillMaxWidth(),
+            textAlign = TextAlign.Center
+        )
+    }
+}
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            Icon(
-                painter = painterResource(id = R.drawable.ic_search), // Иконка поиска
-                contentDescription = "Поиск по аудитории",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp)
+// Компонент для строки с группами
+@Composable
+fun GroupsRow(
+    groups: List<String>,
+    onGroupClick: (String) -> Unit
+) {
+    Column {
+        groups.forEach { group ->
+            OutlineButton(
+                text = group,
+                onClick = { onGroupClick(group) }
             )
+            if (group != groups.last()) {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
     }
 }

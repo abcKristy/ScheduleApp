@@ -80,13 +80,6 @@ fun ScreenSearch() {
         val searchHistory = SearchHistoryManager.historyList
         val coroutineScope = rememberCoroutineScope()
 
-        LaunchedEffect(Unit) {
-            val userGroup = AppState.userGroup
-            AppState.repository?.getAllCachedGroups()
-            if (userGroup != "не задано" && userGroup.isNotBlank() && AppState.currentGroup != userGroup) {
-                AppState.setCurrentGroup(userGroup)
-            }
-        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
