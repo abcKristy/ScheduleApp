@@ -35,9 +35,11 @@ import com.example.scheduleapp.ui.theme.white
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
- * Упрощенный виджет расписания - только дата и список пар
+ * Виджет расписания на 14 дней вперед
  * Поддерживает вертикальный скролл средствами системы
  */
 
@@ -54,7 +56,6 @@ class ScheduleWidget : GlanceAppWidget() {
 
     @Composable
     private fun WidgetContent() {
-        // Получаем данные для отображения
         val widgetData = rememberWidgetData()
 
         Box(
@@ -67,7 +68,7 @@ class ScheduleWidget : GlanceAppWidget() {
             when {
                 widgetData.isLoading -> LoadingState()
                 widgetData.error != null -> ErrorState(widgetData.error)
-                widgetData.scheduleItems.isEmpty() -> EmptyState(widgetData.currentGroup)
+                widgetData.scheduleByDate.isEmpty() -> EmptyState(widgetData.currentGroup)
                 else -> ScheduleContent(widgetData)
             }
         }
@@ -78,34 +79,75 @@ class ScheduleWidget : GlanceAppWidget() {
         Column(
             modifier = GlanceModifier.fillMaxSize()
         ) {
-            // Заголовок с датой
+            // Заголовок с диапазоном дат
             WidgetHeader(
-                currentDate = data.currentDate,
+                startDate = data.startDate,
+                endDate = data.endDate,
                 currentGroup = data.currentGroup
             )
 
             Spacer(modifier = GlanceModifier.height(8.dp))
 
-            // Список всех пар (система сама обеспечит скролл если не помещается)
+            // Список дней с занятиями
             Column(
                 modifier = GlanceModifier.fillMaxWidth()
             ) {
-                data.scheduleItems.forEach { scheduleItem ->
-                    ScheduleItemSimple(scheduleItem = scheduleItem)
-                    Spacer(modifier = GlanceModifier.height(6.dp))
+                data.scheduleByDate.forEach { (date, scheduleItems) ->
+                    // Заголовок дня (Ср, 22 ноября)
+                    DayHeader(date = date)
+
+                    // Занятия на этот день
+                    scheduleItems.sortedBy { it.startTime }.forEach { scheduleItem ->
+                        ScheduleItemSimple(scheduleItem = scheduleItem)
+                        Spacer(modifier = GlanceModifier.height(4.dp))
+                    }
+
+                    Spacer(modifier = GlanceModifier.height(8.dp))
                 }
             }
         }
     }
 
     @Composable
-    private fun WidgetHeader(currentDate: LocalDate, currentGroup: String) {
+    private fun DayHeader(date: LocalDate) {
+        Box(
+            modifier = GlanceModifier
+                .fillMaxWidth()
+                .background(white.copy(alpha = 0.15f))
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = formatDayHeader(date),
+                style = TextStyle(
+                    color = ColorProvider(white),
+                    fontWeight = FontWeight.Medium
+                )
+            )
+        }
+        Spacer(modifier = GlanceModifier.height(4.dp))
+    }
+
+    /**
+     * Форматирует заголовок дня (Ср, 22 ноября)
+     */
+    private fun formatDayHeader(date: LocalDate): String {
+        val dayOfWeekFormatter = DateTimeFormatter.ofPattern("EEE", Locale("ru"))
+        val dateFormatter = DateTimeFormatter.ofPattern("d MMMM", Locale("ru"))
+
+        val dayOfWeek = date.format(dayOfWeekFormatter)
+        val dateString = date.format(dateFormatter)
+
+        return "${dayOfWeek.lowercase()}, $dateString"
+    }
+
+    @Composable
+    private fun WidgetHeader(startDate: LocalDate, endDate: LocalDate, currentGroup: String) {
         Column(
             modifier = GlanceModifier.fillMaxWidth()
         ) {
-            // Форматированная дата (21 ноября - пн)
+            // Диапазон дат (21 ноя - 4 дек)
             Text(
-                text = WidgetDataManager.formatDateForWidget(currentDate),
+                text = formatDateRangeForWidget(startDate, endDate),
                 style = TextStyle(
                     color = ColorProvider(white),
                     fontWeight = FontWeight.Bold
@@ -125,107 +167,104 @@ class ScheduleWidget : GlanceAppWidget() {
         }
     }
 
+    /**
+     * Форматирует диапазон дат для заголовка
+     */
+    private fun formatDateRangeForWidget(startDate: LocalDate, endDate: LocalDate): String {
+        val dateFormatter = DateTimeFormatter.ofPattern("d MMM", Locale("ru"))
+        val start = startDate.format(dateFormatter)
+        val end = endDate.format(dateFormatter)
+        return "$start - $end"
+    }
+
     @Composable
     private fun ScheduleItemSimple(scheduleItem: ScheduleItem) {
-        Box(
+        Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
-                .background(white.copy(alpha = 0.1f))
-                .padding(8.dp)
+                .padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = GlanceModifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top
-            ) {
-                // Время занятия (9:00-10:30)
-                Text(
-                    text = WidgetDataManager.formatLessonTime(scheduleItem),
-                    style = TextStyle(
-                        color = ColorProvider(white),
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = GlanceModifier.width(70.dp)
-                )
+            // Время занятия (9:00)
+            Text(
+                text = scheduleItem.formattedStartTime,
+                style = TextStyle(
+                    color = ColorProvider(white),
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = GlanceModifier.width(40.dp)
+            )
 
+            Spacer(modifier = GlanceModifier.width(8.dp))
+
+            // Короткое название и тип
+            Text(
+                text = buildCompactLessonTitle(scheduleItem),
+                style = TextStyle(
+                    color = ColorProvider(white),
+                    fontWeight = FontWeight.Normal
+                ),
+                modifier = GlanceModifier.defaultWeight(),
+                maxLines = 1
+            )
+
+            // Аудитория (если есть)
+            if (scheduleItem.room.isNotBlank()) {
                 Spacer(modifier = GlanceModifier.width(8.dp))
-
-                // Детали занятия
-                Column(
-                    modifier = GlanceModifier.defaultWeight()
-                ) {
-                    // Тип и название занятия (Лекция: Реляционные БД)
-                    Text(
-                        text = buildLessonTitle(scheduleItem),
-                        style = TextStyle(
-                            color = ColorProvider(white),
-                            fontWeight = FontWeight.Medium
-                        ),
-                        maxLines = 2
+                Text(
+                    text = scheduleItem.room.split(" ").first(), // Только номер
+                    style = TextStyle(
+                        color = ColorProvider(white.copy(alpha = 0.7f))
                     )
-
-                    // Аудитория, если есть
-                    if (scheduleItem.room.isNotBlank()) {
-                        Spacer(modifier = GlanceModifier.height(2.dp))
-                        Text(
-                            text = scheduleItem.room,
-                            style = TextStyle(
-                                color = ColorProvider(white.copy(alpha = 0.7f))
-                            )
-                        )
-                    }
-
-                    // Преподаватель, если есть
-                    if (scheduleItem.teacher.isNotBlank()) {
-                        Spacer(modifier = GlanceModifier.height(2.dp))
-                        Text(
-                            text = scheduleItem.teacher,
-                            style = TextStyle(
-                                color = ColorProvider(white.copy(alpha = 0.7f))
-                            ),
-                            maxLines = 1
-                        )
-                    }
-                }
+                )
             }
         }
     }
 
     /**
-     * Собирает заголовок занятия в формате "Тип: Название"
+     * Собирает компактный заголовок занятия
      */
-    private fun buildLessonTitle(scheduleItem: ScheduleItem): String {
-        val lessonType = WidgetDataManager.formatLessonType(scheduleItem.lessonType)
-        val discipline = scheduleItem.discipline
+    private fun buildCompactLessonTitle(scheduleItem: ScheduleItem): String {
+        val lessonType = formatLessonType(scheduleItem.lessonType)
+        val discipline = getVeryShortDisciplineName(scheduleItem.discipline)
 
-        return if (discipline.isNotBlank()) {
-            if (lessonType == "Окно") {
-                "Окно"
-            } else {
-                "$lessonType: ${getShortDisciplineName(discipline)}"
-            }
+        return if (lessonType == "Окно") {
+            "Окно"
         } else {
-            lessonType
+            "$lessonType: $discipline"
         }
     }
 
     /**
-     * Сокращает название дисциплины для компактного отображения
+     * Форматирует тип занятия для отображения
      */
-    private fun getShortDisciplineName(discipline: String): String {
+    private fun formatLessonType(lessonType: String): String {
+        return when (lessonType.uppercase()) {
+            "LECTURE", "LK", "ЛЕКЦИЯ" -> "Лекция"
+            "PRACTICE", "PR", "ПРАКТИКА" -> "Практика"
+            "LAB", "LABORATORY", "ЛАБОРАТОРНАЯ" -> "Лабораторная"
+            "SEMINAR", "SEM", "СЕМИНАР" -> "Семинар"
+            "EMPTY" -> "Окно"
+            else -> lessonType
+        }
+    }
+
+    /**
+     * Сокращает название дисциплины до минимума
+     */
+    private fun getVeryShortDisciplineName(discipline: String): String {
         return when {
-            discipline.length <= 25 -> discipline
+            discipline.length <= 15 -> discipline
             discipline.contains(" ") -> {
                 val words = discipline.split(" ")
                 if (words.size >= 2) {
-                    // Берем первое слово и первые буквы остальных
-                    words.take(3).joinToString(" ") { word ->
-                        if (word == words.first()) word else "${word.take(1)}."
-                    }
+                    // Берем только первые 2 слова
+                    words.take(2).joinToString(" ")
                 } else {
-                    discipline.take(24) + "…"
+                    discipline.take(14) + "…"
                 }
             }
-            else -> discipline.take(24) + "…"
+            else -> discipline.take(14) + "…"
         }
     }
 
@@ -284,7 +323,7 @@ class ScheduleWidget : GlanceAppWidget() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = if (currentGroup.isNotEmpty() && currentGroup != " ") "Нет пар" else "Выберите группу",
+                    text = if (currentGroup.isNotEmpty() && currentGroup != " ") "Нет пар на 14 дней" else "Выберите группу",
                     style = TextStyle(
                         color = ColorProvider(white),
                         fontWeight = FontWeight.Medium
@@ -313,8 +352,9 @@ private fun rememberWidgetData(): WidgetData {
     val context = androidx.glance.LocalContext.current
     var widgetData by remember { mutableStateOf(WidgetData(
         currentGroup = "",
-        currentDate = LocalDate.now(),
-        scheduleItems = emptyList(),
+        startDate = LocalDate.now(),
+        endDate = LocalDate.now().plusDays(13),
+        scheduleByDate = emptyMap(),
         isLoading = true,
         error = null
     )) }

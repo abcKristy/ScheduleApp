@@ -3,7 +3,6 @@ package com.example.scheduleapp.widgets
 import android.content.Context
 import com.example.scheduleapp.data.state.AppState
 import com.example.scheduleapp.data.entity.ScheduleItem
-import com.example.scheduleapp.logic.createScheduleDayForDate
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -15,7 +14,7 @@ import java.util.Locale
 object WidgetDataManager {
 
     /**
-     * Получает данные для отображения в виджете
+     * Получает данные для отображения в виджете (14 дней вперед)
      */
     suspend fun getWidgetData(context: Context): WidgetData {
         return try {
@@ -25,7 +24,7 @@ object WidgetDataManager {
             }
 
             val currentGroup = AppState.currentGroup
-            val currentDate = AppState.selectedDate ?: LocalDate.now()
+            val startDate = AppState.selectedDate ?: LocalDate.now()
 
             // Получаем расписание для текущей группы
             val scheduleItems = if (currentGroup.isNotBlank() && currentGroup != " ") {
@@ -34,24 +33,29 @@ object WidgetDataManager {
                 emptyList()
             }
 
-            // Фильтруем занятия по текущей дате
-            val filteredItems = filterScheduleForDate(scheduleItems, currentDate)
+            // Фильтруем занятия на ближайшие 14 дней
+            val endDate = startDate.plusDays(13) // +13 дней = 14 дней всего
+            val filteredItems = filterScheduleForDateRange(scheduleItems, startDate, endDate)
 
-            // Сортируем по времени начала
-            val sortedItems = filteredItems.sortedBy { it.startTime }
+            // Группируем по датам и сортируем
+            val groupedByDate = filteredItems
+                .groupBy { it.startTime.toLocalDate() }
+                .toSortedMap()
 
             WidgetData(
                 currentGroup = currentGroup,
-                currentDate = currentDate,
-                scheduleItems = sortedItems,
+                startDate = startDate,
+                endDate = endDate,
+                scheduleByDate = groupedByDate,
                 isLoading = false,
                 error = null
             )
         } catch (e: Exception) {
             WidgetData(
                 currentGroup = AppState.currentGroup,
-                currentDate = LocalDate.now(),
-                scheduleItems = emptyList(),
+                startDate = LocalDate.now(),
+                endDate = LocalDate.now().plusDays(13),
+                scheduleByDate = emptyMap(),
                 isLoading = false,
                 error = "Ошибка загрузки данных"
             )
@@ -59,23 +63,29 @@ object WidgetDataManager {
     }
 
     /**
-     * Фильтрует расписание по указанной дате
+     * Фильтрует расписание по диапазону дат (14 дней)
      */
-    private fun filterScheduleForDate(
+    private fun filterScheduleForDateRange(
         scheduleItems: List<ScheduleItem>,
-        targetDate: LocalDate
+        startDate: LocalDate,
+        endDate: LocalDate
     ): List<ScheduleItem> {
         return scheduleItems.filter { scheduleItem ->
             val itemDate = scheduleItem.startTime.toLocalDate()
+
+            // Проверяем входит ли дата в диапазон
+            if (itemDate.isBefore(startDate) || itemDate.isAfter(endDate)) {
+                return@filter false
+            }
 
             // Проверяем повторяющиеся занятия
             val recurrence = scheduleItem.recurrence
             if (recurrence != null) {
                 // Для повторяющихся занятий используем существующую логику фильтрации
-                shouldShowOnDate(scheduleItem, targetDate)
+                shouldShowOnDate(scheduleItem, itemDate)
             } else {
                 // Для обычных занятий - только точное совпадение даты
-                itemDate == targetDate
+                true
             }
         }
     }
@@ -139,16 +149,13 @@ object WidgetDataManager {
     }
 
     /**
-     * Форматирует дату для отображения в виджете
+     * Форматирует диапазон дат для заголовка
      */
-    fun formatDateForWidget(date: LocalDate): String {
-        val dateFormatter = DateTimeFormatter.ofPattern("d MMMM", Locale("ru"))
-        val dayOfWeekFormatter = DateTimeFormatter.ofPattern("EEE", Locale("ru"))
-
-        val dateString = date.format(dateFormatter)
-        val dayOfWeekString = date.format(dayOfWeekFormatter)
-
-        return "$dateString - ${dayOfWeekString.lowercase()}"
+    fun formatDateRangeForWidget(startDate: LocalDate, endDate: LocalDate): String {
+        val dateFormatter = DateTimeFormatter.ofPattern("d MMM", Locale("ru"))
+        val start = startDate.format(dateFormatter)
+        val end = endDate.format(dateFormatter)
+        return "$start - $end"
     }
 
     /**
@@ -186,12 +193,13 @@ object WidgetDataManager {
 }
 
 /**
- * Data class для хранения данных виджета
+ * Data class для хранения данных виджета (14 дней)
  */
 data class WidgetData(
     val currentGroup: String,
-    val currentDate: LocalDate,
-    val scheduleItems: List<ScheduleItem>,
+    val startDate: LocalDate,      // Начальная дата диапазона
+    val endDate: LocalDate,        // Конечная дата диапазона (+13 дней)
+    val scheduleByDate: Map<LocalDate, List<ScheduleItem>>, // Сгруппировано по датам
     val isLoading: Boolean,
     val error: String?
 )

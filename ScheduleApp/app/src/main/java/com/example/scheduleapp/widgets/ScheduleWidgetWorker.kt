@@ -41,7 +41,11 @@ class ScheduleWidgetWorker(
             Log.d(TAG, "Getting widget data for group: $currentGroup")
             val widgetData = WidgetDataManager.getWidgetData(applicationContext)
 
-            Log.d(TAG, "Widget data retrieved: ${widgetData.scheduleItems.size} items, error: ${widgetData.error}")
+            // Логируем статистику по данным
+            val totalItems = widgetData.scheduleByDate.values.sumOf { it.size }
+            val daysWithLessons = widgetData.scheduleByDate.count { it.value.isNotEmpty() }
+
+            Log.d(TAG, "Widget data retrieved: $totalItems items across $daysWithLessons days, error: ${widgetData.error}")
 
             // Обновляем все виджеты
             ScheduleWidget().updateAll(applicationContext)
