@@ -1,205 +1,315 @@
 package com.example.scheduleapp.widgets
 
+import android.content.ContentValues.TAG
 import android.content.Context
-import com.example.scheduleapp.data.state.AppState
+import android.util.Log
+import androidx.glance.GlanceId
+import androidx.glance.action.ActionParameters
+import androidx.glance.appwidget.updateAll
 import com.example.scheduleapp.data.entity.ScheduleItem
+import com.example.scheduleapp.data.state.AppState
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 /**
- * Мост между виджетом и основным приложением
- * Обеспечивает доступ к данным расписания для виджета
+ * Менеджер данных для виджета
+ * Обрабатывает фильтрацию и подготовку данных для отображения
  */
 object WidgetDataManager {
 
+    private const val TAG = "WidgetDataManager"
+
     /**
-     * Получает данные для отображения в виджете (14 дней вперед)
-     */
-    suspend fun getWidgetData(context: Context): WidgetData {
+    * Получает данные для виджета на 14 дней вперед
+    */
+    fun getWidgetData(context: Context): WidgetData {
         return try {
+            android.util.Log.d("WidgetDataManager", "=== GETTING WIDGET DATA ===")
+
             // Инициализируем AppState если нужно
             if (AppState.repository == null) {
                 AppState.initialize(context)
             }
 
             val currentGroup = AppState.currentGroup
-            val startDate = AppState.selectedDate ?: LocalDate.now()
+            android.util.Log.d("WidgetDataManager", "Current group: '$currentGroup'")
 
-            // Получаем расписание для текущей группы
-            val scheduleItems = if (currentGroup.isNotBlank() && currentGroup != " ") {
-                AppState.repository?.getSchedule(currentGroup) ?: emptyList()
-            } else {
-                emptyList()
+            if (currentGroup.isBlank() || currentGroup == " ") {
+                android.util.Log.w("WidgetDataManager", "No group selected")
+                return WidgetData(
+                    currentGroup = "",
+                    startDate = LocalDate.now(),
+                    endDate = LocalDate.now().plusDays(13),
+                    scheduleByDate = emptyMap(),
+                    isLoading = false,
+                    error = "Выберите группу",
+                    scrollOffset = 0
+                )
             }
 
-            // Фильтруем занятия на ближайшие 14 дней
-            val endDate = startDate.plusDays(13) // +13 дней = 14 дней всего
-            val filteredItems = filterScheduleForDateRange(scheduleItems, startDate, endDate)
+            // Получаем расписание
+            val scheduleItems = getScheduleForWidget(context, currentGroup)
+            android.util.Log.d("WidgetDataManager", "Retrieved ${scheduleItems.size} total schedule items")
 
-            // Группируем по датам и сортируем
-            val groupedByDate = filteredItems
-                .groupBy { it.startTime.toLocalDate() }
-                .toSortedMap()
+            // Фильтруем на 14 дней вперед
+            val filteredItems = filterScheduleFor14Days(scheduleItems)
+            android.util.Log.d("WidgetDataManager", "Filtered to ${filteredItems.size} items for 14-day range")
+
+            // Группируем по датам
+            val scheduleByDate = groupScheduleByDate(filteredItems)
+            android.util.Log.d("WidgetDataManager", "Grouped into ${scheduleByDate.size} days with lessons")
+
+            // Получаем текущее состояние скролла
+            val scrollOffset = WidgetScrollManager.getCurrentOffset(context)
+            android.util.Log.d("WidgetDataManager", "Current scroll offset: $scrollOffset")
 
             WidgetData(
                 currentGroup = currentGroup,
-                startDate = startDate,
-                endDate = endDate,
-                scheduleByDate = groupedByDate,
+                startDate = LocalDate.now(),
+                endDate = LocalDate.now().plusDays(13),
+                scheduleByDate = scheduleByDate,
                 isLoading = false,
-                error = null
+                error = null,
+                scrollOffset = scrollOffset
             )
+
         } catch (e: Exception) {
+            android.util.Log.e("WidgetDataManager", "Error getting widget data", e)
             WidgetData(
                 currentGroup = AppState.currentGroup,
                 startDate = LocalDate.now(),
                 endDate = LocalDate.now().plusDays(13),
                 scheduleByDate = emptyMap(),
                 isLoading = false,
-                error = "Ошибка загрузки данных"
+                error = "Ошибка загрузки",
+                scrollOffset = 0
             )
         }
     }
 
     /**
-     * Фильтрует расписание по диапазону дат (14 дней)
+     * Получает расписание для группы
      */
-    private fun filterScheduleForDateRange(
-        scheduleItems: List<ScheduleItem>,
-        startDate: LocalDate,
-        endDate: LocalDate
-    ): List<ScheduleItem> {
-        return scheduleItems.filter { scheduleItem ->
+    private fun getScheduleForWidget(context: Context, group: String): List<ScheduleItem> {
+        return getTestScheduleItems()
+//        return try {
+//            // Пытаемся получить из AppState
+//            val stateItems = AppState.scheduleItems
+//            if (stateItems.isNotEmpty()) {
+//                Log.d(TAG, "Using ${stateItems.size} items from AppState")
+//                return stateItems
+//            }
+//
+//            // Если в AppState нет, пробуем из БД
+//            val repository = AppState.repository
+//            if (repository != null) {
+//                // Запускаем в синхронном режиме (осторожно с контекстом)
+//                val dbItems = runCatching {
+//                    // В реальном коде это должно быть suspend, но для виджета упрощаем
+//                    // Здесь нужно асинхронное получение данных
+//                    emptyList<ScheduleItem>()
+//                }.getOrElse { emptyList() }
+//
+//                if (dbItems.isNotEmpty()) {
+//                    Log.d(TAG, "Using ${dbItems.size} items from database")
+//                    return dbItems
+//                }
+//            }
+//
+//            Log.w(TAG, "No schedule items found in AppState or database")
+//            emptyList()
+//
+//        } catch (e: Exception) {
+//            Log.e(TAG, "Error getting schedule for widget", e)
+//            emptyList()
+//        }
+    }
+
+    /**
+     * Фильтрует расписание на 14 дней вперед от текущей даты
+     */
+    private fun filterScheduleFor14Days(items: List<ScheduleItem>): List<ScheduleItem> {
+        val startDate = LocalDate.now()
+        val endDate = startDate.plusDays(13)
+
+        Log.d(TAG, "Filtering schedule from $startDate to $endDate")
+
+        val filtered = items.filter { scheduleItem ->
             val itemDate = scheduleItem.startTime.toLocalDate()
+            val isInRange = !itemDate.isBefore(startDate) && !itemDate.isAfter(endDate)
 
-            // Проверяем входит ли дата в диапазон
-            if (itemDate.isBefore(startDate) || itemDate.isAfter(endDate)) {
-                return@filter false
-            }
-
-            // Проверяем повторяющиеся занятия
-            val recurrence = scheduleItem.recurrence
-            if (recurrence != null) {
-                // Для повторяющихся занятий используем существующую логику фильтрации
-                shouldShowOnDate(scheduleItem, itemDate)
-            } else {
-                // Для обычных занятий - только точное совпадение даты
-                true
-            }
+            isInRange
         }
+
+        // Логируем детали
+        val itemsByDate = filtered.groupBy { it.startTime.toLocalDate() }
+        itemsByDate.forEach { (date, dayItems) ->
+            Log.d(TAG, "Date $date: ${dayItems.size} items")
+        }
+
+        Log.d(TAG, "Filter result: ${filtered.size} of ${items.size} items in range")
+        return filtered
     }
 
     /**
-     * Проверяет, должно ли занятие отображаться на указанную дату
-     * (адаптированная версия из ScheduleFilter.kt)
+     * Группирует занятия по датам
      */
-    private fun shouldShowOnDate(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean {
-        val itemDate = scheduleItem.startTime.toLocalDate()
-        val itemDayOfWeek = scheduleItem.startTime.dayOfWeek
-        val targetDayOfWeek = targetDate.dayOfWeek
-
-        // Проверяем исключения
-        if (scheduleItem.exceptions.any { it == targetDate }) {
-            return false
-        }
-
-        // Если дата совпадает точно с оригинальной датой занятия
-        if (itemDate == targetDate) {
-            return true
-        }
-
-        // Проверяем, совпадает ли день недели
-        if (itemDayOfWeek != targetDayOfWeek) {
-            return false
-        }
-
-        val recurrence = scheduleItem.recurrence ?: return false
-
-        // Проверяем правила повторения
-        return isDateInRecurrence(scheduleItem, targetDate)
+    private fun groupScheduleByDate(items: List<ScheduleItem>): Map<LocalDate, List<ScheduleItem>> {
+        return items.groupBy { it.startTime.toLocalDate() }
+            .toSortedMap() // Сортируем по дате
     }
 
     /**
-     * Проверяет, входит ли дата в правило повторения
+     * Вспомогательная функция для конвертации LocalDateTime в LocalDate
      */
-    private fun isDateInRecurrence(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean {
-        val recurrence = scheduleItem.recurrence ?: return false
-        val startDate = scheduleItem.startTime.toLocalDate()
-
-        if (targetDate.isBefore(startDate)) {
-            return false
-        }
-
-        if (recurrence.until != null && targetDate.atStartOfDay().isAfter(recurrence.until)) {
-            return false
-        }
-
-        val weeksBetween = java.time.temporal.ChronoUnit.WEEKS.between(startDate, targetDate)
-        if (recurrence.interval != null && recurrence.interval > 0) {
-            if (weeksBetween % recurrence.interval != 0L) {
-                return false
-            }
-        }
-
-        return when (recurrence.frequency?.uppercase()) {
-            "WEEKLY" -> true
-            else -> true
-        }
+    private fun LocalDateTime.toLocalDate(): LocalDate {
+        return this.toLocalDate()
     }
-
-    /**
-     * Форматирует диапазон дат для заголовка
-     */
-    fun formatDateRangeForWidget(startDate: LocalDate, endDate: LocalDate): String {
-        val dateFormatter = DateTimeFormatter.ofPattern("d MMM", Locale("ru"))
-        val start = startDate.format(dateFormatter)
-        val end = endDate.format(dateFormatter)
-        return "$start - $end"
-    }
-
-    /**
-     * Форматирует время занятия для отображения
-     */
-    fun formatLessonTime(scheduleItem: ScheduleItem): String {
-        return "${scheduleItem.formattedStartTime}-${scheduleItem.formattedEndTime}"
-    }
-
-    /**
-     * Форматирует тип занятия для отображения
-     */
-    fun formatLessonType(lessonType: String): String {
-        return when (lessonType.uppercase()) {
-            "LECTURE", "LK", "ЛЕКЦИЯ" -> "Лекция"
-            "PRACTICE", "PR", "ПРАКТИКА" -> "Практика"
-            "LAB", "LABORATORY", "ЛАБОРАТОРНАЯ" -> "Лабораторная"
-            "SEMINAR", "SEM", "СЕМИНАР" -> "Семинар"
-            "EMPTY" -> "Окно"
-            else -> lessonType
-        }
-    }
-
-    /**
-     * Проверяет, есть ли валидные данные для отображения
-     */
-    fun hasValidData(): Boolean {
-        return AppState.currentGroup.isNotBlank() && AppState.currentGroup != " "
-    }
-
-    /**
-     * Получает текущую группу
-     */
-    fun getCurrentGroup(): String = AppState.currentGroup
 }
 
 /**
- * Data class для хранения данных виджета (14 дней)
+ * Data class для хранения данных виджета
  */
 data class WidgetData(
     val currentGroup: String,
-    val startDate: LocalDate,      // Начальная дата диапазона
-    val endDate: LocalDate,        // Конечная дата диапазона (+13 дней)
-    val scheduleByDate: Map<LocalDate, List<ScheduleItem>>, // Сгруппировано по датам
+    val startDate: LocalDate,
+    val endDate: LocalDate,
+    val scheduleByDate: Map<LocalDate, List<ScheduleItem>>,
     val isLoading: Boolean,
-    val error: String?
+    val error: String?,
+    val scrollOffset: Int = 0
 )
+
+/**
+ * Менеджер состояния скролла для виджета с сохранением в SharedPreferences
+ */
+/**
+ * Менеджер состояния скролла для виджета с сохранением в SharedPreferences
+ */
+object WidgetScrollManager {
+    private const val PREFS_NAME = "widget_scroll"
+    private const val SCROLL_OFFSET_KEY = "scroll_offset"
+    private const val DAYS_PER_PAGE = 3 // Дней на одной "странице"
+
+    fun getCurrentOffset(context: Context): Int {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val offset = prefs.getInt(SCROLL_OFFSET_KEY, 0)
+        android.util.Log.d("WidgetScrollManager", "Getting offset: $offset")
+        return offset
+    }
+
+    fun scrollDown(context: Context, totalDays: Int): Int {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val currentOffset = prefs.getInt(SCROLL_OFFSET_KEY, 0)
+        val maxOffset = maxOf(0, totalDays - DAYS_PER_PAGE)
+        val newOffset = minOf(currentOffset + DAYS_PER_PAGE, maxOffset)
+
+        prefs.edit().putInt(SCROLL_OFFSET_KEY, newOffset).apply()
+        android.util.Log.d("WidgetScrollManager", "Scrolled down: $currentOffset -> $newOffset (total: $totalDays, max: $maxOffset)")
+        return newOffset
+    }
+
+    fun scrollUp(context: Context): Int {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val currentOffset = prefs.getInt(SCROLL_OFFSET_KEY, 0)
+        val newOffset = maxOf(0, currentOffset - DAYS_PER_PAGE)
+
+        prefs.edit().putInt(SCROLL_OFFSET_KEY, newOffset).apply()
+        android.util.Log.d("WidgetScrollManager", "Scrolled up: $currentOffset -> $newOffset")
+        return newOffset
+    }
+
+    fun reset(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putInt(SCROLL_OFFSET_KEY, 0).apply()
+        android.util.Log.d("WidgetScrollManager", "Reset scroll to 0")
+    }
+
+    fun canScrollDown(context: Context, totalDays: Int): Boolean {
+        val currentOffset = getCurrentOffset(context)
+        // МОЖНО скроллить вниз если текущий offset МЕНЬШЕ чем (totalDays - DAYS_PER_PAGE)
+        val canScroll = currentOffset < (totalDays - DAYS_PER_PAGE)
+        android.util.Log.d("WidgetScrollManager", "Can scroll down: $canScroll (offset: $currentOffset, total: $totalDays, need: ${currentOffset < (totalDays - DAYS_PER_PAGE)})")
+        return canScroll
+    }
+
+    fun canScrollUp(context: Context): Boolean {
+        val currentOffset = getCurrentOffset(context)
+        // МОЖНО скроллить вверх если текущий offset БОЛЬШЕ 0
+        val canScroll = currentOffset > 0
+        android.util.Log.d("WidgetScrollManager", "Can scroll up: $canScroll (offset: $currentOffset)")
+        return canScroll
+    }
+}// Action для прокрутки вверх
+class ScrollUpAction : androidx.glance.appwidget.action.ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters
+    ) {
+        android.util.Log.d("ScrollUpAction", "Scroll up action triggered")
+        WidgetScrollManager.scrollUp(context)
+
+        // Используем forceUpdate
+        val widget = ScheduleWidget()
+        widget.forceUpdate(context)
+
+        android.util.Log.d("ScrollUpAction", "Force update completed")
+    }
+}
+
+// Action для прокрутки вниз
+class ScrollDownAction : androidx.glance.appwidget.action.ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters
+    ) {
+        android.util.Log.d("ScrollDownAction", "Scroll down action triggered")
+        val widgetData = WidgetDataManager.getWidgetData(context)
+        val totalDays = widgetData.scheduleByDate.size
+        WidgetScrollManager.scrollDown(context, totalDays)
+
+        // Используем forceUpdate
+        val widget = ScheduleWidget()
+        widget.forceUpdate(context)
+
+        android.util.Log.d("ScrollDownAction", "Force update completed")
+    }
+}
+/**
+ * Временная функция для генерации тестовых данных
+ */
+private fun getTestScheduleItems(): List<ScheduleItem> {
+    val items = mutableListOf<ScheduleItem>()
+    val now = LocalDateTime.now()
+
+    // Генерируем тестовые занятия на 14 дней
+    for (day in 0..13) {
+        val date = now.plusDays(day.toLong())
+
+        // Добавляем 2-3 занятия в день
+        for (lesson in 0..2) {
+            val startTime = date.withHour(9 + lesson * 2).withMinute(0)
+            val endTime = startTime.plusHours(1).plusMinutes(30)
+
+            items.add(ScheduleItem(
+                discipline = "Дисциплина ${day + 1}-${lesson + 1}",
+                lessonType = if (lesson % 2 == 0) "Лекция" else "Практика",
+                startTime = startTime,
+                endTime = endTime,
+                room = "Ауд. ${100 + day + lesson}",
+                teacher = "Преподаватель ${day + 1}",
+                groups = listOf("ИКБО-60-23"),
+                groupsSummary = "ИКБО-60-23",
+                description = "Тестовое занятие",
+                recurrence = null,
+                exceptions = emptyList()
+            ))
+        }
+    }
+
+    Log.d(TAG, "Generated ${items.size} test items")
+    return items
+}

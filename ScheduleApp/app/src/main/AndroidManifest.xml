@@ -58,6 +58,15 @@
                 android:resource="@xml/widget_info" />
         </receiver>
 
+        <receiver
+            android:name="androidx.glance.appwidget.action.ActionBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.scheduleapp.widgets.ScrollUpAction" />
+                <action android:name="com.example.scheduleapp.widgets.ScrollDownAction" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
