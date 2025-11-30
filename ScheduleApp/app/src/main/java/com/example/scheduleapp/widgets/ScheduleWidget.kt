@@ -3,6 +3,11 @@ package com.example.scheduleapp.widgets
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -25,20 +30,15 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.example.scheduleapp.data.entity.ScheduleItem
-import com.example.scheduleapp.data.state.AppState
-import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.darkGray
-import com.example.scheduleapp.ui.theme.deepGreen
-import com.example.scheduleapp.ui.theme.lightGreen
-import com.example.scheduleapp.ui.theme.pink40
 import com.example.scheduleapp.ui.theme.white
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
- * Основной класс виджета расписания
- * Отображает расписание на текущий день в компактном формате
+ * Упрощенный виджет расписания - только дата и список пар
+ * Поддерживает вертикальный скролл средствами системы
  */
 
 @SuppressLint("RestrictedApi")
@@ -61,7 +61,7 @@ class ScheduleWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(darkGray)
-                .padding(16.dp),
+                .padding(12.dp),
             contentAlignment = Alignment.TopStart
         ) {
             when {
@@ -78,146 +78,157 @@ class ScheduleWidget : GlanceAppWidget() {
         Column(
             modifier = GlanceModifier.fillMaxSize()
         ) {
-            // Заголовок с датой и группой
+            // Заголовок с датой
             WidgetHeader(
                 currentDate = data.currentDate,
-                currentGroup = data.currentGroup,
-                itemsCount = data.scheduleItems.size
+                currentGroup = data.currentGroup
             )
 
-            Spacer(modifier = GlanceModifier.height(12.dp))
+            Spacer(modifier = GlanceModifier.height(8.dp))
 
-            // Список пар
+            // Список всех пар (система сама обеспечит скролл если не помещается)
             Column(
                 modifier = GlanceModifier.fillMaxWidth()
             ) {
-                data.scheduleItems.take(4).forEach { scheduleItem ->
-                    ScheduleItemCompact(scheduleItem = scheduleItem)
+                data.scheduleItems.forEach { scheduleItem ->
+                    ScheduleItemSimple(scheduleItem = scheduleItem)
                     Spacer(modifier = GlanceModifier.height(6.dp))
-                }
-
-                // Показать индикатор, если пар больше 4
-                if (data.scheduleItems.size > 4) {
-                    MoreItemsIndicator(count = data.scheduleItems.size - 4)
                 }
             }
         }
     }
 
     @Composable
-    private fun WidgetHeader(currentDate: LocalDate, currentGroup: String, itemsCount: Int) {
+    private fun WidgetHeader(currentDate: LocalDate, currentGroup: String) {
         Column(
             modifier = GlanceModifier.fillMaxWidth()
         ) {
-            // Дата
+            // Форматированная дата (21 ноября - пн)
             Text(
-                text = currentDate.format(
-                    DateTimeFormatter.ofPattern("dd MMMM", Locale("ru"))
-                ),
+                text = WidgetDataManager.formatDateForWidget(currentDate),
                 style = TextStyle(
                     color = ColorProvider(white),
                     fontWeight = FontWeight.Bold
                 )
             )
 
-            Spacer(modifier = GlanceModifier.height(4.dp))
+            Spacer(modifier = GlanceModifier.height(2.dp))
 
-            // Группа и количество пар
-            Row(
-                modifier = GlanceModifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = currentGroup.ifEmpty { "Не выбрана" },
-                    style = TextStyle(
-                        color = ColorProvider(white.copy(alpha = 0.8f)),
-                        fontWeight = FontWeight.Medium
-                    ),
-                    modifier = GlanceModifier.defaultWeight()
+            // Группа
+            Text(
+                text = currentGroup.ifEmpty { "Группа не выбрана" },
+                style = TextStyle(
+                    color = ColorProvider(white.copy(alpha = 0.8f)),
+                    fontWeight = FontWeight.Medium
                 )
-
-                if (itemsCount > 0) {
-                    Text(
-                        text = "$itemsCount пар",
-                        style = TextStyle(
-                            color = ColorProvider(white.copy(alpha = 0.6f))
-                        )
-                    )
-                }
-            }
+            )
         }
     }
 
-
     @Composable
-    private fun ScheduleItemCompact(scheduleItem: ScheduleItem) {
-        val dotColor = when (scheduleItem.lessonType.uppercase()) {
-            "LK", "LECTURE", "ЛЕКЦИЯ" -> deepGreen
-            "PR", "PRACTICE", "ПРАКТИКА" -> blue
-            else -> pink40
-        }
-
-        val isCurrentLesson = scheduleItem.let { item ->
-            val now = java.time.LocalTime.now()
-            now.isAfter(item.startTime.toLocalTime()) && now.isBefore(item.endTime.toLocalTime())
-        }
-
+    private fun ScheduleItemSimple(scheduleItem: ScheduleItem) {
         Box(
             modifier = GlanceModifier
                 .fillMaxWidth()
-                .background(
-                    if (isCurrentLesson) lightGreen.copy(alpha = 0.2f)
-                    else white.copy(alpha = 0.1f)
-                )
+                .background(white.copy(alpha = 0.1f))
                 .padding(8.dp)
         ) {
             Row(
                 modifier = GlanceModifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
-                // Время
+                // Время занятия (9:00-10:30)
                 Text(
-                    text = scheduleItem.formattedStartTime,
+                    text = WidgetDataManager.formatLessonTime(scheduleItem),
                     style = TextStyle(
                         color = ColorProvider(white),
                         fontWeight = FontWeight.Bold
                     ),
-                    modifier = GlanceModifier.width(35.dp)
+                    modifier = GlanceModifier.width(70.dp)
                 )
 
                 Spacer(modifier = GlanceModifier.width(8.dp))
 
-                Box(
-                    modifier = GlanceModifier
-                        .width(4.dp)
-                        .height(4.dp)
-                        .background(dotColor)
-                ){}
-
-                Spacer(modifier = GlanceModifier.width(8.dp))
-
-                Text(
-                    text = getShortDisciplineName(scheduleItem.discipline),
-                    style = TextStyle(
-                        color = ColorProvider(white),
-                        fontWeight = FontWeight.Medium
-                    ),
-                    modifier = GlanceModifier.defaultWeight(),
-                    maxLines = 1
-                )
-
-                // Аудитория
-                if (scheduleItem.room.isNotBlank()) {
+                // Детали занятия
+                Column(
+                    modifier = GlanceModifier.defaultWeight()
+                ) {
+                    // Тип и название занятия (Лекция: Реляционные БД)
                     Text(
-                        text = scheduleItem.room.split(" ").first(), // Берем только номер
+                        text = buildLessonTitle(scheduleItem),
                         style = TextStyle(
-                            color = ColorProvider(white.copy(alpha = 0.7f))
-                        )
+                            color = ColorProvider(white),
+                            fontWeight = FontWeight.Medium
+                        ),
+                        maxLines = 2
                     )
+
+                    // Аудитория, если есть
+                    if (scheduleItem.room.isNotBlank()) {
+                        Spacer(modifier = GlanceModifier.height(2.dp))
+                        Text(
+                            text = scheduleItem.room,
+                            style = TextStyle(
+                                color = ColorProvider(white.copy(alpha = 0.7f))
+                            )
+                        )
+                    }
+
+                    // Преподаватель, если есть
+                    if (scheduleItem.teacher.isNotBlank()) {
+                        Spacer(modifier = GlanceModifier.height(2.dp))
+                        Text(
+                            text = scheduleItem.teacher,
+                            style = TextStyle(
+                                color = ColorProvider(white.copy(alpha = 0.7f))
+                            ),
+                            maxLines = 1
+                        )
+                    }
                 }
             }
         }
     }
+
+    /**
+     * Собирает заголовок занятия в формате "Тип: Название"
+     */
+    private fun buildLessonTitle(scheduleItem: ScheduleItem): String {
+        val lessonType = WidgetDataManager.formatLessonType(scheduleItem.lessonType)
+        val discipline = scheduleItem.discipline
+
+        return if (discipline.isNotBlank()) {
+            if (lessonType == "Окно") {
+                "Окно"
+            } else {
+                "$lessonType: ${getShortDisciplineName(discipline)}"
+            }
+        } else {
+            lessonType
+        }
+    }
+
+    /**
+     * Сокращает название дисциплины для компактного отображения
+     */
+    private fun getShortDisciplineName(discipline: String): String {
+        return when {
+            discipline.length <= 25 -> discipline
+            discipline.contains(" ") -> {
+                val words = discipline.split(" ")
+                if (words.size >= 2) {
+                    // Берем первое слово и первые буквы остальных
+                    words.take(3).joinToString(" ") { word ->
+                        if (word == words.first()) word else "${word.take(1)}."
+                    }
+                } else {
+                    discipline.take(24) + "…"
+                }
+            }
+            else -> discipline.take(24) + "…"
+        }
+    }
+
     @Composable
     private fun LoadingState() {
         Box(
@@ -253,7 +264,7 @@ class ScheduleWidget : GlanceAppWidget() {
                 Spacer(modifier = GlanceModifier.height(4.dp))
 
                 Text(
-                    text = error.take(30) + if (error.length > 30) "..." else "",
+                    text = error.take(40) + if (error.length > 40) "..." else "",
                     style = TextStyle(
                         color = ColorProvider(white.copy(alpha = 0.7f))
                     ),
@@ -273,17 +284,17 @@ class ScheduleWidget : GlanceAppWidget() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = if (currentGroup.isNotEmpty()) "Нет пар" else "Выберите группу",
+                    text = if (currentGroup.isNotEmpty() && currentGroup != " ") "Нет пар" else "Выберите группу",
                     style = TextStyle(
                         color = ColorProvider(white),
                         fontWeight = FontWeight.Medium
                     )
                 )
 
-                if (currentGroup.isEmpty()) {
+                if (currentGroup.isEmpty() || currentGroup == " ") {
                     Spacer(modifier = GlanceModifier.height(4.dp))
                     Text(
-                        text = "в настройках",
+                        text = "в настройках приложения",
                         style = TextStyle(
                             color = ColorProvider(white.copy(alpha = 0.6f))
                         )
@@ -292,65 +303,27 @@ class ScheduleWidget : GlanceAppWidget() {
             }
         }
     }
-
-    @Composable
-    private fun MoreItemsIndicator(count: Int) {
-        Box(
-            modifier = GlanceModifier
-                .fillMaxWidth()
-                .padding(top = 4.dp)
-        ) {
-            Text(
-                text = "+$count ещё",
-                style = TextStyle(
-                    color = ColorProvider(white.copy(alpha = 0.5f))
-                )
-            )
-        }
-    }
-
-    /**
-     * Сокращает название дисциплины для компактного отображения
-     */
-    private fun getShortDisciplineName(discipline: String): String {
-        return when {
-            discipline.length <= 15 -> discipline
-            discipline.contains(" ") -> {
-                val words = discipline.split(" ")
-                if (words.size >= 2) {
-                    "${words[0]} ${words[1].take(1)}."
-                } else {
-                    discipline.take(14) + "…"
-                }
-            }
-            else -> discipline.take(14) + "…"
-        }
-    }
 }
-
-/**
- * Data class для хранения состояния виджета
- */
-private data class WidgetData(
-    val currentGroup: String = "",
-    val currentDate: LocalDate = LocalDate.now(),
-    val scheduleItems: List<ScheduleItem> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null
-)
 
 /**
  * Composable функция для получения данных виджета
  */
 @Composable
 private fun rememberWidgetData(): WidgetData {
-    // TODO: Реализовать получение реальных данных из AppState
-    // Временная заглушка с тестовыми данными
-    return WidgetData(
-        currentGroup = AppState.currentGroup,
-        currentDate = AppState.selectedDate ?: LocalDate.now(),
+    val context = androidx.glance.LocalContext.current
+    var widgetData by remember { mutableStateOf(WidgetData(
+        currentGroup = "",
+        currentDate = LocalDate.now(),
         scheduleItems = emptyList(),
-        isLoading = false,
+        isLoading = true,
         error = null
-    )
+    )) }
+
+    LaunchedEffect(Unit) {
+        widgetData = withContext(Dispatchers.IO) {
+            WidgetDataManager.getWidgetData(context)
+        }
+    }
+
+    return widgetData
 }
