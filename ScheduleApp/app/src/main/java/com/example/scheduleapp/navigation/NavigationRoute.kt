@@ -7,9 +7,8 @@ sealed class NavigationRoute(val route: String){
     object Profile: NavigationRoute("profile")
     object ScheduleList: NavigationRoute("schedule_list")
     object Search: NavigationRoute("search")
-    object Previous: NavigationRoute("previous")
-    object UserDetail: NavigationRoute("user_detail")
     object ScheduleDetail: NavigationRoute("schedule_detail")
+    object UserSettings: NavigationRoute("user_settings")
 
     companion object{
         fun fromRoute(route: String?): NavigationRoute{
@@ -20,15 +19,11 @@ sealed class NavigationRoute(val route: String){
                 "profile" -> Profile
                 "schedule_list" -> ScheduleList
                 "search" -> Search
-                "previous" -> Previous
-                "user_detail" -> UserDetail
                 "schedule_detail" -> ScheduleDetail
+                "user_settings" -> UserSettings
                 null -> Profile
                 else -> throw IllegalArgumentException("Route $route is not recognized")
             }
         }
     }
-
-
-
 }

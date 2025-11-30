@@ -1,4 +1,4 @@
-package com.example.scheduleapp
+package com.example.scheduleapp.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -8,23 +8,18 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.scheduleapp.bottom_navigation.*
-import com.example.scheduleapp.navigation.NavigationRoute
-import com.example.scheduleapp.screens.profile.LoginScreen
-import com.example.scheduleapp.screens.profile.RegisterScreen
-import com.example.scheduleapp.screens.profile.UserDetailScreen
-import com.example.scheduleapp.screens.MainScreen
-import com.example.scheduleapp.screens.master.ScheduleDetailScreen
+import com.example.scheduleapp.screens.master.ScreenList
+import com.example.scheduleapp.screens.master.ScreenProfile
+import com.example.scheduleapp.screens.master.ScreenSearch
 import com.example.scheduleapp.screens.master.WelcomeScreen
+import com.example.scheduleapp.screens.master.detail.ScheduleDetailScreen
+import com.example.scheduleapp.screens.master.detail.UserSettingsScreen
 
 @Composable
 fun MainNavGraph(navController: NavHostController) {
     var startDestination by remember {
         mutableStateOf(NavigationRoute.Welcome.route)
     }
-
-    // Здесь можно добавить логику для проверки, авторизован ли пользователь
-    // if (isUserLoggedIn) startDestination = NavigationRoute.Main.route
 
     NavHost(
         navController = navController,
@@ -41,58 +36,27 @@ fun MainNavGraph(navController: NavHostController) {
         }
 
         composable(NavigationRoute.Profile.route) {
-            ScreenProfile()
+            ScreenProfile(navController = navController)
         }
 
         composable(NavigationRoute.ScheduleList.route) {
-            ScreenList()
+            ScreenList(navController = navController)
         }
 
         composable(NavigationRoute.Search.route) {
             ScreenSearch()
         }
 
-        composable(NavigationRoute.Previous.route) {
-            ScreenPrevious()
-        }
-        ////////////////////////////////////////////////
-
-        // Detail screens
-        composable(NavigationRoute.UserDetail.route) {
-            UserDetailScreen(
+        composable(NavigationRoute.UserSettings.route) {
+            UserSettingsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
         composable(NavigationRoute.ScheduleDetail.route) {
             ScheduleDetailScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-
-
-        composable(NavigationRoute.Login.route) {
-            LoginScreen(
-                onLoginSuccess = {
-                    navController.navigate(NavigationRoute.Profile.route) {
-                        popUpTo(NavigationRoute.Welcome.route) { inclusive = true }
-                    }
-                },
-                onNavigateToRegister = {
-                    navController.navigate(NavigationRoute.Register.route)
-                },
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(NavigationRoute.Register.route) {
-            RegisterScreen(
-                onRegisterSuccess = {
-                    navController.navigate(NavigationRoute.Profile.route) {
-                        popUpTo(NavigationRoute.Welcome.route) { inclusive = true }
-                    }
-                },
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                navController = navController
             )
         }
     }

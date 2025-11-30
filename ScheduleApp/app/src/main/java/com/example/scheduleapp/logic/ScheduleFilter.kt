@@ -1,0 +1,80 @@
+package com.example.scheduleapp.logic
+
+import com.example.scheduleapp.data.entity.DynamicScheduleDay
+import com.example.scheduleapp.data.entity.DynamicScheduleDayFactory
+import com.example.scheduleapp.data.entity.ScheduleDay
+import com.example.scheduleapp.data.entity.ScheduleDayFactory
+import com.example.scheduleapp.data.entity.ScheduleItem
+import java.time.LocalDate
+
+fun isDateInRecurrence(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean {
+    val recurrence = scheduleItem.recurrence ?: return false
+    val startDate = scheduleItem.startTime.toLocalDate()
+
+    if (targetDate.isBefore(startDate)) {
+        return false
+    }
+
+    if (recurrence.until != null && targetDate.atStartOfDay().isAfter(recurrence.until)) {
+        return false
+    }
+
+    val weeksBetween = java.time.temporal.ChronoUnit.WEEKS.between(startDate, targetDate)
+    if (recurrence.interval != null && recurrence.interval > 0) {
+        if (weeksBetween % recurrence.interval != 0L) {
+            return false
+        }
+    }
+
+    return when (recurrence.frequency?.uppercase()) {
+        "WEEKLY" -> true
+        else -> true
+    }
+}
+
+fun isDateException(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean {
+    return scheduleItem.exceptions.any { it == targetDate }
+}
+
+fun shouldShowOnDate(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean {
+    val itemDate = scheduleItem.startTime.toLocalDate()
+    val itemDayOfWeek = scheduleItem.startTime.dayOfWeek
+    val targetDayOfWeek = targetDate.dayOfWeek
+
+    // Проверяем, не является ли дата исключением
+    if (isDateException(scheduleItem, targetDate)) {
+        return false
+    }
+
+    // Если дата совпадает точно с оригинальной датой занятия
+    if (itemDate == targetDate) {
+        return true // Оригинальное занятие всегда показывается (если не исключение)
+    }
+
+    // Проверяем, совпадает ли день недели
+    if (itemDayOfWeek != targetDayOfWeek) {
+        return false
+    }
+
+    val recurrence = scheduleItem.recurrence
+
+    return if (recurrence != null) {
+        // Для занятий с правилом повторения
+        isDateInRecurrence(scheduleItem, targetDate)
+    } else {
+        // Для занятий без правила повторения - только оригинальная дата
+        false
+    }
+}
+
+fun createScheduleDayForDate(
+    scheduleItems: List<ScheduleItem>,
+    targetDate: LocalDate,
+    showEmptyLessons: Boolean = true
+): DynamicScheduleDay {
+    val filteredItems = scheduleItems.filter { scheduleItem ->
+        shouldShowOnDate(scheduleItem, targetDate)
+    }
+
+    return DynamicScheduleDayFactory.createDynamicScheduleDay(targetDate, filteredItems, showEmptyLessons)
+}

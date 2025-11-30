@@ -10,19 +10,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
-import com.example.scheduleapp.MainNavGraph
-import com.example.scheduleapp.bottom_navigation.BottomNav
+import com.example.scheduleapp.navigation.MainNavGraph
+import com.example.scheduleapp.navigation.bottom_navigation.BottomNav
 import com.example.scheduleapp.navigation.NavigationRoute
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Preview
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
     var showBottomNav by remember { mutableStateOf(true) }
+
     LaunchedEffect(navController) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
-            showBottomNav = backStackEntry.destination.route != NavigationRoute.Welcome.route
+            val currentRoute = backStackEntry.destination.route
+            showBottomNav = when (currentRoute) {
+                NavigationRoute.ScheduleList.route -> true
+                NavigationRoute.Profile.route -> true
+                NavigationRoute.Search.route -> true
+                else -> false
+            }
         }
     }
     Scaffold(
@@ -35,7 +41,6 @@ fun MainScreen() {
         MainNavGraph(navController)
     }
 }
-
 
 @Preview
 @Composable

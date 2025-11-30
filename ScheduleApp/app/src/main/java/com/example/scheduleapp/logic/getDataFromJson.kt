@@ -1,0 +1,127 @@
+package com.example.scheduleapp.logic
+
+import android.util.Log
+import com.example.scheduleapp.data.entity.ScheduleItem
+import com.example.scheduleapp.data.entity.RecurrenceRule
+import com.example.scheduleapp.data.database.ScheduleRepository
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Headers
+import retrofit2.http.Path
+import java.time.LocalDateTime
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
+private val dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+
+data class ScheduleItemResponse(
+    val discipline: String,
+    val lessonType: String,
+    val startTime: String,
+    val endTime: String,
+    val room: String,
+    val teacher: String,
+    val groups: List<String>,
+    val groupsSummary: String,
+    val description: String?,
+    val recurrence: RecurrenceRuleResponse? = null,
+    val exceptions: List<String>? = emptyList()
+)
+
+data class RecurrenceRuleResponse(
+    val frequency: String? = null,
+    val interval: Int? = null,
+    val until: String? = null
+)
+
+
+interface ScheduleApiService {
+    @GET("schedule/final/{group}")
+    @Headers(
+        "Content-Type: application/json; charset=utf-8",
+        "Accept: application/json; charset=utf-8"
+    )
+    suspend fun getSchedule(@Path("group") group: String): List<ScheduleItemResponse>
+}
+
+private fun createApiService(): ScheduleApiService {
+    val retrofit = Retrofit.Builder()
+        .baseUrl("http://10.150.247.211:8080/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    return retrofit.create(ScheduleApiService::class.java)
+}
+
+fun parseScheduleFromResponse(response: List<ScheduleItemResponse>): List<ScheduleItem> {
+    return response.map { parseScheduleItem(it) }
+}
+
+fun parseScheduleItem(response: ScheduleItemResponse): ScheduleItem {
+    return ScheduleItem(
+        discipline = response.discipline,
+        lessonType = response.lessonType,
+        startTime = LocalDateTime.parse(response.startTime, dateTimeFormatter),
+        endTime = LocalDateTime.parse(response.endTime, dateTimeFormatter),
+        room = response.room,
+        teacher = response.teacher,
+        groups = response.groups,
+        groupsSummary = response.groupsSummary,
+        description = response.description?.takeIf { it != "null" && it.isNotEmpty() },
+        recurrence = response.recurrence?.let { recurrence ->
+            RecurrenceRule(
+                frequency = recurrence.frequency,
+                interval = recurrence.interval,
+                until = recurrence.until?.let { LocalDateTime.parse(it, dateTimeFormatter) }
+            )
+        },
+        exceptions = response.exceptions?.map { LocalDate.parse(it, dateFormatter) } ?: emptyList()
+    )
+}
+
+suspend fun getScheduleItemsWithCache(
+    group: String,
+    repository: ScheduleRepository? = null,
+    onSuccess: (List<ScheduleItem>) -> Unit,
+    onError: (String) -> Unit
+) {
+    try {
+        // 1. СНАЧАЛА проверяем локальную базу
+        if (repository != null && repository.hasCachedSchedule(group)) {
+            Log.d("SCHEDULE_CACHE", "Loading schedule from database for group: $group")
+            val cachedItems = repository.getSchedule(group)
+            onSuccess(cachedItems)
+            return
+        }
+
+        // 2. ПОТОМ загружаем с сервера (только если нет в БД)
+        Log.d("SCHEDULE_CACHE", "No cache found, loading from server for group: $group")
+        val apiService = createApiService()
+        val response = apiService.getSchedule(group)
+        val scheduleItems = parseScheduleFromResponse(response)
+
+        // Сохраняем в базу данных
+        if (repository != null && scheduleItems.isNotEmpty()) {
+            repository.cacheScheduleItems(group, scheduleItems)
+            Log.d("SCHEDULE_CACHE", "Saved ${scheduleItems.size} items to database")
+        }
+
+        onSuccess(scheduleItems)
+
+    } catch (e: Exception) {
+        Log.e("API_ERROR", "Error: ${e.message}", e)
+
+        // 3. В САМОМ ХУДШЕМ СЛУЧАЕ - проверяем еще раз БД на случай race condition
+        if (repository != null && repository.hasCachedSchedule(group)) {
+            Log.d("SCHEDULE_CACHE", "Server failed, using database cache for group: $group")
+            val cachedItems = repository.getSchedule(group)
+            onSuccess(cachedItems)
+        } else {
+            // Нет ни в БД, ни доступа к серверу - передаем ошибку
+            Log.e("SCHEDULE_CACHE", "No cached data for group: $group and server unavailable")
+            onError("Сервер недоступен и нет сохраненных данных для группы '$group'")
+        }
+    }
+}

@@ -2,13 +2,12 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.kapt)
 }
 
 android {
     namespace = "com.example.scheduleapp"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.scheduleapp"
@@ -18,6 +17,16 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Добавляем для Room
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += mapOf(
+                    "room.schemaLocation" to "$projectDir/schemas",
+                    "room.incremental" to "true"
+                )
+            }
+        }
     }
 
     buildTypes {
@@ -39,10 +48,46 @@ android {
     buildFeatures {
         compose = true
     }
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+    }
 }
 
 dependencies {
-    implementation("androidx.navigation:navigation-compose:2.9.5")
+    // Room dependencies
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.glance.appwidget)
+    kapt(libs.androidx.room.compiler)
+
+    // Для Java 8 time API (LocalDateTime и т.д.)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+    implementation("androidx.navigation:navigation-compose:2.7.4")
+
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+
+
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
+    implementation("me.saket.swipe:swipe:1.0.0")
+
+
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("com.google.accompanist:accompanist-pager:0.28.0")
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.28.0")
+    implementation("com.android.volley:volley:1.2.1")
+
+    // Glance Widgets для Compose
+    implementation(libs.androidx.glance)
+    implementation(libs.androidx.glance.material3)
+
+    // WorkManager для фоновых обновлений виджета
+    implementation(libs.androidx.work.runtime.ktx)
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -52,6 +97,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.datastore.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
