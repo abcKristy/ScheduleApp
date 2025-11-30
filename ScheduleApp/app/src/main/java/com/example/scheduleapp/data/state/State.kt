@@ -8,13 +8,17 @@ import androidx.compose.runtime.setValue
 import com.example.scheduleapp.data.entity.ScheduleItem
 import com.example.scheduleapp.data.database.ScheduleDatabase
 import com.example.scheduleapp.data.database.ScheduleRepository
+import com.example.scheduleapp.widgets.WidgetUpdateHelper
 import java.time.LocalDate
 
 @SuppressLint("StaticFieldLeak")
 object AppState {
     private var _selectedDate by mutableStateOf<LocalDate?>(LocalDate.now())
     val selectedDate: LocalDate? get() = _selectedDate
-    fun setSelectedDate(date: LocalDate?) { _selectedDate = date }
+    fun setSelectedDate(date: LocalDate?) {
+        _selectedDate = date
+        context?.let { WidgetUpdateHelper.scheduleUpdateOnDateChange(it) }
+    }
     var selectedScheduleItem: ScheduleItem? by mutableStateOf(null)
 
     private var _currentGroup by mutableStateOf<String>("")
@@ -23,14 +27,17 @@ object AppState {
         _currentGroup = group
         context?.let {
             PreferencesManager.saveCurrentGroup(it, group)
+            WidgetUpdateHelper.scheduleUpdateOnGroupChange(it)
         }
     }
+
     private var _userGroup by mutableStateOf<String>("не задано")
     val userGroup: String get() = _userGroup
     fun setUserGroup(group: String) {
         _userGroup = group
         context?.let {
             PreferencesManager.saveUserGroup(it, group)
+            WidgetUpdateHelper.scheduleUpdateOnGroupChange(it)
         }
         setCurrentGroup(group)
     }
@@ -55,6 +62,7 @@ object AppState {
         _repository = ScheduleRepository(database)
         loadSavedData(context)
     }
+
     private var _showEmptyLessons by mutableStateOf(true)
     val showEmptyLessons: Boolean get() = _showEmptyLessons
 
@@ -107,7 +115,10 @@ object AppState {
 
     private var _scheduleItems by mutableStateOf<List<ScheduleItem>>(emptyList())
     val scheduleItems: List<ScheduleItem> get() = _scheduleItems
-    fun setScheduleItems(items: List<ScheduleItem>) { _scheduleItems = items }
+    fun setScheduleItems(items: List<ScheduleItem>) {
+        _scheduleItems = items
+        context?.let { WidgetUpdateHelper.scheduleUpdateOnDataChange(it) }
+    }
 
     private var _isLoading by mutableStateOf(false)
     val isLoading: Boolean get() = _isLoading

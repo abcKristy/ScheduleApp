@@ -57,6 +57,7 @@ dependencies {
     // Room dependencies
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.glance.appwidget)
     kapt(libs.androidx.room.compiler)
 
     // Для Java 8 time API (LocalDateTime и т.д.)
@@ -79,6 +80,13 @@ dependencies {
     implementation("com.google.accompanist:accompanist-pager:0.28.0")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.28.0")
     implementation("com.android.volley:volley:1.2.1")
+
+    // Glance Widgets для Compose
+    implementation(libs.androidx.glance)
+    implementation(libs.androidx.glance.material3)
+
+    // WorkManager для фоновых обновлений виджета
+    implementation(libs.androidx.work.runtime.ktx)
 
 
     implementation(libs.androidx.core.ktx)
