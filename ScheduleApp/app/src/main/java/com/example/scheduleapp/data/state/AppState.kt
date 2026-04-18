@@ -10,6 +10,7 @@ import com.example.scheduleapp.data.database.ScheduleDatabase
 import com.example.scheduleapp.data.database.ScheduleRepository
 import com.example.scheduleapp.util.SemesterUtils
 import com.example.scheduleapp.widgets.WidgetUpdateHelper
+import com.example.scheduleapp.workers.SemesterCheckWorker
 import java.time.LocalDate
 
 @SuppressLint("StaticFieldLeak")
@@ -149,20 +150,31 @@ object AppState {
     private var _needsSemesterUpdate by mutableStateOf(false)
     val needsSemesterUpdate: Boolean get() = _needsSemesterUpdate
 
-    /**
-     * Проверка семестра при запуске приложения
-     */
     private fun checkSemesterOnStartup() {
         val currentSemester = SemesterUtils.getCurrentSemester()
-        val savedSemester = PreferencesManager.getLastKnownSemester(context!!)
+        val savedSemester = context?.let { PreferencesManager.getLastKnownSemester(it) }
 
         if (savedSemester != currentSemester) {
-            setNeedsSemesterUpdate(true)
-            PreferencesManager.saveLastKnownSemester(context!!, currentSemester)
+            _needsSemesterUpdate = true
+            context?.let {
+                PreferencesManager.saveLastKnownSemester(it, currentSemester)
+
+                // Запускаем фоновую проверку всех групп
+                scheduleSemesterCheckWorker(it)
+            }
         }
 
         _lastSemesterCheck = System.currentTimeMillis()
-        PreferencesManager.saveLastSemesterCheck(context!!, _lastSemesterCheck)
+        context?.let { PreferencesManager.saveLastSemesterCheck(it, _lastSemesterCheck) }
+    }
+
+    private fun scheduleSemesterCheckWorker(context: Context) {
+        val workRequest = androidx.work.OneTimeWorkRequestBuilder<SemesterCheckWorker>()
+            .addTag(SemesterCheckWorker.WORK_NAME)
+            .build()
+
+        androidx.work.WorkManager.getInstance(context)
+            .enqueue(workRequest)
     }
 
     /**
@@ -211,6 +223,8 @@ object AppState {
         _needsSemesterUpdate = false
     }
 
+
+
     fun setCurrentGroupAndNavigate(group: String) {
         setCurrentGroup(group)
         setSelectedDate(LocalDate.now())
@@ -247,4 +261,6 @@ object AppState {
         _isLoading = false
         _errorMessage = null
     }
+
+
 }
