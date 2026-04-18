@@ -15,6 +15,10 @@ object PreferencesManager {
     private const val KEY_DARK_THEME = "dark_theme"
     private const val KEY_SHOW_EMPTY_LESSONS = "show_empty_lessons"
 
+    // НОВЫЕ КЛЮЧИ ДЛЯ СЕМЕСТРА
+    private const val KEY_LAST_KNOWN_SEMESTER = "last_known_semester"
+    private const val KEY_LAST_SEMESTER_CHECK = "last_semester_check"
+
     fun saveShowEmptyLessons(context: Context, showEmpty: Boolean) {
         getSharedPreferences(context).edit().apply {
             putBoolean(KEY_SHOW_EMPTY_LESSONS, showEmpty)
@@ -110,5 +114,27 @@ object PreferencesManager {
 
     fun getDarkTheme(context: Context): Boolean {
         return getSharedPreferences(context).getBoolean(KEY_DARK_THEME, false)
+    }
+
+    fun saveLastKnownSemester(context: Context, semester: String) {
+        getSharedPreferences(context).edit().apply {
+            putString(KEY_LAST_KNOWN_SEMESTER, semester)
+            apply()
+        }
+    }
+
+    fun getLastKnownSemester(context: Context): String? {
+        return getSharedPreferences(context).getString(KEY_LAST_KNOWN_SEMESTER, null)
+    }
+
+    fun saveLastSemesterCheck(context: Context, timestamp: Long) {
+        getSharedPreferences(context).edit().apply {
+            putLong(KEY_LAST_SEMESTER_CHECK, timestamp)
+            apply()
+        }
+    }
+
+    fun getLastSemesterCheck(context: Context): Long {
+        return getSharedPreferences(context).getLong(KEY_LAST_SEMESTER_CHECK, 0)
     }
 }

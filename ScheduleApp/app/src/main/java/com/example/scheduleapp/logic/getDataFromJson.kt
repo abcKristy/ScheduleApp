@@ -85,35 +85,42 @@ fun parseScheduleItem(response: ScheduleItemResponse): ScheduleItem {
 suspend fun getScheduleItemsWithCache(
     group: String,
     repository: ScheduleRepository? = null,
+    forceRefresh: Boolean = false,
     onSuccess: (List<ScheduleItem>) -> Unit,
     onError: (String) -> Unit
 ) {
     try {
-        // 1. Проверяем локальную базу с учетом семестра
         val currentSemester = SemesterUtils.getCurrentSemester()
 
-        if (repository != null && repository.hasCachedScheduleForSemester(group, currentSemester)) {
-            Log.d("SCHEDULE_CACHE", "Loading schedule from database for group: $group, semester: $currentSemester")
-            val cachedItems = repository.getScheduleForSemester(group, currentSemester)
+        // Если не принудительное обновление, проверяем кэш
+        if (!forceRefresh && repository != null) {
+            val cachedSemester = repository.getCachedSemester(group)
 
-            // Проверяем, не истек ли кэш
-            if (!repository.isCacheExpired(group)) {
-                onSuccess(cachedItems)
-                return
-            } else {
-                Log.d("SCHEDULE_CACHE", "Cache expired for group: $group, will refresh in background")
-                onSuccess(cachedItems) // Показываем старые данные
-                // Продолжаем загрузку свежих в фоне
+            if (cachedSemester == currentSemester && repository.hasCachedScheduleForSemester(group, currentSemester)) {
+                Log.d("SCHEDULE_CACHE", "Loading from database for group: $group, semester: $currentSemester")
+                val cachedItems = repository.getScheduleForSemester(group, currentSemester)
+
+                if (!repository.isCacheExpired(group)) {
+                    onSuccess(cachedItems)
+                    return
+                } else {
+                    Log.d("SCHEDULE_CACHE", "Cache expired, showing old data and refreshing")
+                    onSuccess(cachedItems)
+                    // Продолжаем загрузку свежих данных
+                }
+            } else if (cachedSemester != null && cachedSemester != currentSemester) {
+                Log.d("SCHEDULE_CACHE", "Semester changed: cached=$cachedSemester, current=$currentSemester")
+                // Удаляем устаревшие данные
+                repository.cleanupOutdatedGroups(currentSemester)
             }
         }
 
-        // 2. Загружаем с сервера
+        // Загружаем с сервера
         Log.d("SCHEDULE_CACHE", "Loading from server for group: $group")
         val apiService = createApiService()
         val response = apiService.getSchedule(group)
         val scheduleItems = parseScheduleFromResponse(response)
 
-        // Сохраняем с текущим семестром
         if (repository != null && scheduleItems.isNotEmpty()) {
             repository.cacheScheduleItemsWithSemester(group, scheduleItems, currentSemester)
             Log.d("SCHEDULE_CACHE", "Saved ${scheduleItems.size} items with semester $currentSemester")
@@ -124,7 +131,6 @@ suspend fun getScheduleItemsWithCache(
     } catch (e: Exception) {
         Log.e("API_ERROR", "Error: ${e.message}", e)
 
-        // 3. Fallback — пробуем любые кэшированные данные
         if (repository != null && repository.hasCachedSchedule(group)) {
             Log.d("SCHEDULE_CACHE", "Server failed, using ANY cached data for group: $group")
             val cachedItems = repository.getSchedule(group)

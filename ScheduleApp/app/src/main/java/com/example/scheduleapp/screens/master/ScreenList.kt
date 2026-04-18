@@ -49,6 +49,7 @@ import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
+import com.example.scheduleapp.util.SemesterUtils
 import com.google.gson.Gson
 import java.time.LocalDate
 import java.time.YearMonth
@@ -71,23 +72,42 @@ fun ScreenList(navController: NavController? = null) {
     }
 
     LaunchedEffect(currentGroup) {
+        if (currentGroup.isBlank() || currentGroup == " ") {
+            AppState.setLoading(false)
+            return@LaunchedEffect
+        }
+
         AppState.setLoading(true)
         AppState.setErrorMessage(null)
 
-        getScheduleItemsWithCache(
-            group = currentGroup,
-            repository = AppState.repository,
-            onSuccess = { items ->
-                AppState.setScheduleItems(items)
-                AppState.setLoading(false)
-                AppState.setErrorMessage(null)
-            },
-            onError = { error ->
-                AppState.setErrorMessage(error)
-                AppState.setScheduleItems(TestSchedule())
-                AppState.setScheduleItems(TestSchedule())
+        // Проверяем статус кэша
+        val cacheStatus = AppState.checkGroupCacheFreshness(currentGroup)
+
+        when (cacheStatus) {
+            AppState.CacheStatus.FRESH -> {
+                // Данные актуальны, просто загружаем из кэша
+                loadFromCache(currentGroup)
             }
-        )
+            AppState.CacheStatus.EXPIRED -> {
+                // Кэш просрочен, показываем старые данные и обновляем в фоне
+                loadFromCache(currentGroup)
+                refreshInBackground(currentGroup)
+            }
+            AppState.CacheStatus.OUTDATED_SEMESTER -> {
+                // Данные за другой семестр — принудительно обновляем
+                AppState.setErrorMessage("Загрузка расписания на новый семестр...")
+                forceRefresh(currentGroup)
+            }
+            AppState.CacheStatus.NO_CACHE -> {
+                // Нет данных — загружаем с сервера
+                AppState.setErrorMessage("Загрузка расписания...")
+                loadFromServer(currentGroup)
+            }
+            AppState.CacheStatus.ERROR -> {
+                // Ошибка — пробуем загрузить из кэша
+                loadFromCache(currentGroup)
+            }
+        }
     }
 
     val isSunday = selectedDate?.dayOfWeek?.value == 7
@@ -318,4 +338,75 @@ fun ScreenListDarkPreview() {
             ScreenList()
         }
     }
+}
+
+private suspend fun loadFromCache(group: String) {
+    val repo = AppState.repository ?: return
+    val currentSemester = SemesterUtils.getCurrentSemester()
+    val cachedItems = repo.getScheduleForSemester(group, currentSemester)
+
+    if (cachedItems.isNotEmpty()) {
+        AppState.setScheduleItems(cachedItems)
+        AppState.setLoading(false)
+        AppState.setErrorMessage(null)
+    } else {
+        val oldItems = repo.getSchedule(group)
+        if (oldItems.isNotEmpty()) {
+            AppState.setScheduleItems(oldItems)
+            AppState.setLoading(false)
+            AppState.setErrorMessage("Показаны данные за прошлый семестр")
+        } else {
+            loadFromServer(group)
+        }
+    }
+}
+
+private suspend fun refreshInBackground(group: String) {
+    getScheduleItemsWithCache(
+        group = group,
+        repository = AppState.repository,
+        onSuccess = { items ->
+            AppState.setScheduleItems(items)
+            AppState.setLoading(false)
+            AppState.setErrorMessage(null)
+        },
+        onError = { error ->
+            AppState.setLoading(false)
+            // Не меняем errorMessage, чтобы не перекрывать существующие данные
+        }
+    )
+}
+
+private suspend fun forceRefresh(group: String) {
+    getScheduleItemsWithCache(
+        group = group,
+        repository = AppState.repository,
+        onSuccess = { items ->
+            AppState.setScheduleItems(items)
+            AppState.setLoading(false)
+            AppState.setErrorMessage(null)
+        },
+        onError = { error ->
+            AppState.setErrorMessage(error)
+            AppState.setScheduleItems(emptyList())
+            AppState.setLoading(false)
+        }
+    )
+}
+
+private suspend fun loadFromServer(group: String) {
+    getScheduleItemsWithCache(
+        group = group,
+        repository = AppState.repository,
+        onSuccess = { items ->
+            AppState.setScheduleItems(items)
+            AppState.setLoading(false)
+            AppState.setErrorMessage(null)
+        },
+        onError = { error ->
+            AppState.setErrorMessage(error)
+            AppState.setScheduleItems(emptyList())
+            AppState.setLoading(false)
+        }
+    )
 }
