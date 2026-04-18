@@ -15,19 +15,29 @@ import java.util.Optional;
 @Repository
 public interface ScheduleMetadataRepository extends JpaRepository<ScheduleMetadataEntity, Long> {
 
-    // Найти метаданные для конкретной сущности и семестра
     Optional<ScheduleMetadataEntity> findByEntityTypeAndEntityNameAndSemester(
             String entityType, String entityName, String semester);
 
-    // Найти все метаданные для сущности (все семестры)
     List<ScheduleMetadataEntity> findByEntityTypeAndEntityName(
             String entityType, String entityName);
 
-    // Найти все сущности определенного типа с устаревшим семестром
     List<ScheduleMetadataEntity> findByEntityTypeAndSemesterNot(
             String entityType, String currentSemester);
 
-    // Обновить время последнего обновления и количество занятий
+    @Query("SELECT m FROM ScheduleMetadataEntity m WHERE " +
+            "m.entityType = :entityType AND m.entityName IN :entityNames AND m.semester = :semester")
+    List<ScheduleMetadataEntity> findByEntityTypeAndEntityNameInAndSemester(
+            @Param("entityType") String entityType,
+            @Param("entityNames") List<String> entityNames,
+            @Param("semester") String semester);
+
+    @Query("SELECT COUNT(m) FROM ScheduleMetadataEntity m WHERE " +
+            "m.entityType = :entityType AND m.entityName = :entityName AND m.semester = :semester")
+    int countByEntityTypeAndEntityNameAndSemester(
+            @Param("entityType") String entityType,
+            @Param("entityName") String entityName,
+            @Param("semester") String semester);
+
     @Modifying
     @Transactional
     @Query("UPDATE ScheduleMetadataEntity m SET m.lastUpdated = :lastUpdated, " +
@@ -36,13 +46,11 @@ public interface ScheduleMetadataRepository extends JpaRepository<ScheduleMetada
                         @Param("lastUpdated") LocalDateTime lastUpdated,
                         @Param("lessonCount") Integer lessonCount);
 
-    // Удалить метаданные для сущности и семестра
     @Modifying
     @Transactional
     void deleteByEntityTypeAndEntityNameAndSemester(
             String entityType, String entityName, String semester);
 
-    // Проверить существование метаданных
     boolean existsByEntityTypeAndEntityNameAndSemester(
             String entityType, String entityName, String semester);
 }
