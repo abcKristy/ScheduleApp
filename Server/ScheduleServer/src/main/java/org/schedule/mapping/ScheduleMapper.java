@@ -56,7 +56,8 @@ public class ScheduleMapper {
                     ResponseDto responseDto = new ResponseDto(
                             scheduleData.getId(),
                             scheduleData.getFullTitle(),
-                            scheduleData.getScheduleTarget()
+                            scheduleData.getScheduleTarget(),
+                            scheduleData.getiCalLink()
                     );
                     result.add(responseDto);
                 }
@@ -80,33 +81,40 @@ public class ScheduleMapper {
 
         for (ResponseDto responseDto : responseDtos) {
             try {
-                String apiUrl = String.format("https://schedule-of.mirea.ru/_next/data/aiSpo0O7vLwD8bZTeuvDJ/index.json?s=%d_%d",
-                        responseDto.getTarget(), responseDto.getId());
+                String iCalUrl = responseDto.getiCalLink();
 
-                ResponseEntity<MireaSchedule> response = restTemplate.getForEntity(apiUrl, MireaSchedule.class);
-                MireaSchedule mireaSchedule = response.getBody();
-
-                if (mireaSchedule == null ||
-                        mireaSchedule.getPageProps() == null ||
-                        mireaSchedule.getPageProps().getScheduleLoadInfo() == null ||
-                        mireaSchedule.getPageProps().getScheduleLoadInfo().isEmpty()) {
-
-                    log.warn("Нет данных расписания для id: {}, target: {}", responseDto.getId(), responseDto.getTarget());
+                if (iCalUrl == null || iCalUrl.trim().isEmpty()) {
+                    log.warn("Нет iCal ссылки для id: {}, target: {}",
+                            responseDto.getId(), responseDto.getTarget());
                     continue;
                 }
 
-                MireaScheduleData scheduleData = mireaSchedule.getPageProps().getScheduleLoadInfo().get(0);
+                log.debug("Запрос iCal по URL: {}", iCalUrl);
+
+                ResponseEntity<String> response = restTemplate.getForEntity(iCalUrl, String.class);
+                String iCalContent = response.getBody();
+
+                if (iCalContent == null || iCalContent.trim().isEmpty()) {
+                    log.warn("Пустой iCal контент для id: {}, target: {}",
+                            responseDto.getId(), responseDto.getTarget());
+                    continue;
+                }
+
                 ScheduleDto scheduleDto = new ScheduleDto(
-                        scheduleData.getId(),
-                        scheduleData.getScheduleTarget(),
-                        scheduleData.getTitle(),
-                        scheduleData.getICalContent()
+                        responseDto.getId(),
+                        responseDto.getTarget(),
+                        responseDto.getFullTitle(),
+                        iCalContent
                 );
 
                 result.add(scheduleDto);
+                log.debug("Успешно получен iCal для: {}", responseDto.getFullTitle());
 
+            } catch (RestClientException e) {
+                log.error("Ошибка HTTP при получении iCal для id: {}, target: {}, url: {}",
+                        responseDto.getId(), responseDto.getTarget(), responseDto.getiCalLink(), e);
             } catch (Exception e) {
-                log.error("Ошибка конвертации ResponseDto в ScheduleDto для id: {}, target: {}",
+                log.error("Ошибка обработки iCal для id: {}, target: {}",
                         responseDto.getId(), responseDto.getTarget(), e);
             }
         }

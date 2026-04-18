@@ -18,7 +18,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Добавляем для Room
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments += mapOf(
@@ -58,6 +57,7 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.camera.core)
     kapt(libs.androidx.room.compiler)
 
     // Для Java 8 time API (LocalDateTime и т.д.)

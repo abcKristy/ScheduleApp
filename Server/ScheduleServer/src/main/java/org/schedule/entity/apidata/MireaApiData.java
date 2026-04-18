@@ -30,9 +30,8 @@ public class MireaApiData {
     public Integer getScheduleTarget() { return scheduleTarget; }
     public void setScheduleTarget(Integer scheduleTarget) { this.scheduleTarget = scheduleTarget; }
 
-    public String getICalLink() { return iCalLink; }
-    public void setICalLink(String iCalLink) { this.iCalLink = iCalLink; }
-
+    public String getiCalLink() { return iCalLink; }
+    public void setiCalLink(String iCalLink) { this.iCalLink = iCalLink; }
     public String getScheduleImageLink() { return scheduleImageLink; }
     public void setScheduleImageLink(String scheduleImageLink) { this.scheduleImageLink = scheduleImageLink; }
 

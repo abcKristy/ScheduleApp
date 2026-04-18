@@ -4,13 +4,15 @@ public class ResponseDto {
     private Long id;
     private String fullTitle;
     private Integer target;
+    private String iCalLink;
 
     public ResponseDto() {}
 
-    public ResponseDto(Long id, String fullTitle, Integer target) {
+    public ResponseDto(Long id, String fullTitle, Integer target, String iCalLink) {
         this.id = id;
         this.fullTitle = fullTitle;
         this.target = target;
+        this.iCalLink = iCalLink;
     }
 
     // Getters and Setters
@@ -22,6 +24,10 @@ public class ResponseDto {
 
     public Integer getTarget() { return target; }
     public void setTarget(Integer target) { this.target = target; }
+
+
+    public String getiCalLink() { return iCalLink; }
+    public void setiCalLink(String iCalLink) { this.iCalLink = iCalLink; }
 
     @Override
     public String toString() {
