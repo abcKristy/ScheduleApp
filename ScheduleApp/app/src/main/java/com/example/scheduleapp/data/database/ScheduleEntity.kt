@@ -26,5 +26,9 @@ data class ScheduleEntity(
     val interval: Int?,
     val until: LocalDateTime?,
     val exceptions: List<LocalDate>,
-    val lastUpdated: Long = System.currentTimeMillis()
+    val lastUpdated: Long = System.currentTimeMillis(),
+
+    val semester: String = "LEGACY",
+    val cachedAt: Long = System.currentTimeMillis(),
+    val expiresAt: Long = System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000
 )

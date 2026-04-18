@@ -20,10 +20,6 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         val entities = items.map { it.toScheduleEntity(group) }
         dao.insertScheduleItems(entities)
         Log.d("REPOSITORY", "Successfully cached items for group: $group")
-
-        entities.forEachIndexed { index, entity ->
-            Log.d("REPOSITORY", "Cached item $index: ${entity.id}")
-        }
     }
 
     suspend fun hasCachedSchedule(group: String): Boolean {
@@ -38,6 +34,54 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         Log.d("REPOSITORY", "All cached groups: $groups")
         return groups
     }
+
+    suspend fun getScheduleForSemester(group: String, semester: String): List<ScheduleItem> {
+        Log.d("REPOSITORY", "Getting schedule for group: $group, semester: $semester")
+        val cachedItems = dao.getScheduleByGroupAndSemester(group, semester)
+        Log.d("REPOSITORY", "Found ${cachedItems.size} items for semester $semester")
+        return cachedItems.map { it.toScheduleItem() }
+    }
+
+    suspend fun hasCachedScheduleForSemester(group: String, semester: String): Boolean {
+        val count = dao.hasCachedScheduleForSemester(group, semester)
+        Log.d("REPOSITORY", "Checking cache for group: $group, semester: $semester - count: $count")
+        return count > 0
+    }
+
+    suspend fun getCachedSemester(group: String): String? {
+        return dao.getCachedSemesterForGroup(group)
+    }
+
+    suspend fun cacheScheduleItemsWithSemester(
+        group: String,
+        items: List<ScheduleItem>,
+        semester: String
+    ) {
+        Log.d("REPOSITORY", "Caching ${items.size} items for group: $group, semester: $semester")
+        val entities = items.map { it.toScheduleEntityWithSemester(group, semester) }
+        dao.saveScheduleWithMetadata(group, entities, semester)
+        Log.d("REPOSITORY", "Successfully cached items with semester metadata")
+    }
+
+    suspend fun updateLastAccessed(group: String) {
+        dao.updateLastAccessed(group, System.currentTimeMillis())
+    }
+
+    suspend fun getAllCachedGroupsInfo(): List<CachedGroupEntity> {
+        return dao.getAllCachedGroups()
+    }
+
+    suspend fun cleanupOutdatedGroups(currentSemester: String) {
+        Log.d("REPOSITORY", "Cleaning up groups with semester != $currentSemester")
+        dao.deleteGroupsWithDifferentSemester(currentSemester)
+    }
+
+    suspend fun cleanupExpiredCache() {
+        val currentTime = System.currentTimeMillis()
+        Log.d("REPOSITORY", "Cleaning up expired cache")
+        dao.deleteExpiredSchedule(currentTime)
+    }
+
 
     private fun ScheduleEntity.toScheduleItem(): ScheduleItem {
         return ScheduleItem(
@@ -78,7 +122,33 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
             interval = recurrence?.interval,
             until = recurrence?.until,
             exceptions = exceptions,
-            lastUpdated = System.currentTimeMillis()
+            lastUpdated = System.currentTimeMillis(),
+            semester = "LEGACY"
+        )
+    }
+
+    private fun ScheduleItem.toScheduleEntityWithSemester(group: String, semester: String): ScheduleEntity {
+        val currentTime = System.currentTimeMillis()
+        return ScheduleEntity(
+            id = "${group}_${startTime}_${discipline}_${currentTime}",
+            group = group,
+            discipline = discipline,
+            lessonType = lessonType,
+            startTime = startTime,
+            endTime = endTime,
+            room = room,
+            teacher = teacher,
+            groups = groups,
+            groupsSummary = groupsSummary,
+            description = description,
+            frequency = recurrence?.frequency,
+            interval = recurrence?.interval,
+            until = recurrence?.until,
+            exceptions = exceptions,
+            lastUpdated = currentTime,
+            semester = semester,
+            cachedAt = currentTime,
+            expiresAt = currentTime + 7 * 24 * 60 * 60 * 1000
         )
     }
 }
