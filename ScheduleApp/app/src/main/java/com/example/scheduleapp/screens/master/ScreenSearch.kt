@@ -31,7 +31,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,13 +53,12 @@ import com.example.scheduleapp.logic.LocalThemeViewModel
 import com.example.scheduleapp.data.state.SearchHistoryManager
 import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.screens.master.items.AnimatedShinyBottom
+import com.example.scheduleapp.screens.master.items.HistoryItemWithStatus
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.lightGreen
 import kotlinx.coroutines.launch
-import me.saket.swipe.SwipeAction
-import me.saket.swipe.SwipeableActionsBox
 
 @Composable
 fun ScreenSearch() {
@@ -86,9 +84,9 @@ fun ScreenSearch() {
                 .background(customColors.bg2)
         ) {
             if (isDarkTheme) {
-                AnimatedShinyBottom(shiny = blue,200f,630f)
+                AnimatedShinyBottom(shiny = blue, 200f, 630f)
             } else {
-                AnimatedShinyBottom(shiny = lightGreen,180f,520f)
+                AnimatedShinyBottom(shiny = lightGreen, 180f, 520f)
             }
 
             Column(
@@ -102,7 +100,8 @@ fun ScreenSearch() {
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .height(60.dp)
                         .shadow(
                             elevation = 8.dp,
@@ -172,49 +171,23 @@ fun ScreenSearch() {
 
                     LazyColumn {
                         items(searchHistory) { historyItem ->
-                            val deleteAction = SwipeAction(
-                                onSwipe = {
+                            HistoryItemWithStatus(
+                                query = historyItem,
+                                onClick = {
+                                    AppState.setCurrentGroup(historyItem)
+                                    coroutineScope.launch {
+                                        loadScheduleData(context, historyItem)
+                                    }
+                                },
+                                onRefresh = {
+                                    coroutineScope.launch {
+                                        loadScheduleData(context, historyItem, forceRefresh = true)
+                                    }
+                                },
+                                onDelete = {
                                     SearchHistoryManager.removeFromHistory(context, historyItem)
-                                },
-                                icon = {
-                                    Box(
-                                        modifier = Modifier
-                                            .height(48.dp)
-                                            .fillMaxWidth()
-                                            .offset((-30).dp)
-                                            .background(MaterialTheme.customColors.searchBar,
-                                                RoundedCornerShape(20.dp)),
-                                        contentAlignment = Alignment.CenterStart
-                                    ) {
-                                        Row{
-                                            Spacer(modifier = Modifier.width(35.dp))
-                                            Icon(
-                                                painter = painterResource(R.drawable.ic_del),
-                                                contentDescription = "Удалить",
-                                                tint = Color.White,
-                                                modifier = Modifier.size(28.dp)
-                                            )
-                                        }
-                                    }
-                                },
-                                background = Color.Transparent
+                                }
                             )
-
-                            SwipeableActionsBox(
-                                endActions = listOf(deleteAction),
-                                swipeThreshold = 100.dp,
-                                backgroundUntilSwipeThreshold = Color.Transparent
-                            ) {
-                                HistoryItem(
-                                    query = historyItem,
-                                    onClick = {
-                                        AppState.setCurrentGroup(historyItem)
-                                        coroutineScope.launch {
-                                            loadScheduleData(context, historyItem)
-                                        }
-                                    }
-                                )
-                            }
                         }
                     }
                 } else {
@@ -274,13 +247,18 @@ fun HistoryItem(query: String, onClick: () -> Unit) {
     }
 }
 
-private suspend fun loadScheduleData(context: android.content.Context, group: String) {
+private suspend fun loadScheduleData(
+    context: android.content.Context,
+    group: String,
+    forceRefresh: Boolean = false
+) {
     AppState.setLoading(true)
     AppState.setErrorMessage(null)
 
     getScheduleItemsWithCache(
         group = group,
         repository = AppState.repository,
+        forceRefresh = forceRefresh,
         onSuccess = { items ->
             AppState.setLoading(false)
             if (items.isNotEmpty()) {
@@ -353,7 +331,7 @@ fun ScreenSearchWithHistoryDayPreview() {
                 .fillMaxSize()
                 .background(customColors.bg2)
         ) {
-            AnimatedShinyBottom(shiny = lightGreen,180f,520f)
+            AnimatedShinyBottom(shiny = lightGreen, 180f, 520f)
 
             Column(
                 modifier = Modifier
@@ -362,12 +340,12 @@ fun ScreenSearchWithHistoryDayPreview() {
             ) {
                 Spacer(modifier = Modifier.height(30.dp))
 
-                // Поисковая строка
                 OutlinedTextField(
                     value = "ИКБО-11-23",
                     onValueChange = {},
                     shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .height(60.dp)
                         .shadow(
                             elevation = 8.dp,
@@ -412,7 +390,7 @@ fun ScreenSearchWithHistoryDayPreview() {
                 Text(
                     text = "Текущая группа: ИКБО-11-23",
                     modifier = Modifier.padding(bottom = 16.dp),
-                    color = MaterialTheme.customColors.title ,
+                    color = MaterialTheme.customColors.title,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -458,7 +436,7 @@ fun ScreenSearchWithHistoryNightPreview() {
                 .fillMaxSize()
                 .background(customColors.bg2)
         ) {
-            AnimatedShinyBottom(shiny = blue,200f,630f)
+            AnimatedShinyBottom(shiny = blue, 200f, 630f)
 
             Column(
                 modifier = Modifier
@@ -471,7 +449,8 @@ fun ScreenSearchWithHistoryNightPreview() {
                     value = "ИКБО-11-23",
                     onValueChange = {},
                     shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .height(60.dp)
                         .shadow(
                             elevation = 8.dp,
