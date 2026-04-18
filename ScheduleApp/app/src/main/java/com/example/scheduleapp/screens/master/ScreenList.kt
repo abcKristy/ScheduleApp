@@ -4,9 +4,11 @@ import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,7 +46,10 @@ import com.example.scheduleapp.data.entity.ScheduleItem
 import com.example.scheduleapp.screens.master.items.BreakItemList
 import com.example.scheduleapp.screens.master.items.Calendar
 import com.example.scheduleapp.screens.master.items.EmptyScheduleItemCompact
+import com.example.scheduleapp.screens.master.items.LoadingIndicator
+import com.example.scheduleapp.screens.master.items.OutdatedSemesterBanner
 import com.example.scheduleapp.screens.master.items.ScheduleListItem
+import com.example.scheduleapp.screens.master.items.SemesterInfoChip
 import com.example.scheduleapp.logic.createScheduleDayForDate
 import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.navigation.NavigationRoute
@@ -51,11 +57,13 @@ import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.util.SemesterUtils
 import com.google.gson.Gson
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 
 @Composable
 fun ScreenList(navController: NavController? = null) {
+    val scope = rememberCoroutineScope()
     val scheduleItems = AppState.scheduleItems
     val isLoading = AppState.isLoading
     val errorMessage = AppState.errorMessage
@@ -64,6 +72,10 @@ fun ScreenList(navController: NavController? = null) {
     val showEmptyLessons = AppState.showEmptyLessons
 
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
+
+    var cacheStatus by remember { mutableStateOf(AppState.CacheStatus.FRESH) }
+    var isBackgroundLoading by remember { mutableStateOf(false) }
+    var showBanner by remember { mutableStateOf(true) }
 
     LaunchedEffect(selectedDate) {
         selectedDate?.let { date ->
@@ -77,34 +89,42 @@ fun ScreenList(navController: NavController? = null) {
             return@LaunchedEffect
         }
 
-        AppState.setLoading(true)
-        AppState.setErrorMessage(null)
+        val status = AppState.checkGroupCacheFreshness(currentGroup)
+        cacheStatus = status
+        showBanner = status != AppState.CacheStatus.FRESH
 
-        // Проверяем статус кэша
-        val cacheStatus = AppState.checkGroupCacheFreshness(currentGroup)
-
-        when (cacheStatus) {
+        when (status) {
             AppState.CacheStatus.FRESH -> {
-                // Данные актуальны, просто загружаем из кэша
                 loadFromCache(currentGroup)
             }
             AppState.CacheStatus.EXPIRED -> {
-                // Кэш просрочен, показываем старые данные и обновляем в фоне
                 loadFromCache(currentGroup)
-                refreshInBackground(currentGroup)
+                refreshInBackground(currentGroup) { loading ->
+                    isBackgroundLoading = loading
+                }
             }
             AppState.CacheStatus.OUTDATED_SEMESTER -> {
-                // Данные за другой семестр — принудительно обновляем
-                AppState.setErrorMessage("Загрузка расписания на новый семестр...")
-                forceRefresh(currentGroup)
+                loadFromCache(currentGroup)
+                isBackgroundLoading = true
+                forceRefresh(currentGroup) { loading ->
+                    isBackgroundLoading = loading
+                    if (!loading) {
+                        cacheStatus = AppState.CacheStatus.FRESH
+                        showBanner = false
+                    }
+                }
             }
             AppState.CacheStatus.NO_CACHE -> {
-                // Нет данных — загружаем с сервера
-                AppState.setErrorMessage("Загрузка расписания...")
-                loadFromServer(currentGroup)
+                AppState.setLoading(true)
+                loadFromServer(currentGroup) { loading ->
+                    AppState.setLoading(loading)
+                    if (!loading) {
+                        cacheStatus = AppState.CacheStatus.FRESH
+                        showBanner = false
+                    }
+                }
             }
             AppState.CacheStatus.ERROR -> {
-                // Ошибка — пробуем загрузить из кэша
                 loadFromCache(currentGroup)
             }
         }
@@ -138,10 +158,13 @@ fun ScreenList(navController: NavController? = null) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()
-        .background(MaterialTheme.customColors.bg2)) {
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(MaterialTheme.customColors.bg2)
+    ) {
         Column {
             Spacer(modifier = Modifier.height(40.dp))
+
             Calendar(
                 currentMonth = currentMonth,
                 onMonthChange = { newMonth ->
@@ -149,14 +172,54 @@ fun ScreenList(navController: NavController? = null) {
                 }
             )
 
-            if (isLoading) {
+            if (showBanner && currentGroup.isNotBlank() && currentGroup != " ") {
+                val scope = rememberCoroutineScope()
+
+                OutdatedSemesterBanner(
+                    cacheStatus = cacheStatus,
+                    isLoading = isBackgroundLoading || isLoading,
+                    onRefresh = {
+                        scope.launch {
+                            isBackgroundLoading = true
+                            forceRefresh(currentGroup) { loading ->
+                                isBackgroundLoading = loading
+                                if (!loading) {
+                                    cacheStatus = AppState.CacheStatus.FRESH
+                                    showBanner = false
+                                }
+                            }
+                        }
+                    },
+                    onDismiss = {
+                        showBanner = false
+                    }
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    val semesterText = when (cacheStatus) {
+                        AppState.CacheStatus.OUTDATED_SEMESTER -> "Показан архив"
+                        AppState.CacheStatus.EXPIRED -> "Требует обновления"
+                        else -> ""
+                    }
+                    if (semesterText.isNotEmpty()) {
+                        SemesterInfoChip(semester = semesterText)
+                    }
+                }
+            }
+
+            if (isLoading && scheduleItems.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    LoadingIndicator()
                 }
             } else {
                 SwipeableScheduleContent(
@@ -190,7 +253,7 @@ fun ScreenList(navController: NavController? = null) {
                     )
                 } else if (errorMessage != null) {
                     Text(
-                        text = "Информация: $errorMessage",
+                        text = errorMessage,
                         color = Color.Gray,
                         modifier = Modifier.padding(16.dp)
                     )
@@ -306,6 +369,97 @@ fun SwipeableScheduleContent(
     }
 }
 
+private suspend fun loadFromCache(group: String) {
+    val repo = AppState.repository ?: return
+    val currentSemester = SemesterUtils.getCurrentSemester()
+    val cachedItems = repo.getScheduleForSemester(group, currentSemester)
+
+    if (cachedItems.isNotEmpty()) {
+        AppState.setScheduleItems(cachedItems)
+        AppState.setLoading(false)
+        AppState.setErrorMessage(null)
+    } else {
+        val oldItems = repo.getSchedule(group)
+        if (oldItems.isNotEmpty()) {
+            AppState.setScheduleItems(oldItems)
+            AppState.setLoading(false)
+            AppState.setErrorMessage("Показаны данные за прошлый семестр")
+        } else {
+            loadFromServer(group) { loading ->
+                AppState.setLoading(loading)
+            }
+        }
+    }
+}
+
+private suspend fun refreshInBackground(
+    group: String,
+    onLoadingChanged: (Boolean) -> Unit
+) {
+    onLoadingChanged(true)
+
+    getScheduleItemsWithCache(
+        group = group,
+        repository = AppState.repository,
+        forceRefresh = true,
+        onSuccess = { items ->
+            AppState.setScheduleItems(items)
+            AppState.setErrorMessage(null)
+            onLoadingChanged(false)
+        },
+        onError = { error ->
+            onLoadingChanged(false)
+        }
+    )
+}
+
+private suspend fun forceRefresh(
+    group: String,
+    onLoadingChanged: (Boolean) -> Unit
+) {
+    onLoadingChanged(true)
+    AppState.setErrorMessage("Обновление расписания...")
+
+    getScheduleItemsWithCache(
+        group = group,
+        repository = AppState.repository,
+        forceRefresh = true,
+        onSuccess = { items ->
+            AppState.setScheduleItems(items)
+            AppState.setErrorMessage(null)
+            onLoadingChanged(false)
+        },
+        onError = { error ->
+            AppState.setErrorMessage("Ошибка обновления: $error")
+            onLoadingChanged(false)
+        }
+    )
+}
+
+private suspend fun loadFromServer(
+    group: String,
+    onLoadingChanged: (Boolean) -> Unit
+) {
+    onLoadingChanged(true)
+    AppState.setErrorMessage("Загрузка расписания...")
+
+    getScheduleItemsWithCache(
+        group = group,
+        repository = AppState.repository,
+        forceRefresh = true,
+        onSuccess = { items ->
+            AppState.setScheduleItems(items)
+            AppState.setErrorMessage(null)
+            onLoadingChanged(false)
+        },
+        onError = { error ->
+            AppState.setErrorMessage(error)
+            AppState.setScheduleItems(emptyList())
+            onLoadingChanged(false)
+        }
+    )
+}
+
 @Preview(
     name = "Light Theme",
     showBackground = true,
@@ -338,75 +492,4 @@ fun ScreenListDarkPreview() {
             ScreenList()
         }
     }
-}
-
-private suspend fun loadFromCache(group: String) {
-    val repo = AppState.repository ?: return
-    val currentSemester = SemesterUtils.getCurrentSemester()
-    val cachedItems = repo.getScheduleForSemester(group, currentSemester)
-
-    if (cachedItems.isNotEmpty()) {
-        AppState.setScheduleItems(cachedItems)
-        AppState.setLoading(false)
-        AppState.setErrorMessage(null)
-    } else {
-        val oldItems = repo.getSchedule(group)
-        if (oldItems.isNotEmpty()) {
-            AppState.setScheduleItems(oldItems)
-            AppState.setLoading(false)
-            AppState.setErrorMessage("Показаны данные за прошлый семестр")
-        } else {
-            loadFromServer(group)
-        }
-    }
-}
-
-private suspend fun refreshInBackground(group: String) {
-    getScheduleItemsWithCache(
-        group = group,
-        repository = AppState.repository,
-        onSuccess = { items ->
-            AppState.setScheduleItems(items)
-            AppState.setLoading(false)
-            AppState.setErrorMessage(null)
-        },
-        onError = { error ->
-            AppState.setLoading(false)
-            // Не меняем errorMessage, чтобы не перекрывать существующие данные
-        }
-    )
-}
-
-private suspend fun forceRefresh(group: String) {
-    getScheduleItemsWithCache(
-        group = group,
-        repository = AppState.repository,
-        onSuccess = { items ->
-            AppState.setScheduleItems(items)
-            AppState.setLoading(false)
-            AppState.setErrorMessage(null)
-        },
-        onError = { error ->
-            AppState.setErrorMessage(error)
-            AppState.setScheduleItems(emptyList())
-            AppState.setLoading(false)
-        }
-    )
-}
-
-private suspend fun loadFromServer(group: String) {
-    getScheduleItemsWithCache(
-        group = group,
-        repository = AppState.repository,
-        onSuccess = { items ->
-            AppState.setScheduleItems(items)
-            AppState.setLoading(false)
-            AppState.setErrorMessage(null)
-        },
-        onError = { error ->
-            AppState.setErrorMessage(error)
-            AppState.setScheduleItems(emptyList())
-            AppState.setLoading(false)
-        }
-    )
 }

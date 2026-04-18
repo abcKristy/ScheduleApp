@@ -226,4 +226,25 @@ object AppState {
         NO_CACHE,       // Нет данных в кэше
         ERROR           // Ошибка проверки
     }
+
+    /**
+     * Принудительное обновление текущей группы
+     */
+    suspend fun refreshCurrentGroup() {
+        if (currentGroup.isBlank() || currentGroup == " ") return
+
+        _isLoading = true
+        _errorMessage = "Обновление расписания..."
+
+        // Здесь будет вызов загрузки
+        // Логика вынесена в ScreenList
+    }
+
+    /**
+     * Сброс состояния загрузки
+     */
+    fun resetLoadingState() {
+        _isLoading = false
+        _errorMessage = null
+    }
 }
