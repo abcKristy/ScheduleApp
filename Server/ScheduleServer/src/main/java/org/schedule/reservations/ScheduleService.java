@@ -9,6 +9,7 @@ import org.schedule.mapping.ScheduleMapper;
 import org.schedule.entity.forBD.basic.RoomEntity;
 import org.schedule.entity.forBD.basic.TeacherEntity;
 import org.schedule.entity.forBD.basic.GroupEntity;
+import org.schedule.util.SemesterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -47,32 +48,38 @@ public class ScheduleService {
             // Шаг 1: Получаем данные из кэша/БД (только чтение)
             List<LessonEntity> lessonsFromDb = readService.getLessonsFromCacheOrDatabase(entityList);
 
-            // Если все данные найдены в кэше/БД - возвращаем результат как DTO
-            if (lessonsFromDb.size() >= entityList.size()) {
-                log.info("Все данные получены из кэша/БД, результат: {} занятий", lessonsFromDb.size());
-                return mapper.toResponseDtoList(lessonsFromDb);
-            }
-
             // Шаг 2: Получаем недостающие данные из внешнего API
             List<String> remainingEntities = getRemainingEntities(entityList, lessonsFromDb);
-            log.info("Получение данных из внешнего источника для {} сущностей", remainingEntities.size());
 
-            List<ResponseDto> response = scheduleMapper.mapToResponseDto(remainingEntities, MIREA_API_URL);
-            List<ScheduleDto> schedule = scheduleMapper.mapToScheduleDto(response);
-            List<LessonEntity> parsedLessons = scheduleMapper.parseStringData(schedule);
-            log.info("!!!!!!!!! {}",parsedLessons);
+            if (!remainingEntities.isEmpty()) {
+                log.info("Получение данных из внешнего источника для {} сущностей", remainingEntities.size());
 
-            // Шаг 3: Сохраняем новые данные в БД (отдельная транзакция записи)
-            EntityType entityType = determineEntityType(entityList.get(0));
-            writeService.saveLessonsAndUpdateIds(parsedLessons, response, entityType, entityList.get(0));
-            // Шаг 4: Получаем сохраненные данные из БД (чтение)
-            List<LessonEntity> newLessonsFromDb = readService.getLessonsFromDatabase(remainingEntities);
+                // Определяем тип первой сущности для очистки устаревших данных
+                EntityType entityType = determineEntityType(remainingEntities.get(0));
+                String currentSemester = SemesterUtils.getCurrentSemester();
 
-            // Объединяем все занятия и преобразуем в DTO
-            List<LessonEntity> allLessons = new ArrayList<>(lessonsFromDb);
-            allLessons.addAll(newLessonsFromDb);
+                // Проверяем, нужно ли очистить устаревшие данные
+                boolean needsUpdate = readService.needsUpdate(entityType, remainingEntities.get(0));
+                if (needsUpdate) {
+                    log.info("Обнаружены устаревшие данные для {} {}, выполняем очистку",
+                            entityType, remainingEntities.get(0));
+                    readService.cleanupOutdatedLessons(entityType, remainingEntities.get(0), "LEGACY");
+                }
 
-            List<ScheduleResponseDto> result = mapper.toResponseDtoList(allLessons);
+                // Загружаем свежие данные
+                List<ResponseDto> response = scheduleMapper.mapToResponseDto(remainingEntities, MIREA_API_URL);
+                List<ScheduleDto> schedule = scheduleMapper.mapToScheduleDto(response);
+                List<LessonEntity> parsedLessons = scheduleMapper.parseStringData(schedule);
+                log.debug("Распаршено {} занятий", parsedLessons.size());
+
+                // Сохраняем новые данные в БД
+                writeService.saveLessonsAndUpdateIds(parsedLessons, response, entityType, remainingEntities.get(0));
+            }
+
+            // Шаг 3: Получаем все данные из БД (чтение)
+            List<LessonEntity> allLessonsFromDb = readService.getLessonsFromDatabase(entityList);
+
+            List<ScheduleResponseDto> result = mapper.toResponseDtoList(allLessonsFromDb);
 
             log.info("Выход из getScheduleForGroups, результат: {} занятий", result.size());
             return result;
@@ -83,16 +90,20 @@ public class ScheduleService {
         }
     }
 
-    // В ScheduleService добавим:
     private List<String> getRemainingEntities(List<String> requestedEntities, List<LessonEntity> foundLessons) {
         if (foundLessons.isEmpty()) {
             return new ArrayList<>(requestedEntities);
         }
 
-        // Собираем все сущности, которые покрыты найденными занятиями
+        String currentSemester = SemesterUtils.getCurrentSemester();
         Set<String> coveredEntities = new HashSet<>();
 
         for (LessonEntity lesson : foundLessons) {
+            // Проверяем, что занятие относится к текущему семестру
+            if (!currentSemester.equals(lesson.getSemester())) {
+                continue; // Пропускаем занятия из других семестров
+            }
+
             // Группы
             if (lesson.getGroups() != null) {
                 lesson.getGroups().stream()
@@ -113,7 +124,6 @@ public class ScheduleService {
             }
         }
 
-        // Возвращаем только те сущности, которые не покрыты
         List<String> remaining = requestedEntities.stream()
                 .filter(entity -> !coveredEntities.contains(entity))
                 .collect(Collectors.toList());

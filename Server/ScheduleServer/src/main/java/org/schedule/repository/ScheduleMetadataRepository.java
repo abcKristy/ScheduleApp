@@ -53,4 +53,9 @@ public interface ScheduleMetadataRepository extends JpaRepository<ScheduleMetada
 
     boolean existsByEntityTypeAndEntityNameAndSemester(
             String entityType, String entityName, String semester);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM ScheduleMetadataEntity m WHERE m.semester != :currentSemester")
+    int deleteBySemesterNot(@Param("currentSemester") String currentSemester);
 }
