@@ -15,10 +15,10 @@ object PreferencesManager {
     private const val KEY_DARK_THEME = "dark_theme"
     private const val KEY_SHOW_EMPTY_LESSONS = "show_empty_lessons"
 
-    // НОВЫЕ КЛЮЧИ ДЛЯ СЕМЕСТРА
     private const val KEY_LAST_KNOWN_SEMESTER = "last_known_semester"
     private const val KEY_LAST_SEMESTER_CHECK = "last_semester_check"
     private const val KEY_LAST_CACHE_CLEANUP = "last_cache_cleanup"
+    private const val KEY_PENDING_RETRY_GROUPS = "pending_retry_groups"
 
     fun saveShowEmptyLessons(context: Context, showEmpty: Boolean) {
         getSharedPreferences(context).edit().apply {
@@ -148,5 +148,28 @@ object PreferencesManager {
 
     fun getLastCacheCleanup(context: Context): Long {
         return getSharedPreferences(context).getLong(KEY_LAST_CACHE_CLEANUP, 0)
+    }
+
+    fun savePendingRetryGroups(context: Context, groups: Set<String>) {
+        getSharedPreferences(context).edit().apply {
+            putStringSet(KEY_PENDING_RETRY_GROUPS, groups)
+            apply()
+        }
+    }
+
+    fun getPendingRetryGroups(context: Context): Set<String> {
+        return getSharedPreferences(context).getStringSet(KEY_PENDING_RETRY_GROUPS, emptySet()) ?: emptySet()
+    }
+
+    fun addPendingRetryGroup(context: Context, group: String) {
+        val current = getPendingRetryGroups(context).toMutableSet()
+        current.add(group)
+        savePendingRetryGroups(context, current)
+    }
+
+    fun removePendingRetryGroup(context: Context, group: String) {
+        val current = getPendingRetryGroups(context).toMutableSet()
+        current.remove(group)
+        savePendingRetryGroups(context, current)
     }
 }

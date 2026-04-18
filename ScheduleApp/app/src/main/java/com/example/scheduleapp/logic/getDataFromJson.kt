@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.scheduleapp.data.entity.ScheduleItem
 import com.example.scheduleapp.data.entity.RecurrenceRule
 import com.example.scheduleapp.data.database.ScheduleRepository
+import com.example.scheduleapp.util.NetworkMonitor
 import com.example.scheduleapp.util.SemesterUtils
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -90,9 +91,8 @@ suspend fun getScheduleItemsWithCache(
     onError: (String) -> Unit
 ) {
     try {
-        val currentSemester = SemesterUtils.getCurrentSemester()
+        val currentSemester = SemesterUtils.getActiveSemester()
 
-        // Если не принудительное обновление, проверяем кэш
         if (!forceRefresh && repository != null) {
             val cachedSemester = repository.getCachedSemester(group)
 
@@ -106,13 +106,34 @@ suspend fun getScheduleItemsWithCache(
                 } else {
                     Log.d("SCHEDULE_CACHE", "Cache expired, showing old data and refreshing")
                     onSuccess(cachedItems)
-                    // Продолжаем загрузку свежих данных
                 }
             } else if (cachedSemester != null && cachedSemester != currentSemester) {
                 Log.d("SCHEDULE_CACHE", "Semester changed: cached=$cachedSemester, current=$currentSemester")
-                // Удаляем устаревшие данные
                 repository.cleanupOutdatedGroups(currentSemester)
             }
+        }
+
+        // Проверяем наличие сети перед запросом к серверу
+        if (!NetworkMonitor.isConnected.value) {
+            Log.w("SCHEDULE_CACHE", "Нет подключения к сети")
+
+            if (repository != null && repository.hasCachedSchedule(group)) {
+                Log.d("SCHEDULE_CACHE", "Offline mode: using cached data for group: $group")
+                val cachedItems = repository.getSchedule(group)
+
+                NetworkMonitor.addPendingGroup(group)
+                onError("Отсутствует подключение к сети. Показаны сохраненные данные.")
+
+                if (cachedItems.isNotEmpty()) {
+                    onSuccess(cachedItems)
+                } else {
+                    onError("Нет сохраненных данных для группы '$group'")
+                }
+            } else {
+                NetworkMonitor.addPendingGroup(group)
+                onError("Отсутствует подключение к сети и нет сохраненных данных")
+            }
+            return
         }
 
         // Загружаем с сервера
@@ -123,11 +144,44 @@ suspend fun getScheduleItemsWithCache(
 
         if (repository != null && scheduleItems.isNotEmpty()) {
             repository.cacheScheduleItemsWithSemester(group, scheduleItems, currentSemester)
+            NetworkMonitor.removePendingGroup(group)
             Log.d("SCHEDULE_CACHE", "Saved ${scheduleItems.size} items with semester $currentSemester")
         }
 
         onSuccess(scheduleItems)
 
+    } catch (e: java.net.UnknownHostException) {
+        Log.e("API_ERROR", "Network error: ${e.message}")
+
+        if (repository != null && repository.hasCachedSchedule(group)) {
+            val cachedItems = repository.getSchedule(group)
+            NetworkMonitor.addPendingGroup(group)
+
+            if (cachedItems.isNotEmpty()) {
+                onSuccess(cachedItems)
+                onError("Сервер недоступен. Показаны сохраненные данные.")
+            } else {
+                onError("Сервер недоступен и нет сохраненных данных")
+            }
+        } else {
+            NetworkMonitor.addPendingGroup(group)
+            onError("Сервер недоступен. Данные будут загружены при появлении сети.")
+        }
+    } catch (e: java.net.SocketTimeoutException) {
+        Log.e("API_ERROR", "Timeout error: ${e.message}")
+
+        if (repository != null && repository.hasCachedSchedule(group)) {
+            val cachedItems = repository.getSchedule(group)
+
+            if (cachedItems.isNotEmpty()) {
+                onSuccess(cachedItems)
+                onError("Превышено время ожидания. Показаны сохраненные данные.")
+            } else {
+                onError("Превышено время ожидания. Попробуйте позже.")
+            }
+        } else {
+            onError("Превышено время ожидания. Проверьте подключение к интернету.")
+        }
     } catch (e: Exception) {
         Log.e("API_ERROR", "Error: ${e.message}", e)
 
@@ -136,7 +190,7 @@ suspend fun getScheduleItemsWithCache(
             val cachedItems = repository.getSchedule(group)
             onSuccess(cachedItems)
         } else {
-            onError("Сервер недоступен и нет сохраненных данных для группы '$group'")
+            onError("Ошибка загрузки: ${e.message}")
         }
     }
 }

@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import com.example.scheduleapp.data.entity.ScheduleItem
 import com.example.scheduleapp.data.database.ScheduleDatabase
 import com.example.scheduleapp.data.database.ScheduleRepository
+import com.example.scheduleapp.util.NetworkMonitor
 import com.example.scheduleapp.util.SemesterUtils
 import com.example.scheduleapp.widgets.WidgetUpdateHelper
 import com.example.scheduleapp.workers.CacheCleanupWorker
@@ -70,6 +71,7 @@ object AppState {
         val database = ScheduleDatabase.getInstance(context)
         _repository = ScheduleRepository(database)
         loadSavedData(context)
+        NetworkMonitor.initialize(context)
         checkSemesterOnStartup()
         schedulePeriodicCacheCheck(context)
         scheduleCacheCleanup(context)
