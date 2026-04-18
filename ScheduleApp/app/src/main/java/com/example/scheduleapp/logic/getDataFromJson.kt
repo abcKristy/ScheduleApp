@@ -48,7 +48,7 @@ interface ScheduleApiService {
 
 private fun createApiService(): ScheduleApiService {
     val retrofit = Retrofit.Builder()
-        .baseUrl("http://10.150.247.211:8080/")
+        .baseUrl("http://10.141.151.211:8080/")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 

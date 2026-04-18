@@ -47,6 +47,9 @@ public class LessonEntity {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "semester", nullable = false)
+    private String semester;
+
     @ManyToMany
     @JoinTable(
             name = "lesson_group",
@@ -222,4 +225,8 @@ public class LessonEntity {
     public void setRooms(List<RoomEntity> rooms) {
         this.rooms = rooms;
     }
+
+    public String getSemester() { return semester; }
+    public void setSemester(String semester) { this.semester = semester; }
+
 }
