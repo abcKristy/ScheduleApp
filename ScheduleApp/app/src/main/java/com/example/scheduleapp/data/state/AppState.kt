@@ -248,12 +248,12 @@ object AppState {
         val repo = repository ?: return CacheStatus.NO_CACHE
 
         return try {
-            val currentSemester = SemesterUtils.getCurrentSemester()
+            val activeSemester = SemesterUtils.getActiveSemester()  // ← ИСПОЛЬЗОВАТЬ АКТИВНЫЙ СЕМЕСТР
             val cachedSemester = repo.getCachedSemester(group)
 
             when {
                 cachedSemester == null -> CacheStatus.NO_CACHE
-                cachedSemester != currentSemester -> CacheStatus.OUTDATED_SEMESTER
+                cachedSemester != activeSemester -> CacheStatus.OUTDATED_SEMESTER
                 repo.isCacheExpired(group) -> CacheStatus.EXPIRED
                 else -> CacheStatus.FRESH
             }

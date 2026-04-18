@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -67,6 +68,15 @@ fun SemesterHeader(
                 MaterialTheme.customColors.title.copy(alpha = 0.7f)
             }
         )
+
+        if (SemesterUtils.isSummerHolidayPeriod()) {
+            Text(
+                text = "• Каникулы",
+                fontSize = 12.sp,
+                color = Color(0xFF0288D1),
+                modifier = Modifier.padding(start = 4.dp)
+            )
+        }
 
         if (isOutdated) {
             Text(

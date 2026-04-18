@@ -88,4 +88,116 @@ object SemesterUtils {
         }
         return "Сейчас период каникул. Расписание $nextSemester появится позже."
     }
+
+    /**
+     * Проверяет, является ли дата периодом летних каникул
+     */
+    fun isSummerHolidayPeriod(date: LocalDate = LocalDate.now()): Boolean {
+        val month = date.monthValue
+        return month == 7 || month == 8
+    }
+
+    /**
+     * Возвращает последний завершившийся семестр
+     * Используется в период летних каникул
+     */
+    fun getLastCompletedSemester(date: LocalDate = LocalDate.now()): String {
+        val year = date.year
+        val month = date.monthValue
+
+        return when {
+            month >= 9 -> "$year-$AUTUMN"           // Осень — возвращаем текущий осенний
+            month in 7..8 -> "$year-$SPRING"        // Лето — возвращаем весенний
+            month in 2..6 -> "$year-$SPRING"        // Весна — возвращаем текущий весенний
+            month == 1 -> "${year - 1}-$AUTUMN"     // Январь — возвращаем осенний прошлого года
+            else -> "$year-$SPRING"
+        }
+    }
+
+    /**
+     * Возвращает активный семестр для отображения расписания
+     * В каникулы возвращает последний завершившийся семестр
+     */
+    fun getActiveSemester(date: LocalDate = LocalDate.now()): String {
+        return if (isSummerHolidayPeriod(date)) {
+            getLastCompletedSemester(date)
+        } else {
+            getCurrentSemester(date)
+        }
+    }
+
+    /**
+     * Возвращает название следующего семестра (для информационных сообщений)
+     */
+    fun getNextSemesterName(date: LocalDate = LocalDate.now()): String {
+        val month = date.monthValue
+        val year = date.year
+
+        return when {
+            month in 7..8 -> "Осенний семестр ${year}/${year + 1}"
+            month in 1..6 -> "Осенний семестр ${year}/${year + 1}"
+            month >= 9 -> "Весенний семестр ${year + 1}"
+            else -> "следующий семестр"
+        }
+    }
+
+    /**
+     * Возвращает дату начала следующего семестра
+     */
+    fun getNextSemesterStartDate(date: LocalDate = LocalDate.now()): LocalDate {
+        val year = date.year
+        val month = date.monthValue
+
+        return when {
+            month in 7..8 -> LocalDate.of(year, 9, 1)
+            month in 1..6 -> LocalDate.of(year, 9, 1)
+            month >= 9 -> LocalDate.of(year + 1, 2, 1)
+            else -> LocalDate.of(year, 9, 1)
+        }
+    }
+
+    /**
+     * Возвращает количество дней до начала следующего семестра
+     */
+    fun getDaysUntilNextSemester(date: LocalDate = LocalDate.now()): Long {
+        val nextStart = getNextSemesterStartDate(date)
+        return java.time.temporal.ChronoUnit.DAYS.between(date, nextStart)
+    }
+
+    /**
+     * Возвращает информационное сообщение для периода каникул
+     */
+    fun getSummerHolidayMessage(): String {
+        val nextSemester = getNextSemesterName()
+        val daysLeft = getDaysUntilNextSemester()
+
+        return when (daysLeft) {
+            0L -> "Сегодня начинается $nextSemester!"
+            1L -> "Завтра начинается $nextSemester"
+            in 2L..7L -> "До начала $nextSemester осталось $daysLeft дней"
+            else -> "Сейчас период летних каникул. $nextSemester начнется ${daysLeft} дней"
+        }
+    }
+
+    /**
+     * Возвращает статус текущего периода
+     */
+    fun getPeriodStatus(): PeriodStatus {
+        val today = LocalDate.now()
+        val month = today.monthValue
+
+        return when {
+            month in 7..8 -> PeriodStatus.SUMMER_HOLIDAYS
+            month in 1..1 -> PeriodStatus.WINTER_SESSION
+            month in 6..6 -> PeriodStatus.SUMMER_SESSION
+            else -> PeriodStatus.ACTIVE_SEMESTER
+        }
+    }
+
+    enum class PeriodStatus {
+        ACTIVE_SEMESTER,
+        SUMMER_HOLIDAYS,
+        WINTER_SESSION,
+        SUMMER_SESSION
+    }
 }

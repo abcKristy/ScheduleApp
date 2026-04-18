@@ -55,6 +55,7 @@ import com.example.scheduleapp.screens.master.items.SemesterInfoChip
 import com.example.scheduleapp.logic.createScheduleDayForDate
 import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.navigation.NavigationRoute
+import com.example.scheduleapp.screens.master.items.SummerHolidayBanner
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.util.SemesterUtils
@@ -233,6 +234,10 @@ fun ScreenList(navController: NavController? = null) {
                             showBanner = false
                         }
                     )
+
+                    if (SemesterUtils.isSummerHolidayPeriod()) {
+                        SummerHolidayBanner()
+                    }
 
                     if (cacheStatus == AppState.CacheStatus.OUTDATED_SEMESTER) {
                         Text(
