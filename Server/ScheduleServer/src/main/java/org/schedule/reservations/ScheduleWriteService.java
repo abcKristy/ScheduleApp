@@ -1,6 +1,7 @@
 package org.schedule.reservations;
 
 import org.schedule.entity.apidata.ResponseDto;
+import org.schedule.entity.forBD.EntityType;
 import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.mapping.SaverToMemory;
 import org.slf4j.Logger;
@@ -21,12 +22,13 @@ public class ScheduleWriteService {
     }
 
     @Transactional
-    public void saveLessonsAndUpdateIds(List<LessonEntity> lessons, List<ResponseDto> responseDtos) {
-        log.info("Сохранение занятий и обновление ID из API, занятий: {}, объектов: {}",
-                lessons.size(), responseDtos.size());
+    public void saveLessonsAndUpdateIds(List<LessonEntity> lessons, List<ResponseDto> responseDtos,
+                                        EntityType entityType, String entityName) {
+        log.info("Сохранение занятий и обновление ID из API, занятий: {}, объектов: {}, тип: {}, имя: {}",
+                lessons.size(), responseDtos.size(), entityType, entityName);
 
         try {
-            saver.saveLessonsWithErrorHandling(lessons);
+            saver.saveLessonsWithErrorHandling(lessons, entityType.name(), entityName);
             saver.updateAllIdsFromApi(responseDtos);
             log.info("Успешно сохранено занятий и обновлены ID");
         } catch (Exception e) {

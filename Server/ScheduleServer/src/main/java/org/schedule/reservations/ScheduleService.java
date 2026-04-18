@@ -2,6 +2,7 @@ package org.schedule.reservations;
 
 import org.schedule.entity.ScheduleResponseDto;
 import org.schedule.entity.apidata.ResponseDto;
+import org.schedule.entity.forBD.EntityType;
 import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.schedule.ScheduleDto;
 import org.schedule.mapping.ScheduleMapper;
@@ -12,10 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -65,8 +63,8 @@ public class ScheduleService {
             log.info("!!!!!!!!! {}",parsedLessons);
 
             // Шаг 3: Сохраняем новые данные в БД (отдельная транзакция записи)
-            writeService.saveLessonsAndUpdateIds(parsedLessons, response);
-
+            EntityType entityType = determineEntityType(entityList.get(0));
+            writeService.saveLessonsAndUpdateIds(parsedLessons, response, entityType, entityList.get(0));
             // Шаг 4: Получаем сохраненные данные из БД (чтение)
             List<LessonEntity> newLessonsFromDb = readService.getLessonsFromDatabase(remainingEntities);
 
@@ -122,5 +120,26 @@ public class ScheduleService {
 
         log.debug("Непокрытые сущности: {}/{}", remaining.size(), requestedEntities.size());
         return remaining;
+    }
+
+    private EntityType determineEntityType(String entityString) {
+        if (entityString == null) return EntityType.GROUP;
+
+        String cleanName = entityString.trim();
+
+        if (cleanName.matches("[А-ЯA-Z0-9]{2,4}-\\d{2}-\\d{2}")) {
+            return EntityType.GROUP;
+        }
+
+        String[] words = cleanName.split("\\s+");
+        if (words.length >= 2) {
+            boolean allWordsStartWithUpperCase = Arrays.stream(words)
+                    .allMatch(word -> !word.isEmpty() && Character.isUpperCase(word.charAt(0)));
+            if (allWordsStartWithUpperCase) {
+                return EntityType.TEACHER;
+            }
+        }
+
+        return EntityType.ROOM;
     }
 }

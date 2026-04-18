@@ -1,6 +1,7 @@
 package org.schedule.mapping;
 
 import org.schedule.entity.apidata.ResponseDto;
+import org.schedule.entity.forBD.ScheduleMetadataEntity;
 import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.forBD.basic.GroupEntity;
 import org.schedule.entity.forBD.basic.RoomEntity;
@@ -9,11 +10,14 @@ import org.schedule.repository.LessonRepository;
 import org.schedule.repository.GroupRepository;
 import org.schedule.repository.RoomRepository;
 import org.schedule.repository.TeacherRepository;
+import org.schedule.repository.ScheduleMetadataRepository;
+import org.schedule.util.SemesterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -27,23 +31,26 @@ public class SaverToMemory {
     private final GroupRepository groupRepository;
     private final TeacherRepository teacherRepository;
     private final RoomRepository roomRepository;
+    private final ScheduleMetadataRepository metadataRepository;
 
     public SaverToMemory(LessonRepository lessonRepository,
                          GroupRepository groupRepository,
                          TeacherRepository teacherRepository,
-                         RoomRepository roomRepository) {
+                         RoomRepository roomRepository,
+                         ScheduleMetadataRepository metadataRepository) {
         this.lessonRepository = lessonRepository;
         this.groupRepository = groupRepository;
         this.teacherRepository = teacherRepository;
         this.roomRepository = roomRepository;
+        this.metadataRepository = metadataRepository;
     }
 
     /**
-     * ПОЛНОЕ ПАКЕТНОЕ СОХРАНЕНИЕ УРОКОВ С УСИЛЕННОЙ ДЕДУПЛИКАЦИЕЙ
+     * ПАКЕТНОЕ СОХРАНЕНИЕ УРОКОВ С УЧЕТОМ СЕМЕСТРА
      */
     @Transactional
-    public BatchSaveResult saveLessonsBatch(List<LessonEntity> lessons) {
-        log.info("Начало пакетного сохранения {} уроков", lessons.size());
+    public BatchSaveResult saveLessonsBatch(List<LessonEntity> lessons, String entityType, String entityName) {
+        log.info("Начало пакетного сохранения {} уроков для {} {}", lessons.size(), entityType, entityName);
 
         if (lessons == null || lessons.isEmpty()) {
             log.warn("Пустой список уроков для пакетного сохранения");
@@ -53,12 +60,15 @@ public class SaverToMemory {
         long startTime = System.currentTimeMillis();
 
         try {
-            // ЭТАП 0: УСИЛЕННАЯ ДЕДУПЛИКАЦИЯ С ПРОВЕРКОЙ БД
+            String currentSemester = SemesterUtils.getCurrentSemester();
+            log.debug("Текущий семестр: {}", currentSemester);
+
+            lessons.forEach(lesson -> lesson.setSemester(currentSemester));
+
             log.debug("Этап 0: Усиленная дедупликация занятий");
             List<LessonEntity> deduplicatedLessons = deduplicateLessonsWithDBCheck(lessons);
             log.info("После дедупликации: {} -> {} занятий", lessons.size(), deduplicatedLessons.size());
 
-            // ОПТИМИЗАЦИЯ N+1: обрабатываем ВСЕ справочники для ВСЕХ уроков пакетно
             log.debug("Этап 1: Пакетная обработка справочников");
             if (shouldUseParallelProcessing(deduplicatedLessons)) {
                 log.debug("Используется параллельная обработка");
@@ -68,9 +78,10 @@ public class SaverToMemory {
                 processAllReferencesBatch(deduplicatedLessons);
             }
 
-            // Сохраняем уроки
             log.debug("Этап 2: Пакетное сохранение дедуплицированных уроков");
             List<LessonEntity> savedLessons = lessonRepository.saveAll(deduplicatedLessons);
+
+            updateScheduleMetadata(entityType, entityName, currentSemester, savedLessons.size());
 
             long duration = System.currentTimeMillis() - startTime;
             log.info("Пакетное сохранение завершено за {} мс: успешно={} (дедуплицировано с {})",
@@ -85,7 +96,37 @@ public class SaverToMemory {
     }
 
     /**
-     * УСИЛЕННАЯ ДЕДУПЛИКАЦИЯ С ПРОВЕРКОЙ БД И ДВУХУРОВНЕВОЙ ПРОВЕРКОЙ
+     * Обновляет или создает метаданные о расписании
+     */
+    private void updateScheduleMetadata(String entityType, String entityName,
+                                        String semester, int lessonCount) {
+        try {
+            Optional<ScheduleMetadataEntity> existingMetadata =
+                    metadataRepository.findByEntityTypeAndEntityNameAndSemester(
+                            entityType, entityName, semester);
+
+            ScheduleMetadataEntity metadata;
+            if (existingMetadata.isPresent()) {
+                metadata = existingMetadata.get();
+                metadata.setLastUpdated(LocalDateTime.now());
+                metadata.setLessonCount(lessonCount);
+            } else {
+                metadata = new ScheduleMetadataEntity(entityType, entityName, semester);
+                metadata.setLastUpdated(LocalDateTime.now());
+                metadata.setLessonCount(lessonCount);
+            }
+
+            metadataRepository.save(metadata);
+            log.debug("Метаданные обновлены: {} {} -> {} занятий, семестр {}",
+                    entityType, entityName, lessonCount, semester);
+
+        } catch (Exception e) {
+            log.error("Ошибка при обновлении метаданных для {} {}", entityType, entityName, e);
+        }
+    }
+
+    /**
+     * УСИЛЕННАЯ ДЕДУПЛИКАЦИЯ С ПРОВЕРКОЙ БД
      */
     private List<LessonEntity> deduplicateLessonsWithDBCheck(List<LessonEntity> lessons) {
         log.info("Начало усиленной дедупликации {} занятий", lessons.size());
@@ -100,14 +141,12 @@ public class SaverToMemory {
 
             String key = createDeduplicationKey(lesson);
 
-            // Уровень 1: Проверка дубликатов в текущей пачке
             if (seenKeysInCurrentBatch.contains(key)) {
                 log.debug("Пропуск дубликата в текущей пачке: {}", key);
                 duplicatesInBatch++;
                 continue;
             }
 
-            // Уровень 2: Проверка дубликатов в БД
             boolean existsInDB = checkIfLessonExistsInDatabase(lesson);
             if (existsInDB) {
                 log.debug("Пропуск дубликата (уже есть в БД): {}", key);
@@ -115,7 +154,6 @@ public class SaverToMemory {
                 continue;
             }
 
-            // Если не дубликат - добавляем
             result.add(lesson);
             seenKeysInCurrentBatch.add(key);
         }
@@ -126,9 +164,6 @@ public class SaverToMemory {
         return result;
     }
 
-    /**
-     * СОЗДАЕТ КЛЮЧ ДЕДУПЛИКАЦИИ
-     */
     private String createDeduplicationKey(LessonEntity lesson) {
         return String.format("%s|%s|%s|%s|%s|%s",
                 lesson.getDiscipline() != null ? lesson.getDiscipline().trim().toLowerCase() : "",
@@ -139,15 +174,11 @@ public class SaverToMemory {
                 lesson.getTeacher() != null ? lesson.getTeacher().trim().toLowerCase() : "");
     }
 
-    /**
-     * Нормализует строку групп для корректного сравнения
-     */
     private String normalizeGroups(String groupsSummary) {
         if (groupsSummary == null || groupsSummary.trim().isEmpty()) {
             return "";
         }
 
-        // Разделяем группы, сортируем и объединяем обратно
         return Arrays.stream(groupsSummary.split(",\\s*"))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
@@ -156,17 +187,16 @@ public class SaverToMemory {
                 .toLowerCase();
     }
 
-    /**
-     * Проверяет существование занятия в БД
-     */
     private boolean checkIfLessonExistsInDatabase(LessonEntity lesson) {
         try {
-            // Ищем занятия с такими же основными параметрами
-            List<LessonEntity> existingLessons = lessonRepository.findByDisciplineAndStartTimeAndEndTime(
-                    lesson.getDiscipline(),
-                    lesson.getStartTime(),
-                    lesson.getEndTime()
-            );
+            String currentSemester = SemesterUtils.getCurrentSemester();
+            List<LessonEntity> existingLessons = lessonRepository
+                    .findByDisciplineAndStartTimeAndEndTimeAndSemester(
+                            lesson.getDiscipline(),
+                            lesson.getStartTime(),
+                            lesson.getEndTime(),
+                            currentSemester
+                    );
 
             for (LessonEntity existing : existingLessons) {
                 if (isSameLesson(existing, lesson)) {
@@ -177,15 +207,12 @@ public class SaverToMemory {
             return false;
         } catch (Exception e) {
             log.warn("Ошибка при проверке существования занятия в БД: {}", e.getMessage());
-            return false; // В случае ошибки лучше пропустить проверку, чем потерять данные
+            return false;
         }
     }
 
-    /**
-     * Сравнивает два занятия на идентичность
-     */
     private boolean isSameLesson(LessonEntity lesson1, LessonEntity lesson2) {
-        boolean isSame = Objects.equals(lesson1.getDiscipline(), lesson2.getDiscipline()) &&
+        return Objects.equals(lesson1.getDiscipline(), lesson2.getDiscipline()) &&
                 Objects.equals(lesson1.getLessonType(), lesson2.getLessonType()) &&
                 Objects.equals(lesson1.getStartTime(), lesson2.getStartTime()) &&
                 Objects.equals(lesson1.getEndTime(), lesson2.getEndTime()) &&
@@ -194,23 +221,15 @@ public class SaverToMemory {
                         lesson1.getTeacher() != null ? lesson1.getTeacher().trim().toLowerCase() : "",
                         lesson2.getTeacher() != null ? lesson2.getTeacher().trim().toLowerCase() : ""
                 );
-
-        if (isSame) {
-            log.debug("Занятия идентичны: {}", createDeduplicationKey(lesson1));
-        }
-
-        return isSame;
     }
 
     private boolean shouldUseParallelProcessing(List<LessonEntity> lessons) {
-        // Используем параллельную обработку для больших объемов данных
-        int threshold = 100; // Настройка порога
+        int threshold = 100;
 
         if (lessons.size() < threshold) {
-            return false; // Маленькие объемы - последовательно (меньше накладных расходов)
+            return false;
         }
 
-        // Проверяем сложность данных
         long totalReferences = lessons.stream()
                 .filter(Objects::nonNull)
                 .mapToLong(lesson -> {
@@ -222,7 +241,7 @@ public class SaverToMemory {
                 })
                 .sum();
 
-        return totalReferences > 500; // Много справочников - используем параллелизм
+        return totalReferences > 500;
     }
 
     private void processAllReferencesBatch(List<LessonEntity> lessons) {
@@ -233,13 +252,9 @@ public class SaverToMemory {
         processRoomsBatch(lessons);
     }
 
-    /**
-     * ПАРАЛЛЕЛЬНАЯ обработка справочников
-     */
     private void processAllReferencesParallel(List<LessonEntity> lessons) {
         log.debug("Параллельная обработка справочников для {} уроков", lessons.size());
 
-        // Создаем задачи для параллельного выполнения
         CompletableFuture<Void> groupsFuture = CompletableFuture
                 .runAsync(() -> processGroupsBatch(lessons))
                 .exceptionally(ex -> {
@@ -261,7 +276,6 @@ public class SaverToMemory {
                     return null;
                 });
 
-        // Ждем завершения ВСЕХ задач
         try {
             CompletableFuture.allOf(groupsFuture, teachersFuture, roomsFuture).join();
             log.debug("Параллельная обработка справочников завершена");
@@ -271,11 +285,7 @@ public class SaverToMemory {
         }
     }
 
-    /**
-     * ОПТИМИЗИРОВАННЫЙ метод обработки групп (N+1 решение)
-     */
     private void processGroupsBatch(List<LessonEntity> lessons) {
-        // 1. Собираем ВСЕ уникальные имена групп из ВСЕХ уроков
         Set<String> allGroupNames = lessons.stream()
                 .filter(lesson -> lesson.getGroups() != null)
                 .flatMap(lesson -> lesson.getGroups().stream())
@@ -290,13 +300,11 @@ public class SaverToMemory {
 
         log.debug("Обработка {} уникальных групп", allGroupNames.size());
 
-        // 2. ОДИН запрос для получения всех существующих групп
         Map<String, GroupEntity> existingGroupsMap = groupRepository
                 .findByGroupNameIn(new ArrayList<>(allGroupNames))
                 .stream()
                 .collect(Collectors.toMap(GroupEntity::getGroupName, Function.identity()));
 
-        // 3. Определяем какие группы нужно создать
         List<GroupEntity> groupsToCreate = allGroupNames.stream()
                 .filter(groupName -> !existingGroupsMap.containsKey(groupName))
                 .map(groupName -> {
@@ -306,14 +314,12 @@ public class SaverToMemory {
                 })
                 .collect(Collectors.toList());
 
-        // 4. ОДИН запрос для сохранения всех новых групп
         if (!groupsToCreate.isEmpty()) {
             log.debug("Создание {} новых групп", groupsToCreate.size());
             List<GroupEntity> savedGroups = groupRepository.saveAll(groupsToCreate);
             savedGroups.forEach(group -> existingGroupsMap.put(group.getGroupName(), group));
         }
 
-        // 5. Сопоставляем группы с уроками (в памяти, без запросов)
         for (LessonEntity lesson : lessons) {
             if (lesson.getGroups() != null) {
                 List<GroupEntity> processedGroups = lesson.getGroups().stream()
@@ -325,11 +331,7 @@ public class SaverToMemory {
         }
     }
 
-    /**
-     * ОПТИМИЗИРОВАННЫЙ метод обработки преподавателей (N+1 решение)
-     */
     private void processTeachersBatch(List<LessonEntity> lessons) {
-        // 1. Собираем ВСЕ уникальные имена преподавателей из ВСЕХ уроков
         Set<String> allTeacherNames = lessons.stream()
                 .filter(lesson -> lesson.getTeacher() != null)
                 .flatMap(lesson -> Arrays.stream(lesson.getTeacher().split("[,\n]")))
@@ -344,13 +346,11 @@ public class SaverToMemory {
 
         log.debug("Обработка {} уникальных преподавателей", allTeacherNames.size());
 
-        // 2. ОДИН запрос для получения всех существующих преподавателей
         Map<String, TeacherEntity> existingTeachersMap = teacherRepository
                 .findByFullNameIn(new ArrayList<>(allTeacherNames))
                 .stream()
                 .collect(Collectors.toMap(TeacherEntity::getFullName, Function.identity()));
 
-        // 3. Создаем новых преподавателей
         List<TeacherEntity> teachersToCreate = allTeacherNames.stream()
                 .filter(teacherName -> !existingTeachersMap.containsKey(teacherName))
                 .map(teacherName -> {
@@ -360,14 +360,12 @@ public class SaverToMemory {
                 })
                 .collect(Collectors.toList());
 
-        // 4. ОДИН запрос для сохранения всех новых преподавателей
         if (!teachersToCreate.isEmpty()) {
             log.debug("Создание {} новых преподавателей", teachersToCreate.size());
             List<TeacherEntity> savedTeachers = teacherRepository.saveAll(teachersToCreate);
             savedTeachers.forEach(teacher -> existingTeachersMap.put(teacher.getFullName(), teacher));
         }
 
-        // 5. Сопоставляем преподавателей с уроками
         for (LessonEntity lesson : lessons) {
             if (lesson.getTeacher() != null) {
                 List<TeacherEntity> processedTeachers = Arrays.stream(lesson.getTeacher().split("[,\n]"))
@@ -381,11 +379,7 @@ public class SaverToMemory {
         }
     }
 
-    /**
-     * ОПТИМИЗИРОВАННЫЙ метод обработки аудиторий (N+1 решение)
-     */
     private void processRoomsBatch(List<LessonEntity> lessons) {
-        // 1. Собираем ВСЕ уникальные имена аудиторий из ВСЕХ уроков
         Set<String> allRoomNames = lessons.stream()
                 .filter(lesson -> lesson.getRoom() != null)
                 .flatMap(lesson -> Arrays.stream(lesson.getRoom().split(",")))
@@ -400,13 +394,11 @@ public class SaverToMemory {
 
         log.debug("Обработка {} уникальных аудиторий", allRoomNames.size());
 
-        // 2. ОДИН запрос для получения всех существующих аудиторий
         Map<String, RoomEntity> existingRoomsMap = roomRepository
                 .findByRoomNamesIn(new ArrayList<>(allRoomNames))
                 .stream()
                 .collect(Collectors.toMap(RoomEntity::getRoomName, Function.identity()));
 
-        // 3. Создаем новых аудиторий
         List<RoomEntity> roomsToCreate = allRoomNames.stream()
                 .filter(roomName -> !existingRoomsMap.containsKey(roomName))
                 .map(roomName -> {
@@ -416,14 +408,12 @@ public class SaverToMemory {
                 })
                 .collect(Collectors.toList());
 
-        // 4. ОДИН запрос для сохранения всех новых аудиторий
         if (!roomsToCreate.isEmpty()) {
             log.debug("Создание {} новых аудиторий", roomsToCreate.size());
             List<RoomEntity> savedRooms = roomRepository.saveAll(roomsToCreate);
             savedRooms.forEach(room -> existingRoomsMap.put(room.getRoomName(), room));
         }
 
-        // 5. Сопоставляем аудитории с уроками
         for (LessonEntity lesson : lessons) {
             if (lesson.getRoom() != null) {
                 List<RoomEntity> processedRooms = Arrays.stream(lesson.getRoom().split(","))
@@ -437,37 +427,11 @@ public class SaverToMemory {
         }
     }
 
-    public static class BatchSaveResult {
-        private final int savedCount;
-        private final int errorCount;
-        private final int totalCount;
-        private final List<String> errors;
-
-        public BatchSaveResult(int savedCount, int errorCount, int totalCount, List<String> errors) {
-            this.savedCount = savedCount;
-            this.errorCount = errorCount;
-            this.totalCount = totalCount;
-            this.errors = errors != null ? new ArrayList<>(errors) : new ArrayList<>();
-        }
-
-        // Геттеры
-        public int getSavedCount() { return savedCount; }
-        public int getErrorCount() { return errorCount; }
-        public int getTotalCount() { return totalCount; }
-        public List<String> getErrors() { return new ArrayList<>(errors); }
-        public boolean isSuccess() { return errorCount == 0; }
-        public double getSuccessRate() {
-            return totalCount > 0 ? (double) savedCount / totalCount * 100 : 0;
-        }
-    }
-
     @Transactional
-    public void saveLessonsWithErrorHandling(List<LessonEntity> lessons) {
-        // Заменяем старую реализацию на новую пакетную
-        BatchSaveResult result = saveLessonsBatch(lessons);
+    public void saveLessonsWithErrorHandling(List<LessonEntity> lessons, String entityType, String entityName) {
+        BatchSaveResult result = saveLessonsBatch(lessons, entityType, entityName);
 
         if (result.getErrorCount() > 0) {
-            // Сохраняем логику обработки ошибок из старого метода
             if (result.getSavedCount() == 0) {
                 throw new RuntimeException("Не удалось сохранить ни одного занятия: " +
                         String.join("; ", result.getErrors().subList(0, Math.min(5, result.getErrors().size()))));
@@ -563,5 +527,28 @@ public class SaverToMemory {
         }
 
         log.info("Выход из updateAllIdsFromApi, результат: успешно - {}, пропущено - {}", updatedCount, skippedCount);
+    }
+
+    public static class BatchSaveResult {
+        private final int savedCount;
+        private final int errorCount;
+        private final int totalCount;
+        private final List<String> errors;
+
+        public BatchSaveResult(int savedCount, int errorCount, int totalCount, List<String> errors) {
+            this.savedCount = savedCount;
+            this.errorCount = errorCount;
+            this.totalCount = totalCount;
+            this.errors = errors != null ? new ArrayList<>(errors) : new ArrayList<>();
+        }
+
+        public int getSavedCount() { return savedCount; }
+        public int getErrorCount() { return errorCount; }
+        public int getTotalCount() { return totalCount; }
+        public List<String> getErrors() { return new ArrayList<>(errors); }
+        public boolean isSuccess() { return errorCount == 0; }
+        public double getSuccessRate() {
+            return totalCount > 0 ? (double) savedCount / totalCount * 100 : 0;
+        }
     }
 }
