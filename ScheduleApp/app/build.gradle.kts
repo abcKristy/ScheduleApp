@@ -53,6 +53,8 @@ android {
 }
 
 dependencies {
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.36.0")
+
     // Room dependencies
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)

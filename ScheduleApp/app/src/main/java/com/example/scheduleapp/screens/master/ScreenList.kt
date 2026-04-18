@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,6 +34,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.scheduleapp.R
 import com.example.scheduleapp.data.state.AppState
@@ -48,7 +48,9 @@ import com.example.scheduleapp.screens.master.items.Calendar
 import com.example.scheduleapp.screens.master.items.EmptyScheduleItemCompact
 import com.example.scheduleapp.screens.master.items.LoadingIndicator
 import com.example.scheduleapp.screens.master.items.OutdatedSemesterBanner
+import com.example.scheduleapp.screens.master.items.RefreshButton
 import com.example.scheduleapp.screens.master.items.ScheduleListItem
+import com.example.scheduleapp.screens.master.items.SemesterHeader
 import com.example.scheduleapp.screens.master.items.SemesterInfoChip
 import com.example.scheduleapp.logic.createScheduleDayForDate
 import com.example.scheduleapp.logic.getScheduleItemsWithCache
@@ -158,9 +160,10 @@ fun ScreenList(navController: NavController? = null) {
         }
     }
 
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .background(MaterialTheme.customColors.bg2)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.customColors.bg2)
     ) {
         Column {
             Spacer(modifier = Modifier.height(40.dp))
@@ -172,28 +175,75 @@ fun ScreenList(navController: NavController? = null) {
                 }
             )
 
-            if (showBanner && currentGroup.isNotBlank() && currentGroup != " ") {
-                val scope = rememberCoroutineScope()
+            // Индикация семестра и кнопка обновления
+            if (currentGroup.isNotBlank() && currentGroup != " ") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val currentSemester = SemesterUtils.getCurrentSemester()
+                    val isOutdated = cacheStatus != AppState.CacheStatus.FRESH &&
+                            cacheStatus != AppState.CacheStatus.NO_CACHE
 
-                OutdatedSemesterBanner(
-                    cacheStatus = cacheStatus,
-                    isLoading = isBackgroundLoading || isLoading,
-                    onRefresh = {
-                        scope.launch {
-                            isBackgroundLoading = true
-                            forceRefresh(currentGroup) { loading ->
-                                isBackgroundLoading = loading
-                                if (!loading) {
-                                    cacheStatus = AppState.CacheStatus.FRESH
-                                    showBanner = false
+                    SemesterHeader(
+                        semester = currentSemester,
+                        isOutdated = isOutdated,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    RefreshButton(
+                        isLoading = isBackgroundLoading || isLoading,
+                        onClick = {
+                            scope.launch {
+                                isBackgroundLoading = true
+                                forceRefresh(currentGroup) { loading ->
+                                    isBackgroundLoading = loading
+                                    if (!loading) {
+                                        cacheStatus = AppState.CacheStatus.FRESH
+                                        showBanner = false
+                                    }
                                 }
                             }
                         }
-                    },
-                    onDismiss = {
-                        showBanner = false
+                    )
+                }
+            }
+
+            if (showBanner && currentGroup.isNotBlank() && currentGroup != " ") {
+                Column {
+                    OutdatedSemesterBanner(
+                        cacheStatus = cacheStatus,
+                        isLoading = isBackgroundLoading || isLoading,
+                        onRefresh = {
+                            scope.launch {
+                                isBackgroundLoading = true
+                                forceRefresh(currentGroup) { loading ->
+                                    isBackgroundLoading = loading
+                                    if (!loading) {
+                                        cacheStatus = AppState.CacheStatus.FRESH
+                                        showBanner = false
+                                    }
+                                }
+                            }
+                        },
+                        onDismiss = {
+                            showBanner = false
+                        }
+                    )
+
+                    // Дополнительная информация о семестре в баннере
+                    if (cacheStatus == AppState.CacheStatus.OUTDATED_SEMESTER) {
+                        Text(
+                            text = "Расписание загружено для прошлого семестра. Нажмите обновить для загрузки актуального расписания.",
+                            fontSize = 12.sp,
+                            color = Color(0xFFE65100),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
                     }
-                )
+                }
 
                 Row(
                     modifier = Modifier
@@ -214,9 +264,7 @@ fun ScreenList(navController: NavController? = null) {
 
             if (isLoading && scheduleItems.isEmpty()) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     LoadingIndicator()
