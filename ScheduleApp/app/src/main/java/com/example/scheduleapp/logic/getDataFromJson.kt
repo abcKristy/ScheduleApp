@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.scheduleapp.data.entity.ScheduleItem
 import com.example.scheduleapp.data.entity.RecurrenceRule
 import com.example.scheduleapp.data.database.ScheduleRepository
+import com.example.scheduleapp.util.SemesterUtils
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
@@ -88,24 +89,34 @@ suspend fun getScheduleItemsWithCache(
     onError: (String) -> Unit
 ) {
     try {
-        // 1. СНАЧАЛА проверяем локальную базу
-        if (repository != null && repository.hasCachedSchedule(group)) {
-            Log.d("SCHEDULE_CACHE", "Loading schedule from database for group: $group")
-            val cachedItems = repository.getSchedule(group)
-            onSuccess(cachedItems)
-            return
+        // 1. Проверяем локальную базу с учетом семестра
+        val currentSemester = SemesterUtils.getCurrentSemester()
+
+        if (repository != null && repository.hasCachedScheduleForSemester(group, currentSemester)) {
+            Log.d("SCHEDULE_CACHE", "Loading schedule from database for group: $group, semester: $currentSemester")
+            val cachedItems = repository.getScheduleForSemester(group, currentSemester)
+
+            // Проверяем, не истек ли кэш
+            if (!repository.isCacheExpired(group)) {
+                onSuccess(cachedItems)
+                return
+            } else {
+                Log.d("SCHEDULE_CACHE", "Cache expired for group: $group, will refresh in background")
+                onSuccess(cachedItems) // Показываем старые данные
+                // Продолжаем загрузку свежих в фоне
+            }
         }
 
-        // 2. ПОТОМ загружаем с сервера (только если нет в БД)
-        Log.d("SCHEDULE_CACHE", "No cache found, loading from server for group: $group")
+        // 2. Загружаем с сервера
+        Log.d("SCHEDULE_CACHE", "Loading from server for group: $group")
         val apiService = createApiService()
         val response = apiService.getSchedule(group)
         val scheduleItems = parseScheduleFromResponse(response)
 
-        // Сохраняем в базу данных
+        // Сохраняем с текущим семестром
         if (repository != null && scheduleItems.isNotEmpty()) {
-            repository.cacheScheduleItems(group, scheduleItems)
-            Log.d("SCHEDULE_CACHE", "Saved ${scheduleItems.size} items to database")
+            repository.cacheScheduleItemsWithSemester(group, scheduleItems, currentSemester)
+            Log.d("SCHEDULE_CACHE", "Saved ${scheduleItems.size} items with semester $currentSemester")
         }
 
         onSuccess(scheduleItems)
@@ -113,14 +124,12 @@ suspend fun getScheduleItemsWithCache(
     } catch (e: Exception) {
         Log.e("API_ERROR", "Error: ${e.message}", e)
 
-        // 3. В САМОМ ХУДШЕМ СЛУЧАЕ - проверяем еще раз БД на случай race condition
+        // 3. Fallback — пробуем любые кэшированные данные
         if (repository != null && repository.hasCachedSchedule(group)) {
-            Log.d("SCHEDULE_CACHE", "Server failed, using database cache for group: $group")
+            Log.d("SCHEDULE_CACHE", "Server failed, using ANY cached data for group: $group")
             val cachedItems = repository.getSchedule(group)
             onSuccess(cachedItems)
         } else {
-            // Нет ни в БД, ни доступа к серверу - передаем ошибку
-            Log.e("SCHEDULE_CACHE", "No cached data for group: $group and server unavailable")
             onError("Сервер недоступен и нет сохраненных данных для группы '$group'")
         }
     }

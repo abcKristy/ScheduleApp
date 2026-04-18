@@ -3,6 +3,7 @@ package com.example.scheduleapp.data.database
 import android.util.Log
 import com.example.scheduleapp.data.entity.RecurrenceRule
 import com.example.scheduleapp.data.entity.ScheduleItem
+import com.example.scheduleapp.util.SemesterUtils
 
 class ScheduleRepository(private val database: ScheduleDatabase) {
 
@@ -35,6 +36,31 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         return groups
     }
 
+    /**
+     * Сохранение расписания с указанием семестра и временных меток
+     */
+    suspend fun cacheScheduleItemsWithSemester(
+        group: String,
+        items: List<ScheduleItem>,
+        semester: String = SemesterUtils.getCurrentSemester()
+    ) {
+        Log.d("REPOSITORY", "Caching ${items.size} items for group: $group, semester: $semester")
+
+        val currentTime = System.currentTimeMillis()
+        val expiresAt = currentTime + CACHE_TTL
+
+        val entities = items.map { item ->
+            item.toScheduleEntityWithSemester(group, semester, currentTime, expiresAt)
+        }
+
+        dao.saveScheduleWithMetadata(group, entities, semester)
+
+        Log.d("REPOSITORY", "Successfully cached items with semester metadata")
+    }
+
+    /**
+     * Получить расписание группы с учетом семестра
+     */
     suspend fun getScheduleForSemester(group: String, semester: String): List<ScheduleItem> {
         Log.d("REPOSITORY", "Getting schedule for group: $group, semester: $semester")
         val cachedItems = dao.getScheduleByGroupAndSemester(group, semester)
@@ -42,46 +68,79 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         return cachedItems.map { it.toScheduleItem() }
     }
 
+    /**
+     * Проверить, есть ли кэш для группы с указанным семестром
+     */
     suspend fun hasCachedScheduleForSemester(group: String, semester: String): Boolean {
         val count = dao.hasCachedScheduleForSemester(group, semester)
         Log.d("REPOSITORY", "Checking cache for group: $group, semester: $semester - count: $count")
         return count > 0
     }
 
+    /**
+     * Получить семестр кэшированных данных для группы
+     */
     suspend fun getCachedSemester(group: String): String? {
         return dao.getCachedSemesterForGroup(group)
     }
 
-    suspend fun cacheScheduleItemsWithSemester(
-        group: String,
-        items: List<ScheduleItem>,
-        semester: String
-    ) {
-        Log.d("REPOSITORY", "Caching ${items.size} items for group: $group, semester: $semester")
-        val entities = items.map { it.toScheduleEntityWithSemester(group, semester) }
-        dao.saveScheduleWithMetadata(group, entities, semester)
-        Log.d("REPOSITORY", "Successfully cached items with semester metadata")
-    }
-
+    /**
+     * Обновить время последнего доступа к группе
+     */
     suspend fun updateLastAccessed(group: String) {
         dao.updateLastAccessed(group, System.currentTimeMillis())
     }
 
+    /**
+     * Получить все кэшированные группы с информацией о семестре
+     */
     suspend fun getAllCachedGroupsInfo(): List<CachedGroupEntity> {
         return dao.getAllCachedGroups()
     }
 
+    /**
+     * Удалить устаревшие группы (с другим семестром)
+     */
     suspend fun cleanupOutdatedGroups(currentSemester: String) {
         Log.d("REPOSITORY", "Cleaning up groups with semester != $currentSemester")
         dao.deleteGroupsWithDifferentSemester(currentSemester)
     }
 
+    /**
+     * Удалить просроченный кэш
+     */
     suspend fun cleanupExpiredCache() {
         val currentTime = System.currentTimeMillis()
         Log.d("REPOSITORY", "Cleaning up expired cache")
         dao.deleteExpiredSchedule(currentTime)
     }
 
+    /**
+     * Проверить, истек ли срок кэша для группы
+     */
+    suspend fun isCacheExpired(group: String): Boolean {
+        val items = dao.getScheduleByGroup(group)
+        if (items.isEmpty()) return true
+
+        val currentTime = System.currentTimeMillis()
+        return items.any { it.expiresAt < currentTime }
+    }
+
+    /**
+     * Удалить кэш для конкретной группы
+     */
+    suspend fun deleteCacheForGroup(group: String) {
+        Log.d("REPOSITORY", "Deleting cache for group: $group")
+        dao.deleteCachedGroup(group)
+        val items = dao.getScheduleByGroup(group)
+        items.forEach { /* удаление через отдельный метод */ }
+    }
+
+    companion object {
+        private const val CACHE_TTL = 7 * 24 * 60 * 60 * 1000L // 7 дней в миллисекундах
+    }
+
+    // ========== МАППИНГ ==========
 
     private fun ScheduleEntity.toScheduleItem(): ScheduleItem {
         return ScheduleItem(
@@ -106,31 +165,9 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
     }
 
     private fun ScheduleItem.toScheduleEntity(group: String): ScheduleEntity {
-        return ScheduleEntity(
-            id = "${group}_${startTime}_${discipline}",
-            group = group,
-            discipline = discipline,
-            lessonType = lessonType,
-            startTime = startTime,
-            endTime = endTime,
-            room = room,
-            teacher = teacher,
-            groups = groups,
-            groupsSummary = groupsSummary,
-            description = description,
-            frequency = recurrence?.frequency,
-            interval = recurrence?.interval,
-            until = recurrence?.until,
-            exceptions = exceptions,
-            lastUpdated = System.currentTimeMillis(),
-            semester = "LEGACY"
-        )
-    }
-
-    private fun ScheduleItem.toScheduleEntityWithSemester(group: String, semester: String): ScheduleEntity {
         val currentTime = System.currentTimeMillis()
         return ScheduleEntity(
-            id = "${group}_${startTime}_${discipline}_${currentTime}",
+            id = "${group}_${startTime}_${discipline}_$currentTime",
             group = group,
             discipline = discipline,
             lessonType = lessonType,
@@ -146,9 +183,38 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
             until = recurrence?.until,
             exceptions = exceptions,
             lastUpdated = currentTime,
-            semester = semester,
+            semester = "LEGACY",
             cachedAt = currentTime,
-            expiresAt = currentTime + 7 * 24 * 60 * 60 * 1000
+            expiresAt = currentTime + CACHE_TTL
+        )
+    }
+
+    private fun ScheduleItem.toScheduleEntityWithSemester(
+        group: String,
+        semester: String,
+        cachedAt: Long,
+        expiresAt: Long
+    ): ScheduleEntity {
+        return ScheduleEntity(
+            id = "${group}_${startTime}_${discipline}_$cachedAt",
+            group = group,
+            discipline = discipline,
+            lessonType = lessonType,
+            startTime = startTime,
+            endTime = endTime,
+            room = room,
+            teacher = teacher,
+            groups = groups,
+            groupsSummary = groupsSummary,
+            description = description,
+            frequency = recurrence?.frequency,
+            interval = recurrence?.interval,
+            until = recurrence?.until,
+            exceptions = exceptions,
+            lastUpdated = cachedAt,
+            semester = semester,
+            cachedAt = cachedAt,
+            expiresAt = expiresAt
         )
     }
 }
