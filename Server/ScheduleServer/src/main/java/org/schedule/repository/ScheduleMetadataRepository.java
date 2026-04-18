@@ -58,4 +58,24 @@ public interface ScheduleMetadataRepository extends JpaRepository<ScheduleMetada
     @Transactional
     @Query("DELETE FROM ScheduleMetadataEntity m WHERE m.semester != :currentSemester")
     int deleteBySemesterNot(@Param("currentSemester") String currentSemester);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE ScheduleMetadataEntity m SET m.lessonCount = " +
+            "(SELECT COUNT(l) FROM LessonEntity l WHERE " +
+            "l.semester = m.semester AND " +
+            "(EXISTS (SELECT g FROM l.groups g WHERE g.groupName = m.entityName) OR " +
+            "EXISTS (SELECT t FROM l.teachers t WHERE t.fullName = m.entityName) OR " +
+            "EXISTS (SELECT r FROM l.rooms r WHERE r.roomName = m.entityName))) " +
+            "WHERE m.id = :id")
+    void recalculateLessonCount(@Param("id") Long id);
+
+    @Query("SELECT m FROM ScheduleMetadataEntity m WHERE m.lastUpdated < :cutoffDate")
+    List<ScheduleMetadataEntity> findOutdatedMetadata(@Param("cutoffDate") LocalDateTime cutoffDate);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM ScheduleMetadataEntity m WHERE m.lastUpdated < :cutoffDate AND m.semester != :currentSemester")
+    int deleteOutdatedMetadata(@Param("cutoffDate") LocalDateTime cutoffDate,
+                               @Param("currentSemester") String currentSemester);
 }
