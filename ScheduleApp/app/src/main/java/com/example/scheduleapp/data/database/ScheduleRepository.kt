@@ -140,7 +140,7 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         private const val CACHE_TTL = 7 * 24 * 60 * 60 * 1000L // 7 дней в миллисекундах
     }
 
-    // ========== МАППИНГ ==========
+
 
     private fun ScheduleEntity.toScheduleItem(): ScheduleItem {
         return ScheduleItem(

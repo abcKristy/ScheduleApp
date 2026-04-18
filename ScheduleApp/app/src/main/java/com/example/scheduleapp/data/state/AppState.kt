@@ -10,6 +10,7 @@ import com.example.scheduleapp.data.database.ScheduleDatabase
 import com.example.scheduleapp.data.database.ScheduleRepository
 import com.example.scheduleapp.util.SemesterUtils
 import com.example.scheduleapp.widgets.WidgetUpdateHelper
+import com.example.scheduleapp.workers.PeriodicCacheUpdateWorker
 import com.example.scheduleapp.workers.SemesterCheckWorker
 import java.time.LocalDate
 
@@ -68,6 +69,7 @@ object AppState {
         _repository = ScheduleRepository(database)
         loadSavedData(context)
         checkSemesterOnStartup()
+        schedulePeriodicCacheCheck(context)
     }
 
     private var _showEmptyLessons by mutableStateOf(true)
@@ -159,7 +161,6 @@ object AppState {
             context?.let {
                 PreferencesManager.saveLastKnownSemester(it, currentSemester)
 
-                // Запускаем фоновую проверку всех групп
                 scheduleSemesterCheckWorker(it)
             }
         }
@@ -176,6 +177,25 @@ object AppState {
         androidx.work.WorkManager.getInstance(context)
             .enqueue(workRequest)
     }
+
+    /**
+     * Планирование периодической проверки кэша (раз в 3 дня)
+     */
+    private fun schedulePeriodicCacheCheck(context: Context) {
+        val periodicWorkRequest = androidx.work.PeriodicWorkRequestBuilder<PeriodicCacheUpdateWorker>(
+            3, java.util.concurrent.TimeUnit.DAYS
+        )
+            .addTag(PeriodicCacheUpdateWorker.WORK_NAME)
+            .build()
+
+        androidx.work.WorkManager.getInstance(context)
+            .enqueueUniquePeriodicWork(
+                PeriodicCacheUpdateWorker.WORK_NAME,
+                androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+                periodicWorkRequest
+            )
+    }
+
 
     /**
      * Проверка актуальности кэша для группы
