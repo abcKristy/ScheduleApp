@@ -234,7 +234,6 @@ fun ScreenList(navController: NavController? = null) {
                         }
                     )
 
-                    // Дополнительная информация о семестре в баннере
                     if (cacheStatus == AppState.CacheStatus.OUTDATED_SEMESTER) {
                         Text(
                             text = "Расписание загружено для прошлого семестра. Нажмите обновить для загрузки актуального расписания.",

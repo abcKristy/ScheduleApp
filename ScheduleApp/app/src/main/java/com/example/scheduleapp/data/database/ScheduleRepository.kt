@@ -140,7 +140,34 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         private const val CACHE_TTL = 7 * 24 * 60 * 60 * 1000L // 7 дней в миллисекундах
     }
 
+    /**
+     * Удалить кэш для конкретной группы и семестра
+     */
+    suspend fun deleteCacheForGroupAndSemester(group: String, semester: String) {
+        Log.d("REPOSITORY", "Deleting cache for group: $group, semester: $semester")
+        dao.deleteScheduleByGroupAndSemester(group, semester)
+    }
 
+    /**
+     * Полная очистка устаревших данных
+     */
+    suspend fun performFullCleanup(currentSemester: String): Int {
+        Log.d("REPOSITORY", "Performing full cleanup for semester: $currentSemester")
+
+        // Удаляем занятия с устаревшим семестром
+        dao.deleteBySemesterNot(currentSemester)
+
+        // Удаляем просроченный кэш
+        cleanupExpiredCache()
+
+        // Удаляем метаданные устаревших групп
+        cleanupOutdatedGroups(currentSemester)
+
+        val remainingGroups = getAllCachedGroupsInfo()
+        Log.d("REPOSITORY", "After cleanup: ${remainingGroups.size} groups remain")
+
+        return remainingGroups.size
+    }
 
     private fun ScheduleEntity.toScheduleItem(): ScheduleItem {
         return ScheduleItem(

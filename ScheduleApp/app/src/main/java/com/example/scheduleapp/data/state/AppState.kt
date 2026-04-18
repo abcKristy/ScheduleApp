@@ -2,6 +2,7 @@ package com.example.scheduleapp.data.state
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,6 +11,7 @@ import com.example.scheduleapp.data.database.ScheduleDatabase
 import com.example.scheduleapp.data.database.ScheduleRepository
 import com.example.scheduleapp.util.SemesterUtils
 import com.example.scheduleapp.widgets.WidgetUpdateHelper
+import com.example.scheduleapp.workers.CacheCleanupWorker
 import com.example.scheduleapp.workers.PeriodicCacheUpdateWorker
 import com.example.scheduleapp.workers.SemesterCheckWorker
 import java.time.LocalDate
@@ -70,6 +72,8 @@ object AppState {
         loadSavedData(context)
         checkSemesterOnStartup()
         schedulePeriodicCacheCheck(context)
+        scheduleCacheCleanup(context)
+        checkAndRunCleanupIfNeeded(context)
     }
 
     private var _showEmptyLessons by mutableStateOf(true)
@@ -196,6 +200,42 @@ object AppState {
             )
     }
 
+    /**
+     * Планирование периодической очистки кэша (раз в 3 дня)
+     */
+    private fun scheduleCacheCleanup(context: Context) {
+        val cleanupWorkRequest = androidx.work.PeriodicWorkRequestBuilder<CacheCleanupWorker>(
+            3, java.util.concurrent.TimeUnit.DAYS
+        )
+            .addTag(CacheCleanupWorker.WORK_NAME)
+            .build()
+
+        androidx.work.WorkManager.getInstance(context)
+            .enqueueUniquePeriodicWork(
+                CacheCleanupWorker.WORK_NAME,
+                androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+                cleanupWorkRequest
+            )
+    }
+
+    /**
+     * Проверка необходимости очистки при запуске
+     */
+    private fun checkAndRunCleanupIfNeeded(context: Context) {
+        val lastCleanup = PreferencesManager.getLastCacheCleanup(context)
+        val currentTime = System.currentTimeMillis()
+        val threeDaysInMillis = 3 * 24 * 60 * 60 * 1000L
+
+        if (currentTime - lastCleanup > threeDaysInMillis) {
+            Log.d("AppState", "Запуск очистки кэша при старте (прошло > 3 дней)")
+            val workRequest = androidx.work.OneTimeWorkRequestBuilder<CacheCleanupWorker>()
+                .addTag(CacheCleanupWorker.WORK_NAME)
+                .build()
+
+            androidx.work.WorkManager.getInstance(context)
+                .enqueue(workRequest)
+        }
+    }
 
     /**
      * Проверка актуальности кэша для группы

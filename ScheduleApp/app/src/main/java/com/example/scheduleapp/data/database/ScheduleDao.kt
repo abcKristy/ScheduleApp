@@ -61,6 +61,12 @@ interface ScheduleDao {
     @Query("DELETE FROM cached_groups WHERE semester != :currentSemester")
     suspend fun deleteGroupsWithDifferentSemester(currentSemester: String)
 
+    /**
+     * Удалить все занятия с семестром, отличным от текущего
+     */
+    @Query("DELETE FROM schedule_items WHERE semester != :currentSemester AND semester != 'LEGACY'")
+    suspend fun deleteBySemesterNot(currentSemester: String)
+
     @Transaction
     suspend fun saveScheduleWithMetadata(
         group: String,

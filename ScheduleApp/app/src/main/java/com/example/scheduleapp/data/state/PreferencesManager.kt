@@ -18,6 +18,7 @@ object PreferencesManager {
     // НОВЫЕ КЛЮЧИ ДЛЯ СЕМЕСТРА
     private const val KEY_LAST_KNOWN_SEMESTER = "last_known_semester"
     private const val KEY_LAST_SEMESTER_CHECK = "last_semester_check"
+    private const val KEY_LAST_CACHE_CLEANUP = "last_cache_cleanup"
 
     fun saveShowEmptyLessons(context: Context, showEmpty: Boolean) {
         getSharedPreferences(context).edit().apply {
@@ -136,5 +137,16 @@ object PreferencesManager {
 
     fun getLastSemesterCheck(context: Context): Long {
         return getSharedPreferences(context).getLong(KEY_LAST_SEMESTER_CHECK, 0)
+    }
+
+    fun saveLastCacheCleanup(context: Context, timestamp: Long) {
+        getSharedPreferences(context).edit().apply {
+            putLong(KEY_LAST_CACHE_CLEANUP, timestamp)
+            apply()
+        }
+    }
+
+    fun getLastCacheCleanup(context: Context): Long {
+        return getSharedPreferences(context).getLong(KEY_LAST_CACHE_CLEANUP, 0)
     }
 }
