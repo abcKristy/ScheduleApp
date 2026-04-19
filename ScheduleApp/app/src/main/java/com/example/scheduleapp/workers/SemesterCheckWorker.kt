@@ -72,6 +72,7 @@ class SemesterCheckWorker(
                         var errorMessage: String? = null
 
                         getScheduleItemsWithCache(
+                            context = applicationContext,
                             group = groupInfo.groupName,
                             repository = repository,
                             forceRefresh = true,

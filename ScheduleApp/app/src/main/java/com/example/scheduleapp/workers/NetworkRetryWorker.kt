@@ -31,13 +31,13 @@ class NetworkRetryWorker(
             var errorMessage: String? = null
 
             getScheduleItemsWithCache(
+                context = applicationContext,
                 group = group,
                 repository = repository,
                 forceRefresh = forceRefresh,
                 onSuccess = { items ->
                     success = true
                     Log.d(TAG, "✅ Отложенная загрузка успешна: $group, ${items.size} занятий")
-
                     PreferencesManager.removePendingRetryGroup(applicationContext, group)
                 },
                 onError = { error ->

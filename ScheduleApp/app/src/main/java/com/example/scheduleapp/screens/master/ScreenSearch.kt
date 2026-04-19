@@ -256,6 +256,7 @@ private suspend fun loadScheduleData(
     AppState.setErrorMessage(null)
 
     getScheduleItemsWithCache(
+        context = context,
         group = group,
         repository = AppState.repository,
         forceRefresh = forceRefresh,

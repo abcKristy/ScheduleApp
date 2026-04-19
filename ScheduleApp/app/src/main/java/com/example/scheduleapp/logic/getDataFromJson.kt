@@ -50,7 +50,7 @@ interface ScheduleApiService {
     suspend fun getSchedule(@Path("group") group: String): List<ScheduleItemResponse>
 }
 
-private fun createApiService(): ScheduleApiService {
+fun createApiService(): ScheduleApiService {
     val retrofit = Retrofit.Builder()
         .baseUrl("http://10.141.151.211:8080/")
         .addConverterFactory(GsonConverterFactory.create())
