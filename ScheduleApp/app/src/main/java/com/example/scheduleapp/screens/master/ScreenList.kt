@@ -37,12 +37,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.scheduleapp.R
+import androidx.compose.ui.platform.LocalContext
 import com.example.scheduleapp.data.state.AppState
 import com.example.scheduleapp.data.entity.DayItem
 import com.example.scheduleapp.data.entity.DynamicScheduleDay
 import com.example.scheduleapp.data.entity.EmptySchedule
 import com.example.scheduleapp.data.entity.TestSchedule
 import com.example.scheduleapp.data.entity.ScheduleItem
+import com.example.scheduleapp.data.state.PreferencesManager
 import com.example.scheduleapp.screens.master.items.BreakItemList
 import com.example.scheduleapp.screens.master.items.Calendar
 import com.example.scheduleapp.screens.master.items.EmptyScheduleItemCompact
@@ -55,6 +57,7 @@ import com.example.scheduleapp.screens.master.items.SemesterInfoChip
 import com.example.scheduleapp.logic.createScheduleDayForDate
 import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.navigation.NavigationRoute
+import com.example.scheduleapp.screens.master.items.NewSemesterPendingBanner
 import com.example.scheduleapp.screens.master.items.SummerHolidayBanner
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
@@ -86,6 +89,8 @@ fun ScreenList(navController: NavController? = null) {
         }
     }
 
+    val context = LocalContext.current
+
     LaunchedEffect(currentGroup) {
         if (currentGroup.isBlank() || currentGroup == " ") {
             AppState.setLoading(false)
@@ -98,28 +103,39 @@ fun ScreenList(navController: NavController? = null) {
 
         when (status) {
             AppState.CacheStatus.FRESH -> {
-                loadFromCache(currentGroup)
+                loadFromCache(context,currentGroup)
             }
             AppState.CacheStatus.EXPIRED -> {
-                loadFromCache(currentGroup)
-                refreshInBackground(currentGroup) { loading ->
+                loadFromCache(context,currentGroup)
+                refreshInBackground(context, currentGroup) { loading ->
                     isBackgroundLoading = loading
                 }
             }
             AppState.CacheStatus.OUTDATED_SEMESTER -> {
-                loadFromCache(currentGroup)
-                isBackgroundLoading = true
-                forceRefresh(currentGroup) { loading ->
-                    isBackgroundLoading = loading
-                    if (!loading) {
-                        cacheStatus = AppState.CacheStatus.FRESH
-                        showBanner = false
+                loadFromCache(context,currentGroup)
+
+                // Проверяем, не было ли уже много неудачных попыток
+                val failedAttempts = PreferencesManager.getFailedAttemptsCount(context)
+
+                if (failedAttempts == 0) {
+                    // Первая попытка — пробуем загрузить
+                    isBackgroundLoading = true
+                    forceRefresh(context, currentGroup) { loading ->
+                        isBackgroundLoading = loading
+                        if (!loading) {
+                            cacheStatus = AppState.CacheStatus.FRESH
+                            showBanner = false
+                        }
                     }
+                } else {
+                    // Уже были неудачные попытки — запускаем фоновую проверку с увеличенной частотой
+                    AppState.scheduleSemesterAvailabilityCheck(currentGroup)
+                    AppState.setLoading(false)
                 }
             }
             AppState.CacheStatus.NO_CACHE -> {
                 AppState.setLoading(true)
-                loadFromServer(currentGroup) { loading ->
+                loadFromServer(context, currentGroup) { loading ->
                     AppState.setLoading(loading)
                     if (!loading) {
                         cacheStatus = AppState.CacheStatus.FRESH
@@ -128,7 +144,7 @@ fun ScreenList(navController: NavController? = null) {
                 }
             }
             AppState.CacheStatus.ERROR -> {
-                loadFromCache(currentGroup)
+                loadFromCache(context,currentGroup)
             }
         }
     }
@@ -200,7 +216,7 @@ fun ScreenList(navController: NavController? = null) {
                         onClick = {
                             scope.launch {
                                 isBackgroundLoading = true
-                                forceRefresh(currentGroup) { loading ->
+                                forceRefresh(context, currentGroup) { loading ->
                                     isBackgroundLoading = loading
                                     if (!loading) {
                                         cacheStatus = AppState.CacheStatus.FRESH
@@ -221,7 +237,7 @@ fun ScreenList(navController: NavController? = null) {
                         onRefresh = {
                             scope.launch {
                                 isBackgroundLoading = true
-                                forceRefresh(currentGroup) { loading ->
+                                forceRefresh(context,currentGroup) { loading ->
                                     isBackgroundLoading = loading
                                     if (!loading) {
                                         cacheStatus = AppState.CacheStatus.FRESH
@@ -237,6 +253,10 @@ fun ScreenList(navController: NavController? = null) {
 
                     if (SemesterUtils.isSummerHolidayPeriod()) {
                         SummerHolidayBanner()
+                    }
+
+                    if (cacheStatus == AppState.CacheStatus.OUTDATED_SEMESTER) {
+                        NewSemesterPendingBanner()
                     }
 
                     if (cacheStatus == AppState.CacheStatus.OUTDATED_SEMESTER) {
@@ -421,7 +441,7 @@ fun SwipeableScheduleContent(
     }
 }
 
-private suspend fun loadFromCache(group: String) {
+private suspend fun loadFromCache(context: android.content.Context, group: String) {
     val repo = AppState.repository ?: return
     val currentSemester = SemesterUtils.getCurrentSemester()
     val cachedItems = repo.getScheduleForSemester(group, currentSemester)
@@ -437,7 +457,7 @@ private suspend fun loadFromCache(group: String) {
             AppState.setLoading(false)
             AppState.setErrorMessage("Показаны данные за прошлый семестр")
         } else {
-            loadFromServer(group) { loading ->
+            loadFromServer(context, group) { loading ->
                 AppState.setLoading(loading)
             }
         }
@@ -445,12 +465,14 @@ private suspend fun loadFromCache(group: String) {
 }
 
 private suspend fun refreshInBackground(
+    context: android.content.Context,
     group: String,
     onLoadingChanged: (Boolean) -> Unit
 ) {
     onLoadingChanged(true)
 
     getScheduleItemsWithCache(
+        context = context,
         group = group,
         repository = AppState.repository,
         forceRefresh = true,
@@ -466,6 +488,7 @@ private suspend fun refreshInBackground(
 }
 
 private suspend fun forceRefresh(
+    context: android.content.Context,
     group: String,
     onLoadingChanged: (Boolean) -> Unit
 ) {
@@ -473,6 +496,7 @@ private suspend fun forceRefresh(
     AppState.setErrorMessage("Обновление расписания...")
 
     getScheduleItemsWithCache(
+        context = context,
         group = group,
         repository = AppState.repository,
         forceRefresh = true,
@@ -489,6 +513,7 @@ private suspend fun forceRefresh(
 }
 
 private suspend fun loadFromServer(
+    context: android.content.Context,
     group: String,
     onLoadingChanged: (Boolean) -> Unit
 ) {
@@ -496,6 +521,7 @@ private suspend fun loadFromServer(
     AppState.setErrorMessage("Загрузка расписания...")
 
     getScheduleItemsWithCache(
+        context = context,
         group = group,
         repository = AppState.repository,
         forceRefresh = true,

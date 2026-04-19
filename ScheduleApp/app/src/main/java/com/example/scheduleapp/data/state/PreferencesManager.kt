@@ -20,6 +20,10 @@ object PreferencesManager {
     private const val KEY_LAST_CACHE_CLEANUP = "last_cache_cleanup"
     private const val KEY_PENDING_RETRY_GROUPS = "pending_retry_groups"
 
+    private const val KEY_API_HAS_NEW_SEMESTER = "api_has_new_semester"
+    private const val KEY_FAILED_ATTEMPTS_COUNT = "failed_attempts_count"
+    private const val KEY_LAST_FAILED_ATTEMPT = "last_failed_attempt"
+
     fun saveShowEmptyLessons(context: Context, showEmpty: Boolean) {
         getSharedPreferences(context).edit().apply {
             putBoolean(KEY_SHOW_EMPTY_LESSONS, showEmpty)
@@ -171,5 +175,58 @@ object PreferencesManager {
         val current = getPendingRetryGroups(context).toMutableSet()
         current.remove(group)
         savePendingRetryGroups(context, current)
+    }
+
+    fun setApiHasNewSemester(context: Context, hasNew: Boolean) {
+        getSharedPreferences(context).edit().apply {
+            putBoolean(KEY_API_HAS_NEW_SEMESTER, hasNew)
+            apply()
+        }
+    }
+
+    fun getApiHasNewSemester(context: Context): Boolean {
+        return getSharedPreferences(context).getBoolean(KEY_API_HAS_NEW_SEMESTER, true)
+    }
+
+    fun incrementFailedAttempts(context: Context): Int {
+        val current = getFailedAttemptsCount(context) + 1
+        getSharedPreferences(context).edit().apply {
+            putInt(KEY_FAILED_ATTEMPTS_COUNT, current)
+            putLong(KEY_LAST_FAILED_ATTEMPT, System.currentTimeMillis())
+            apply()
+        }
+        return current
+    }
+
+    fun resetFailedAttempts(context: Context) {
+        getSharedPreferences(context).edit().apply {
+            putInt(KEY_FAILED_ATTEMPTS_COUNT, 0)
+            remove(KEY_LAST_FAILED_ATTEMPT)
+            apply()
+        }
+    }
+
+    fun getFailedAttemptsCount(context: Context): Int {
+        return getSharedPreferences(context).getInt(KEY_FAILED_ATTEMPTS_COUNT, 0)
+    }
+
+    fun getLastFailedAttempt(context: Context): Long {
+        return getSharedPreferences(context).getLong(KEY_LAST_FAILED_ATTEMPT, 0)
+    }
+
+    fun shouldUseExpeditedRetry(context: Context): Boolean {
+        val attempts = getFailedAttemptsCount(context)
+        return attempts >= 2
+    }
+
+    fun getRetryIntervalHours(context: Context): Int {
+        val attempts = getFailedAttemptsCount(context)
+        return when {
+            attempts == 0 -> 168 // 7 дней
+            attempts == 1 -> 72  // 3 дня
+            attempts == 2 -> 24  // 1 день
+            attempts >= 3 -> 6   // 6 часов
+            else -> 168
+        }
     }
 }

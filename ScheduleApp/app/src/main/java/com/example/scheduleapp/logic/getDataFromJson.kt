@@ -1,9 +1,11 @@
 package com.example.scheduleapp.logic
 
+import android.content.Context
 import android.util.Log
 import com.example.scheduleapp.data.entity.ScheduleItem
 import com.example.scheduleapp.data.entity.RecurrenceRule
 import com.example.scheduleapp.data.database.ScheduleRepository
+import com.example.scheduleapp.data.state.PreferencesManager
 import com.example.scheduleapp.util.NetworkMonitor
 import com.example.scheduleapp.util.SemesterUtils
 import retrofit2.Retrofit
@@ -84,6 +86,7 @@ fun parseScheduleItem(response: ScheduleItemResponse): ScheduleItem {
 }
 
 suspend fun getScheduleItemsWithCache(
+    context: Context,
     group: String,
     repository: ScheduleRepository? = null,
     forceRefresh: Boolean = false,
@@ -145,6 +148,8 @@ suspend fun getScheduleItemsWithCache(
         if (repository != null && scheduleItems.isNotEmpty()) {
             repository.cacheScheduleItemsWithSemester(group, scheduleItems, currentSemester)
             NetworkMonitor.removePendingGroup(group)
+            PreferencesManager.resetFailedAttempts(context)
+            PreferencesManager.setApiHasNewSemester(context, true)
             Log.d("SCHEDULE_CACHE", "Saved ${scheduleItems.size} items with semester $currentSemester")
         }
 

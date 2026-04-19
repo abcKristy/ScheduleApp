@@ -14,6 +14,7 @@ import com.example.scheduleapp.util.SemesterUtils
 import com.example.scheduleapp.widgets.WidgetUpdateHelper
 import com.example.scheduleapp.workers.CacheCleanupWorker
 import com.example.scheduleapp.workers.PeriodicCacheUpdateWorker
+import com.example.scheduleapp.workers.SemesterAvailabilityWorker
 import com.example.scheduleapp.workers.SemesterCheckWorker
 import java.time.LocalDate
 
@@ -324,5 +325,32 @@ object AppState {
         _errorMessage = null
     }
 
+    /**
+     * Запуск проверки доступности нового семестра
+     */
+    fun scheduleSemesterAvailabilityCheck(group: String) {
+        context?.let { ctx ->
+            val workRequest = androidx.work.OneTimeWorkRequestBuilder<SemesterAvailabilityWorker>()
+                .setInputData(
+                    androidx.work.Data.Builder()
+                        .putString(SemesterAvailabilityWorker.KEY_GROUP, group)
+                        .build()
+                )
+                .setConstraints(
+                    androidx.work.Constraints.Builder()
+                        .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                        .build()
+                )
+                .addTag(SemesterAvailabilityWorker.WORK_NAME)
+                .build()
+
+            androidx.work.WorkManager.getInstance(ctx)
+                .enqueueUniqueWork(
+                    "${SemesterAvailabilityWorker.WORK_NAME}_$group",
+                    androidx.work.ExistingWorkPolicy.REPLACE,
+                    workRequest
+                )
+        }
+    }
 
 }
