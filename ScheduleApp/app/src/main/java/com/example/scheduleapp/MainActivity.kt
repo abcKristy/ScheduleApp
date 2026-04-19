@@ -9,6 +9,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.core.view.WindowCompat
 import com.example.scheduleapp.data.state.AppState
 import com.example.scheduleapp.logic.LocalThemeViewModel
 import com.example.scheduleapp.logic.ThemeViewModel
@@ -21,6 +22,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         AppState.initialize(this)
         themeViewModel.initializeTheme(this)

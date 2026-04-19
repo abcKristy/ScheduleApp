@@ -83,8 +83,8 @@ fun ScreenProfile(navController: NavHostController? = null) {
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.customColors.bg1),
+            .fillMaxSize(),
+//            .background(MaterialTheme.customColors.bg1),
         contentAlignment = Alignment.Center
     ) {
         if (isDarkTheme) {

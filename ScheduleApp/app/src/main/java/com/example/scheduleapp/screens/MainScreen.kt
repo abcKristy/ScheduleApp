@@ -1,6 +1,7 @@
 package com.example.scheduleapp.screens
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -44,13 +45,17 @@ fun MainScreen() {
             }
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            OfflineIndicator()
-            MainNavGraph(navController)
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                OfflineIndicator()
+                MainNavGraph(navController)
+            }
         }
     }
 }
