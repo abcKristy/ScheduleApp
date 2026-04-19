@@ -140,7 +140,8 @@ fun UserSettingsScreen(
 
     Box(
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .background(MaterialTheme.customColors.bg2),
         contentAlignment = Alignment.Center
     ) {
         if (isSystemInDarkTheme()){

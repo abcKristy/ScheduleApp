@@ -206,7 +206,7 @@ fun ScreenList(navController: NavController? = null) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-//            .background(MaterialTheme.customColors.bg2)
+            .background(MaterialTheme.customColors.bg2)
     ) {
         Column {
             Spacer(modifier = Modifier.height(40.dp))

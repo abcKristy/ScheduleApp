@@ -49,7 +49,7 @@ fun WelcomeScreen(
         val shiny = MaterialTheme.customColors.shiny
         Box(
             modifier = Modifier.fillMaxSize()
-//                .background(MaterialTheme.customColors.bg1)
+                .background(MaterialTheme.customColors.bg1)
         ) {
             AnimatedShinyTop(shiny = shiny, initialX = -70f, initialY =-40f)
             AnimatedShinyBottom(shiny = lightGreen, initialX = 180f, initialY = 520f)

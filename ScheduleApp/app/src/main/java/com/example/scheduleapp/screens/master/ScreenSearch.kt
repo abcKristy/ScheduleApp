@@ -81,7 +81,7 @@ fun ScreenSearch() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-//                .background(customColors.bg2)
+                .background(customColors.bg2)
         ) {
             if (isDarkTheme) {
                 AnimatedShinyBottom(shiny = blue, 200f, 630f)
