@@ -1,10 +1,12 @@
 package com.example.scheduleapp.screens
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,6 +21,7 @@ import com.example.scheduleapp.navigation.MainNavGraph
 import com.example.scheduleapp.navigation.bottom_navigation.BottomNav
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.screens.master.items.OfflineIndicator
+import com.example.scheduleapp.ui.theme.customColors
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -39,6 +42,7 @@ fun MainScreen() {
     }
 
     Scaffold(
+        containerColor = MaterialTheme.customColors.bg2,
         bottomBar = {
             if (showBottomNav) {
                 BottomNav(navController)
@@ -49,6 +53,7 @@ fun MainScreen() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(MaterialTheme.customColors.bg2)
         ) {
             Column(
                 modifier = Modifier.fillMaxSize()
