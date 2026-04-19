@@ -12,6 +12,7 @@ import com.example.scheduleapp.screens.master.ScreenList
 import com.example.scheduleapp.screens.master.ScreenProfile
 import com.example.scheduleapp.screens.master.ScreenSearch
 import com.example.scheduleapp.screens.master.WelcomeScreen
+import com.example.scheduleapp.screens.master.detail.CacheSettingsScreen
 import com.example.scheduleapp.screens.master.detail.ScheduleDetailScreen
 import com.example.scheduleapp.screens.master.detail.UserSettingsScreen
 
@@ -49,7 +50,8 @@ fun MainNavGraph(navController: NavHostController) {
 
         composable(NavigationRoute.UserSettings.route) {
             UserSettingsScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                navController = navController
             )
         }
 
@@ -57,6 +59,12 @@ fun MainNavGraph(navController: NavHostController) {
             ScheduleDetailScreen(
                 onNavigateBack = { navController.popBackStack() },
                 navController = navController
+            )
+        }
+
+        composable(NavigationRoute.CacheSettings.route) {
+            CacheSettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

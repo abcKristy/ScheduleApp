@@ -48,18 +48,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
+import com.example.scheduleapp.R
 import com.example.scheduleapp.data.state.AppState
 import com.example.scheduleapp.logic.manager.rememberImagePickerManager
+import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.screens.master.dialogs.AvatarPickerDialog
 import com.example.scheduleapp.screens.master.dialogs.EditDialog
 import com.example.scheduleapp.screens.master.items.AnimatedShinyBottom
@@ -74,7 +79,8 @@ import java.io.File
 
 @Composable
 fun UserSettingsScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    navController: NavController? = null
 ) {
     var showNameDialog by remember { mutableStateOf(false) }
     var showGroupDialog by remember { mutableStateOf(false) }
@@ -272,6 +278,15 @@ fun UserSettingsScreen(
                         value = currentEmail,
                         onClick = { showEmailDialog = true  }
                     )
+
+                    SettingItem(
+                        iconPainter = painterResource(R.drawable.ic_cached),
+                        title = "Управление кэшем",
+                        value = "Очистка, автообновление",
+                        onClick = {
+                            navController?.navigate(NavigationRoute.CacheSettings.route)
+                        }
+                    )
                 }
             }
         }
@@ -371,7 +386,8 @@ fun UserSettingsScreen(
 
 @Composable
 fun SettingItem(
-    icon: ImageVector,
+    icon: ImageVector? = null,
+    iconPainter: Painter? = null,
     title: String,
     value: String,
     onClick: () -> Unit
@@ -382,12 +398,24 @@ fun SettingItem(
             .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = title,
-            tint = white,
-            modifier = Modifier.size(24.dp)
-        )
+        when {
+            icon != null -> {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = white,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            iconPainter != null -> {
+                Icon(
+                    painter = iconPainter,
+                    contentDescription = title,
+                    tint = white,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
         Column(
             modifier = Modifier
                 .weight(1f)

@@ -10,6 +10,8 @@ sealed class NavigationRoute(val route: String){
     object ScheduleDetail: NavigationRoute("schedule_detail")
     object UserSettings: NavigationRoute("user_settings")
 
+    object CacheSettings: NavigationRoute("cache_settings")
+
     companion object{
         fun fromRoute(route: String?): NavigationRoute{
             return when(route?.substringBefore("/")){

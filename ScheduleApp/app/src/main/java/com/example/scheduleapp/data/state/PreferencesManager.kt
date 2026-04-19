@@ -23,6 +23,8 @@ object PreferencesManager {
     private const val KEY_API_HAS_NEW_SEMESTER = "api_has_new_semester"
     private const val KEY_FAILED_ATTEMPTS_COUNT = "failed_attempts_count"
     private const val KEY_LAST_FAILED_ATTEMPT = "last_failed_attempt"
+    private const val KEY_AUTO_UPDATE_CACHE = "auto_update_cache"
+    private const val KEY_CACHE_TTL_DAYS = "cache_ttl_days"
 
     fun saveShowEmptyLessons(context: Context, showEmpty: Boolean) {
         getSharedPreferences(context).edit().apply {
@@ -228,5 +230,26 @@ object PreferencesManager {
             attempts >= 3 -> 6   // 6 часов
             else -> 168
         }
+    }
+    fun setAutoUpdateCache(context: Context, enabled: Boolean) {
+        getSharedPreferences(context).edit().apply {
+            putBoolean(KEY_AUTO_UPDATE_CACHE, enabled)
+            apply()
+        }
+    }
+
+    fun isAutoUpdateCacheEnabled(context: Context): Boolean {
+        return getSharedPreferences(context).getBoolean(KEY_AUTO_UPDATE_CACHE, true)
+    }
+
+    fun setCacheTtlDays(context: Context, days: Int) {
+        getSharedPreferences(context).edit().apply {
+            putInt(KEY_CACHE_TTL_DAYS, days)
+            apply()
+        }
+    }
+
+    fun getCacheTtlDays(context: Context): Int {
+        return getSharedPreferences(context).getInt(KEY_CACHE_TTL_DAYS, 7)
     }
 }
