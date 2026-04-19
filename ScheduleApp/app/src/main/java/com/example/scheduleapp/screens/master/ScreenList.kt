@@ -63,6 +63,8 @@ import com.example.scheduleapp.screens.master.items.SummerHolidayBanner
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.util.SemesterUtils
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -240,7 +242,7 @@ fun ScreenList(navController: NavController? = null) {
                         onClick = {
                             scope.launch {
                                 isBackgroundLoading = true
-                                forceRefresh(context, currentGroup) { loading ->
+                                forceRefreshIgnoreCache(context, currentGroup) { loading ->
                                     isBackgroundLoading = loading
                                     if (!loading) {
                                         cacheStatus = AppState.CacheStatus.FRESH
@@ -350,13 +352,39 @@ fun ScreenList(navController: NavController? = null) {
                         filteredSchedule.hasLessons -> {
                             ScheduleListContent(
                                 filteredSchedule = filteredSchedule,
-                                navController = navController
+                                navController = navController,
+                                isRefreshing = isBackgroundLoading,
+                                onRefresh = {
+                                    scope.launch {
+                                        isBackgroundLoading = true
+                                        forceRefresh(context, currentGroup) { loading ->
+                                            isBackgroundLoading = loading
+                                            if (!loading) {
+                                                cacheStatus = AppState.CacheStatus.FRESH
+                                                showBanner = false
+                                            }
+                                        }
+                                    }
+                                }
                             )
                         }
                         else -> {
                             EmptyStateContent(
                                 selectedDate = selectedDate,
-                                scheduleItems = scheduleItems
+                                scheduleItems = scheduleItems,
+                                isRefreshing = isBackgroundLoading,
+                                onRefresh = {
+                                    scope.launch {
+                                        isBackgroundLoading = true
+                                        forceRefresh(context, currentGroup) { loading ->
+                                            isBackgroundLoading = loading
+                                            if (!loading) {
+                                                cacheStatus = AppState.CacheStatus.FRESH
+                                                showBanner = false
+                                            }
+                                        }
+                                    }
+                                }
                             )
                         }
                     }
@@ -397,28 +425,38 @@ private fun SundayContent() {
 @Composable
 private fun ScheduleListContent(
     filteredSchedule: DynamicScheduleDay,
-    navController: NavController?
+    navController: NavController?,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit
 ) {
-    LazyColumn(
-        contentPadding = PaddingValues(bottom = 120.dp)
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
+
+    SwipeRefresh(
+        state = swipeRefreshState,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize()
     ) {
-        items(filteredSchedule.allItems) { dayItem ->
-            when (dayItem) {
-                is DayItem.Lesson -> {
-                    if (EmptySchedule.isEmpty(dayItem.scheduleItem)) {
-                        EmptyScheduleItemCompact(scheduleItem = dayItem.scheduleItem)
-                    } else {
-                        ScheduleListItem(
-                            scheduleItem = dayItem.scheduleItem,
-                            onItemClick = {
-                                AppState.selectedScheduleItem = dayItem.scheduleItem
-                                navController?.navigate(NavigationRoute.ScheduleDetail.route)
-                            }
-                        )
+        LazyColumn(
+            contentPadding = PaddingValues(bottom = 120.dp)
+        ) {
+            items(filteredSchedule.allItems) { dayItem ->
+                when (dayItem) {
+                    is DayItem.Lesson -> {
+                        if (EmptySchedule.isEmpty(dayItem.scheduleItem)) {
+                            EmptyScheduleItemCompact(scheduleItem = dayItem.scheduleItem)
+                        } else {
+                            ScheduleListItem(
+                                scheduleItem = dayItem.scheduleItem,
+                                onItemClick = {
+                                    AppState.selectedScheduleItem = dayItem.scheduleItem
+                                    navController?.navigate(NavigationRoute.ScheduleDetail.route)
+                                }
+                            )
+                        }
                     }
-                }
-                is DayItem.Break -> {
-                    BreakItemList(breakItem = dayItem.breakItem)
+                    is DayItem.Break -> {
+                        BreakItemList(breakItem = dayItem.breakItem)
+                    }
                 }
             }
         }
@@ -428,20 +466,43 @@ private fun ScheduleListContent(
 @Composable
 private fun EmptyStateContent(
     selectedDate: LocalDate?,
-    scheduleItems: List<ScheduleItem>
+    scheduleItems: List<ScheduleItem>,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
+
+    SwipeRefresh(
+        state = swipeRefreshState,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize()
     ) {
-        Text(
-            text = when {
-                selectedDate != null && scheduleItems.isNotEmpty() -> "На выбранную дату занятий нет!"
-                selectedDate != null -> "Нет данных о занятиях"
-                else -> "Выберите дату"
-            },
-            color = Color.Gray
-        )
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = when {
+                        selectedDate != null && scheduleItems.isNotEmpty() -> "На выбранную дату занятий нет!"
+                        selectedDate != null -> "Нет данных о занятиях"
+                        else -> "Выберите дату"
+                    },
+                    color = Color.Gray
+                )
+
+                if (selectedDate != null && scheduleItems.isEmpty()) {
+                    Text(
+                        text = "Потяните вниз для загрузки",
+                        color = Color.Gray.copy(alpha = 0.7f),
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -615,4 +676,35 @@ fun ScreenListDarkPreview() {
             ScreenList()
         }
     }
+}
+
+private suspend fun forceRefreshIgnoreCache(
+    context: android.content.Context,
+    group: String,
+    onLoadingChanged: (Boolean) -> Unit
+) {
+    onLoadingChanged(true)
+    AppState.setErrorMessage("Принудительное обновление...")
+
+    // Очищаем кэш для этой группы перед загрузкой
+    AppState.repository?.let { repo ->
+        val currentSemester = SemesterUtils.getCurrentSemester()
+        repo.deleteCacheForGroupAndSemester(group, currentSemester)
+    }
+
+    getScheduleItemsWithCache(
+        context = context,
+        group = group,
+        repository = AppState.repository,
+        forceRefresh = true,
+        onSuccess = { items ->
+            AppState.setScheduleItems(items)
+            AppState.setErrorMessage(null)
+            onLoadingChanged(false)
+        },
+        onError = { error ->
+            AppState.setErrorMessage("Ошибка обновления: $error")
+            onLoadingChanged(false)
+        }
+    )
 }
