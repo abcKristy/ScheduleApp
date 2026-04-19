@@ -20,6 +20,10 @@ import java.time.LocalDate
 
 @SuppressLint("StaticFieldLeak")
 object AppState {
+
+
+    private var _lastForegroundTime by mutableStateOf<Long>(0)
+    private var _lastKnownSemester by mutableStateOf<String?>(null)
     private var _selectedDate by mutableStateOf<LocalDate?>(LocalDate.now())
     val selectedDate: LocalDate? get() = _selectedDate
 
@@ -351,6 +355,52 @@ object AppState {
                     workRequest
                 )
         }
+    }
+
+    /**
+     * Вызывается при возврате приложения из фона (onResume)
+     */
+    fun onAppResumed(context: Context) {
+        val currentTime = System.currentTimeMillis()
+        val timeInBackground = currentTime - _lastForegroundTime
+
+        // Проверяем семестр, если приложение было в фоне более 1 часа
+        if (timeInBackground > 60 * 60 * 1000) {
+            val currentSemester = SemesterUtils.getCurrentSemester()
+
+            if (_lastKnownSemester != null && _lastKnownSemester != currentSemester) {
+                Log.d("AppState", "Семестр изменился во время фона: $_lastKnownSemester -> $currentSemester")
+                _needsSemesterUpdate = true
+                PreferencesManager.saveLastKnownSemester(context, currentSemester)
+
+                // Запускаем проверку текущей группы
+                if (currentGroup.isNotBlank() && currentGroup != " ") {
+                    scheduleSemesterAvailabilityCheck(currentGroup)
+                }
+
+                // Запускаем фоновое обновление всех групп
+                scheduleSemesterCheckWorker(context)
+            }
+
+            _lastKnownSemester = currentSemester
+        }
+
+        _lastForegroundTime = currentTime
+    }
+
+    /**
+     * Вызывается при уходе приложения в фон (onPause)
+     */
+    fun onAppPaused() {
+        _lastForegroundTime = System.currentTimeMillis()
+        _lastKnownSemester = SemesterUtils.getCurrentSemester()
+    }
+
+    /**
+     * Проверка необходимости обновления при возврате из фона
+     */
+    fun shouldRefreshOnResume(): Boolean {
+        return _needsSemesterUpdate
     }
 
 }

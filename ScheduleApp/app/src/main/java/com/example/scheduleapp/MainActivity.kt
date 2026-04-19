@@ -17,6 +17,7 @@ import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 
 class MainActivity : ComponentActivity() {
     private val themeViewModel: ThemeViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -39,5 +40,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        AppState.onAppResumed(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        AppState.onAppPaused()
     }
 }

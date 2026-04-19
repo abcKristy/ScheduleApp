@@ -58,6 +58,7 @@ import com.example.scheduleapp.logic.createScheduleDayForDate
 import com.example.scheduleapp.logic.getScheduleItemsWithCache
 import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.screens.master.items.NewSemesterPendingBanner
+import com.example.scheduleapp.screens.master.items.SemesterChangedBanner
 import com.example.scheduleapp.screens.master.items.SummerHolidayBanner
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
@@ -83,13 +84,36 @@ fun ScreenList(navController: NavController? = null) {
     var isBackgroundLoading by remember { mutableStateOf(false) }
     var showBanner by remember { mutableStateOf(true) }
 
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        if (AppState.shouldRefreshOnResume() && currentGroup.isNotBlank() && currentGroup != " ") {
+            val status = AppState.checkGroupCacheFreshness(currentGroup)
+            if (status == AppState.CacheStatus.OUTDATED_SEMESTER) {
+                cacheStatus = status
+                showBanner = true
+
+                val failedAttempts = PreferencesManager.getFailedAttemptsCount(context)
+                if (failedAttempts == 0) {
+                    isBackgroundLoading = true
+                    forceRefresh(context, currentGroup) { loading ->
+                        isBackgroundLoading = loading
+                        if (!loading) {
+                            cacheStatus = AppState.CacheStatus.FRESH
+                            showBanner = false
+                        }
+                    }
+                }
+            }
+            AppState.resetNeedsSemesterUpdate()
+        }
+    }
+
     LaunchedEffect(selectedDate) {
         selectedDate?.let { date ->
             currentMonth = YearMonth.from(date)
         }
     }
-
-    val context = LocalContext.current
 
     LaunchedEffect(currentGroup) {
         if (currentGroup.isBlank() || currentGroup == " ") {
@@ -231,6 +255,27 @@ fun ScreenList(navController: NavController? = null) {
 
             if (showBanner && currentGroup.isNotBlank() && currentGroup != " ") {
                 Column {
+                    if (AppState.needsSemesterUpdate && cacheStatus == AppState.CacheStatus.OUTDATED_SEMESTER) {
+                        SemesterChangedBanner(
+                            onUpdate = {
+                                scope.launch {
+                                    isBackgroundLoading = true
+                                    forceRefresh(context, currentGroup) { loading ->
+                                        isBackgroundLoading = loading
+                                        if (!loading) {
+                                            cacheStatus = AppState.CacheStatus.FRESH
+                                            showBanner = false
+                                            AppState.resetNeedsSemesterUpdate()
+                                        }
+                                    }
+                                }
+                            },
+                            onDismiss = {
+                                AppState.resetNeedsSemesterUpdate()
+                            }
+                        )
+                    }
+
                     OutdatedSemesterBanner(
                         cacheStatus = cacheStatus,
                         isLoading = isBackgroundLoading || isLoading,
