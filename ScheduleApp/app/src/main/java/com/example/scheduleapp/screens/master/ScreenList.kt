@@ -218,7 +218,6 @@ fun ScreenList(navController: NavController? = null) {
                 }
             )
 
-            // Индикация семестра и кнопка обновления
             if (currentGroup.isNotBlank() && currentGroup != " ") {
                 Row(
                     modifier = Modifier
@@ -278,57 +277,12 @@ fun ScreenList(navController: NavController? = null) {
                         )
                     }
 
-                    OutdatedSemesterBanner(
-                        cacheStatus = cacheStatus,
-                        isLoading = isBackgroundLoading || isLoading,
-                        onRefresh = {
-                            scope.launch {
-                                isBackgroundLoading = true
-                                forceRefresh(context,currentGroup) { loading ->
-                                    isBackgroundLoading = loading
-                                    if (!loading) {
-                                        cacheStatus = AppState.CacheStatus.FRESH
-                                        showBanner = false
-                                    }
-                                }
-                            }
-                        },
-                        onDismiss = {
-                            showBanner = false
-                        }
-                    )
-
                     if (SemesterUtils.isSummerHolidayPeriod()) {
                         SummerHolidayBanner()
                     }
 
                     if (cacheStatus == AppState.CacheStatus.OUTDATED_SEMESTER) {
                         NewSemesterPendingBanner()
-                    }
-
-                    if (cacheStatus == AppState.CacheStatus.OUTDATED_SEMESTER) {
-                        Text(
-                            text = "Расписание загружено для прошлого семестра. Нажмите обновить для загрузки актуального расписания.",
-                            fontSize = 12.sp,
-                            color = Color(0xFFE65100),
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    val semesterText = when (cacheStatus) {
-                        AppState.CacheStatus.OUTDATED_SEMESTER -> "Показан архив"
-                        AppState.CacheStatus.EXPIRED -> "Требует обновления"
-                        else -> ""
-                    }
-                    if (semesterText.isNotEmpty()) {
-                        SemesterInfoChip(semester = semesterText)
                     }
                 }
             }
