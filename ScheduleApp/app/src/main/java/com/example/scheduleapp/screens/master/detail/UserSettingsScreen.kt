@@ -278,15 +278,6 @@ fun UserSettingsScreen(
                         value = currentEmail,
                         onClick = { showEmailDialog = true  }
                     )
-
-                    SettingItem(
-                        iconPainter = painterResource(R.drawable.ic_cached),
-                        title = "Управление кэшем",
-                        value = "Очистка, автообновление",
-                        onClick = {
-                            navController?.navigate(NavigationRoute.CacheSettings.route)
-                        }
-                    )
                 }
             }
         }

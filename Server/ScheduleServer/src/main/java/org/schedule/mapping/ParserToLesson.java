@@ -203,27 +203,22 @@ public class ParserToLesson {
     }
 
     private String extractTeacher(Map<String, String> properties, String scheduleTitle) {
-        // Способ 1: X-META-TEACHER (уже очищен в extractProperties)
         String teacher = properties.get("X-META-TEACHER");
         if (teacher != null && !teacher.trim().isEmpty()) {
-            log.debug("X-META-TEACHER до очистки: '{}'", teacher);
-            String cleaned = cleanText(teacher).replace("\n", " ");
-            log.debug("X-META-TEACHER после очистки: '{}'", cleaned);
-            return cleaned;
+            return cleanText(teacher);
         }
 
-        // Способ 2: Из DESCRIPTION (уже очищен в extractProperties)
         String description = properties.getOrDefault("DESCRIPTION", "");
         if (description.contains("Преподаватель:")) {
-            Pattern teacherPattern = Pattern.compile("Преподаватель:\\s*(.+?)(?:\\s+Группы:|$)");            Matcher matcher = teacherPattern.matcher(description);
+            Pattern teacherPattern = Pattern.compile("Преподавател[ья]:\\s*(.+?)(?:\\s+Групп[аы]:|$)");
+            Matcher matcher = teacherPattern.matcher(description);
             if (matcher.find()) {
                 String rawTeacher = matcher.group(1);
                 log.debug("Преподаватель из DESCRIPTION до очистки: '{}'", rawTeacher);
 
-// Принудительно убираем текстовые \n
                 String cleaned = rawTeacher
-                        .replace("\\n", "")   // ← Убираем текст "\n"
-                        .replace("\\r", "");  // ← Убираем текст "\r"
+                        .replace("\\n", "")
+                        .replace("\\r", "");
 
                 cleaned = cleanText(cleaned);
                 log.debug("Преподаватель из DESCRIPTION после очистки: '{}'", cleaned);
@@ -289,7 +284,7 @@ public class ParserToLesson {
     private List<GroupEntity> extractGroups(Map<String, String> properties, String scheduleTitle) {
         List<GroupEntity> groups = new ArrayList<>();
 
-        // Способ 1: Ищем X-META-GROUP
+        // Способ 1: X-META-GROUP
         for (Map.Entry<String, String> entry : properties.entrySet()) {
             String key = entry.getKey();
             if (key.startsWith("X-META-GROUP") && !entry.getValue().trim().isEmpty()) {
@@ -300,11 +295,11 @@ public class ParserToLesson {
             }
         }
 
-        // Способ 2: Извлекаем группы из DESCRIPTION
         if (groups.isEmpty()) {
             String description = properties.getOrDefault("DESCRIPTION", "");
-            if (description.contains("Группы:")) {
-                String[] parts = description.split("Группы:");
+
+            if (description.contains("Групп")) {
+                String[] parts = description.split("Групп[аы]:");
                 if (parts.length > 1) {
                     String groupsSection = parts[1];
                     java.util.regex.Pattern groupPattern =
@@ -317,15 +312,24 @@ public class ParserToLesson {
                     }
                 }
             }
+
+            if (groups.isEmpty() && !description.contains("Преподавател")) {
+                java.util.regex.Pattern groupPattern =
+                        java.util.regex.Pattern.compile("[А-ЯA-Z]{2,5}-\\d{2}-\\d{2}");
+                java.util.regex.Matcher matcher = groupPattern.matcher(description);
+                while (matcher.find()) {
+                    GroupEntity group = new GroupEntity();
+                    group.setGroupName(matcher.group());
+                    groups.add(group);
+                }
+            }
         }
 
-        // Способ 3: FALLBACK — добавляем группу из названия расписания
         if (groups.isEmpty() && scheduleTitle != null &&
                 scheduleTitle.matches("[А-ЯA-Z]{2,5}-\\d{2}-\\d{2}")) {
             GroupEntity group = new GroupEntity();
             group.setGroupName(scheduleTitle);
             groups.add(group);
-            log.debug("Добавлена группа из scheduleTitle: {}", scheduleTitle);
         }
 
         log.debug("Всего найдено групп: {}", groups.size());

@@ -77,6 +77,37 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/*
+ * НЕИСПОЛЬЗУЕМЫЙ ФАЙЛ — ДЛЯ ОТЛАДКИ
+ *
+ * Этот экран был создан для тестирования и отладки системы кэширования.
+ * В production-сборке не используется (удалён из навигации).
+ *
+ * Функционал:
+ * - Просмотр статистики кэша (группы, занятия, размер БД)
+ * - Очистка всего кэша
+ * - Принудительное обновление всех групп
+ * - Настройка TTL кэша (1-30 дней)
+ * - Управление фоновыми задачами WorkManager
+ *
+ * КАК ПОДКЛЮЧИТЬ ОБРАТНО:
+ * 1. В UserSettingsScreen.kt добавить пункт меню:
+ *    SettingItem(
+ *        iconPainter = painterResource(R.drawable.ic_cached),
+ *        title = "Управление кэшем",
+ *        value = "Очистка, автообновление",
+ *        onClick = { navController?.navigate(NavigationRoute.CacheSettings.route) }
+ *    )
+ *
+ * 2. В NavigationRoute.kt раскомментировать:
+ *    object CacheSettings: NavigationRoute("cache_settings")
+ *
+ * 3. В MainNavGraph.kt добавить:
+ *    composable(NavigationRoute.CacheSettings.route) {
+ *        CacheSettingsScreen(onNavigateBack = { navController.popBackStack() })
+ *    }
+ */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CacheSettingsScreen(
