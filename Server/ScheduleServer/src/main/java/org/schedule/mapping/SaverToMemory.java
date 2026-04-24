@@ -293,6 +293,8 @@ public class SaverToMemory {
                 .filter(name -> name != null && !name.trim().isEmpty())
                 .collect(Collectors.toSet());
 
+        log.debug("Извлечено групп из занятий: {}", allGroupNames);
+
         if (allGroupNames.isEmpty()) {
             log.debug("Нет групп для обработки");
             return;

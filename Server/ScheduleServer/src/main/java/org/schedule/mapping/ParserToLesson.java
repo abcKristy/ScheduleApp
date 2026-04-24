@@ -80,7 +80,7 @@ public class ParserToLesson {
             lesson.setStartTime(startTime);
             lesson.setEndTime(endTime);
 
-            List<GroupEntity> groups = extractGroups(properties);
+            List<GroupEntity> groups = extractGroups(properties, scheduleTitle);
             lesson.setGroups(groups);
 
             RecurrenceRule recurrence = extractRecurrenceRule(properties);
@@ -104,7 +104,7 @@ public class ParserToLesson {
     private Map<String, String> extractProperties(String eventBlock) {
         Map<String, String> properties = new HashMap<>();
 
-        String[] lines = eventBlock.split("\r\n");
+        String[] lines = eventBlock.split("\\r?\\n");
 
         String currentKey = null;
         StringBuilder currentValue = new StringBuilder();
@@ -113,14 +113,17 @@ public class ParserToLesson {
             if (line.isEmpty()) continue;
 
             if (line.contains(":") && !line.startsWith(" ")) {
+                // Сохраняем предыдущий ключ-значение с ОЧИСТКОЙ
                 if (currentKey != null) {
-                    properties.put(currentKey, currentValue.toString());
+                    String cleanedValue = cleanText(currentValue.toString());
+                    properties.put(currentKey, cleanedValue);
                 }
 
                 int colonIndex = line.indexOf(":");
                 currentKey = line.substring(0, colonIndex).trim();
                 currentValue = new StringBuilder(line.substring(colonIndex + 1));
             } else {
+                // Продолжение предыдущей строки
                 if (currentKey != null) {
                     if (line.startsWith(" ")) {
                         String continuation = line.substring(1);
@@ -135,8 +138,15 @@ public class ParserToLesson {
             }
         }
 
+        // Сохраняем последний ключ-значение с ОЧИСТКОЙ
         if (currentKey != null) {
-            properties.put(currentKey, currentValue.toString());
+            String cleanedValue = cleanText(currentValue.toString());
+            properties.put(currentKey, cleanedValue);
+        }
+
+        // Отладочный лог для проверки DESCRIPTION
+        if (properties.containsKey("DESCRIPTION")) {
+            log.debug("DESCRIPTION после очистки: {}", properties.get("DESCRIPTION"));
         }
 
         return properties;
@@ -193,32 +203,65 @@ public class ParserToLesson {
     }
 
     private String extractTeacher(Map<String, String> properties, String scheduleTitle) {
+        // Способ 1: X-META-TEACHER (уже очищен в extractProperties)
         String teacher = properties.get("X-META-TEACHER");
         if (teacher != null && !teacher.trim().isEmpty()) {
-            return cleanText(teacher);
+            log.debug("X-META-TEACHER до очистки: '{}'", teacher);
+            String cleaned = cleanText(teacher).replace("\n", " ");
+            log.debug("X-META-TEACHER после очистки: '{}'", cleaned);
+            return cleaned;
         }
 
-        for (Map.Entry<String, String> entry : properties.entrySet()) {
-            String key = entry.getKey();
-            if (key.startsWith("X-META-TEACHER") && !entry.getValue().isEmpty()) {
-                String teacherValue = entry.getValue().trim();
-                if (!teacherValue.isEmpty()) {
-                    return cleanText(teacherValue);
-                }
+        // Способ 2: Из DESCRIPTION (уже очищен в extractProperties)
+        String description = properties.getOrDefault("DESCRIPTION", "");
+        if (description.contains("Преподаватель:")) {
+            Pattern teacherPattern = Pattern.compile("Преподаватель:\\s*(.+?)(?:\\s+Группы:|$)");            Matcher matcher = teacherPattern.matcher(description);
+            if (matcher.find()) {
+                String rawTeacher = matcher.group(1);
+                log.debug("Преподаватель из DESCRIPTION до очистки: '{}'", rawTeacher);
+
+// Принудительно убираем текстовые \n
+                String cleaned = rawTeacher
+                        .replace("\\n", "")   // ← Убираем текст "\n"
+                        .replace("\\r", "");  // ← Убираем текст "\r"
+
+                cleaned = cleanText(cleaned);
+                log.debug("Преподаватель из DESCRIPTION после очистки: '{}'", cleaned);
+                return cleaned;
             }
         }
 
+        // Способ 3: Поиск по всем ключам X-META-TEACHER
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith("X-META-TEACHER") && !entry.getValue().isEmpty()) {
+                log.debug("X-META-TEACHER из цикла до очистки: '{}'", entry.getValue());
+                String cleaned = cleanText(entry.getValue()).replace("\n", " ");
+                log.debug("X-META-TEACHER из цикла после очистки: '{}'", cleaned);
+                return cleaned;
+            }
+        }
+
+        // Способ 4: Из SUMMARY (в скобках)
         String summary = properties.getOrDefault("SUMMARY", "");
         if (summary.contains("(") && summary.contains(")")) {
             Pattern teacherInSummaryPattern = Pattern.compile("\\(([А-ЯЁ][а-яё]+\\s+[А-ЯЁ]\\.\\s*[А-ЯЁ]\\.)\\)");
             Matcher matcher = teacherInSummaryPattern.matcher(summary);
             if (matcher.find()) {
-                return cleanText(matcher.group(1));
+                String rawTeacher = matcher.group(1);
+                log.debug("Преподаватель из SUMMARY до очистки: '{}'", rawTeacher);
+                String cleaned = cleanText(rawTeacher).replace("\n", " ");
+                log.debug("Преподаватель из SUMMARY после очистки: '{}'", cleaned);
+                return cleaned;
             }
         }
 
+        // Способ 5: FALLBACK — если scheduleTitle похож на имя преподавателя
         if (isLikelyTeacherName(scheduleTitle)) {
-            return cleanText(scheduleTitle);
+            log.debug("Преподаватель из scheduleTitle до очистки: '{}'", scheduleTitle);
+            String cleaned = cleanText(scheduleTitle).replace("\n", " ");
+            log.debug("Преподаватель из scheduleTitle после очистки: '{}'", cleaned);
+            return cleaned;
         }
 
         return "";
@@ -243,20 +286,49 @@ public class ParserToLesson {
         return false;
     }
 
-    private List<GroupEntity> extractGroups(Map<String, String> properties) {
+    private List<GroupEntity> extractGroups(Map<String, String> properties, String scheduleTitle) {
         List<GroupEntity> groups = new ArrayList<>();
 
+        // Способ 1: Ищем X-META-GROUP
         for (Map.Entry<String, String> entry : properties.entrySet()) {
-            if (entry.getKey().startsWith("X-META-GROUP") && !entry.getValue().trim().isEmpty()) {
+            String key = entry.getKey();
+            if (key.startsWith("X-META-GROUP") && !entry.getValue().trim().isEmpty()) {
                 String groupName = entry.getValue().trim();
-                if (groupName.matches("[А-ЯA-Z0-9]{2,4}-\\d{2}-\\d{2}")) {
-                    GroupEntity group = new GroupEntity();
-                    group.setGroupName(groupName);
-                    groups.add(group);
+                GroupEntity group = new GroupEntity();
+                group.setGroupName(groupName);
+                groups.add(group);
+            }
+        }
+
+        // Способ 2: Извлекаем группы из DESCRIPTION
+        if (groups.isEmpty()) {
+            String description = properties.getOrDefault("DESCRIPTION", "");
+            if (description.contains("Группы:")) {
+                String[] parts = description.split("Группы:");
+                if (parts.length > 1) {
+                    String groupsSection = parts[1];
+                    java.util.regex.Pattern groupPattern =
+                            java.util.regex.Pattern.compile("[А-ЯA-Z]{2,5}-\\d{2}-\\d{2}");
+                    java.util.regex.Matcher matcher = groupPattern.matcher(groupsSection);
+                    while (matcher.find()) {
+                        GroupEntity group = new GroupEntity();
+                        group.setGroupName(matcher.group());
+                        groups.add(group);
+                    }
                 }
             }
         }
 
+        // Способ 3: FALLBACK — добавляем группу из названия расписания
+        if (groups.isEmpty() && scheduleTitle != null &&
+                scheduleTitle.matches("[А-ЯA-Z]{2,5}-\\d{2}-\\d{2}")) {
+            GroupEntity group = new GroupEntity();
+            group.setGroupName(scheduleTitle);
+            groups.add(group);
+            log.debug("Добавлена группа из scheduleTitle: {}", scheduleTitle);
+        }
+
+        log.debug("Всего найдено групп: {}", groups.size());
         return groups;
     }
 
@@ -413,7 +485,22 @@ public class ParserToLesson {
 
     private String cleanText(String text) {
         if (text == null) return "";
-        return text.replaceAll("\\s+", " ").trim();
+
+        String result = text;
+
+        // Убираем БУКВАЛЬНЫЕ \n (текст из двух символов: \ и n)
+        result = result.replace("\\n", " ");
+        result = result.replace("\\r", " ");
+
+        // Убираем реальные переносы строк (на всякий случай)
+        result = result.replace("\r\n", " ");
+        result = result.replace("\n", " ");
+        result = result.replace("\r", " ");
+
+        // Убираем лишние пробелы
+        result = result.replaceAll("\\s+", " ").trim();
+
+        return result;
     }
 
     private boolean isValidLesson(LessonEntity lesson) {
