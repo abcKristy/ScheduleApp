@@ -142,6 +142,15 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
     }
 
     /**
+     * Удаляет все LEGACY-записи (устаревший формат без семестра)
+     */
+    suspend fun cleanupLegacyData() {
+        Log.d("REPOSITORY", "Cleaning up LEGACY data")
+        dao.deleteLegacyItems()
+        dao.deleteLegacyGroups()
+    }
+
+    /**
      * Удалить кэш для конкретной группы
      */
     suspend fun deleteCacheForGroup(group: String) {

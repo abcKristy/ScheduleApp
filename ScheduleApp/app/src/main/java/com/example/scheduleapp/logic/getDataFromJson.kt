@@ -95,7 +95,7 @@ suspend fun getScheduleItemsWithCache(
 ) {
     try {
         val currentSemester = SemesterUtils.getActiveSemester()
-        val cacheTtlDays = PreferencesManager.getCacheTtlDays(context)  // ← получаем TTL
+        val cacheTtlDays = PreferencesManager.getCacheTtlDays(context)
 
         if (!forceRefresh && repository != null) {
             val cachedSemester = repository.getCachedSemester(group)
@@ -104,7 +104,7 @@ suspend fun getScheduleItemsWithCache(
                 Log.d("SCHEDULE_CACHE", "Loading from database for group: $group, semester: $currentSemester")
                 val cachedItems = repository.getScheduleForSemester(group, currentSemester)
 
-                if (!repository.isCacheExpired(group, cacheTtlDays)) {  // ← передаём TTL
+                if (!repository.isCacheExpired(group, cacheTtlDays)) {
                     onSuccess(cachedItems)
                     return
                 } else {
@@ -117,7 +117,7 @@ suspend fun getScheduleItemsWithCache(
             }
         }
 
-        // Проверяем наличие сети перед запросом к серверу
+        // Проверяем наличие сети
         if (!NetworkMonitor.isConnected.value) {
             Log.w("SCHEDULE_CACHE", "Нет подключения к сети")
 
@@ -147,8 +147,17 @@ suspend fun getScheduleItemsWithCache(
         val scheduleItems = parseScheduleFromResponse(response)
 
         if (repository != null && scheduleItems.isNotEmpty()) {
+            repository.cacheScheduleItemsWithSemester(group, scheduleItems, currentSemester, cacheTtlDays)
 
+            repository.cleanupLegacyData()
+
+            NetworkMonitor.removePendingGroup(group)
+            PreferencesManager.resetFailedAttempts(context)
+            PreferencesManager.setApiHasNewSemester(context, true)
+            Log.d("SCHEDULE_CACHE", "Saved ${scheduleItems.size} items with semester $currentSemester, TTL: $cacheTtlDays days")
+        } else if (repository != null && forceRefresh) {
             repository.deleteCacheForGroupAndSemester(group, currentSemester)
+            repository.deleteCacheForGroupAndSemester(group, "LEGACY")
             Log.d("SCHEDULE_CACHE", "API returned empty, deleted stale cache for: $group")
         }
 

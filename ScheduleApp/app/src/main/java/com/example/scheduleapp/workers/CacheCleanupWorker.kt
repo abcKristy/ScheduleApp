@@ -49,10 +49,9 @@ class CacheCleanupWorker(
                 }
             }
 
-            // Очистка просроченного кэша
+            repository.cleanupLegacyData()
             repository.cleanupExpiredCache()
 
-            // Очистка устаревших групп из cached_groups
             repository.cleanupOutdatedGroups(currentSemester)
 
             // Сохраняем время последней очистки

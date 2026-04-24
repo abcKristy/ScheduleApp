@@ -244,29 +244,39 @@ object AppState {
         }
     }
 
-    /**
-     * Проверка актуальности кэша для группы
-     */
     suspend fun checkGroupCacheFreshness(group: String): CacheStatus {
         if (group.isBlank() || group == " ") {
             return CacheStatus.NO_CACHE
         }
 
         val repo = repository ?: return CacheStatus.NO_CACHE
-        val context = this.context ?: return CacheStatus.ERROR
+        val ctx = context ?: return CacheStatus.ERROR
 
         return try {
             val activeSemester = SemesterUtils.getActiveSemester()
             val cachedSemester = repo.getCachedSemester(group)
-            val cacheTtlDays = PreferencesManager.getCacheTtlDays(context)  // ← получаем TTL
+            val cacheTtlDays = PreferencesManager.getCacheTtlDays(ctx)
 
             when {
-                cachedSemester == null -> CacheStatus.NO_CACHE
-                cachedSemester != activeSemester -> CacheStatus.OUTDATED_SEMESTER
-                isCacheExpiredWithTtl(group, cacheTtlDays) -> CacheStatus.EXPIRED  // ← новый метод
-                else -> CacheStatus.FRESH
+                cachedSemester == null -> {
+                    CacheStatus.NO_CACHE
+                }
+                cachedSemester != activeSemester -> {
+                    // Семестр изменился — удаляем LEGACY и устаревшие данные
+                    repo.cleanupLegacyData()
+                    CacheStatus.OUTDATED_SEMESTER
+                }
+                repo.isCacheExpired(group, cacheTtlDays) -> {
+                    CacheStatus.EXPIRED
+                }
+                else -> {
+                    // Семестр совпадает — удаляем LEGACY на всякий случай
+                    repo.cleanupLegacyData()
+                    CacheStatus.FRESH
+                }
             }
         } catch (e: Exception) {
+            Log.e("AppState", "Error checking cache freshness", e)
             CacheStatus.ERROR
         }
     }

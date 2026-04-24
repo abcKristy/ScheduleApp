@@ -55,6 +55,8 @@ fun GroupStatusIndicator(
             else -> {
                 val iconInfo = getStatusIcon(status)
                 when {
+                    iconInfo == null -> {
+                    }
                     iconInfo.iconRes != null -> {
                         Icon(
                             painter = painterResource(id = iconInfo.iconRes),
@@ -84,13 +86,9 @@ private data class StatusIconInfo(
     val description: String
 )
 
-private fun getStatusIcon(status: AppState.CacheStatus): StatusIconInfo {
+private fun getStatusIcon(status: AppState.CacheStatus): StatusIconInfo? {
     return when (status) {
-        AppState.CacheStatus.FRESH -> StatusIconInfo(
-            imageVector = Icons.Default.CheckCircle,
-            color = Color(0xFF4CAF50),
-            description = "Актуально"
-        )
+        AppState.CacheStatus.FRESH -> null
         AppState.CacheStatus.EXPIRED -> StatusIconInfo(
             imageVector = Icons.Default.Warning,
             color = Color(0xFFFFC107),

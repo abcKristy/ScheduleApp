@@ -504,6 +504,9 @@ fun SwipeableScheduleContent(
 private suspend fun loadFromCache(context: android.content.Context, group: String) {
     val repo = AppState.repository ?: return
     val currentSemester = SemesterUtils.getCurrentSemester()
+
+    repo.cleanupLegacyData()
+
     val cachedItems = repo.getScheduleForSemester(group, currentSemester)
 
     if (cachedItems.isNotEmpty()) {

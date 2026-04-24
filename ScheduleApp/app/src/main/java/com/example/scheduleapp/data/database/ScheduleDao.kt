@@ -70,6 +70,12 @@ interface ScheduleDao {
     @Query("SELECT COUNT(*) FROM schedule_items WHERE `group` = :group AND cachedAt < :threshold")
     suspend fun getItemsOlderThan(group: String, threshold: Long): Int
 
+    @Query("DELETE FROM schedule_items WHERE semester = 'LEGACY'")
+    suspend fun deleteLegacyItems()
+
+    @Query("DELETE FROM cached_groups WHERE semester = 'LEGACY'")
+    suspend fun deleteLegacyGroups()
+
     /**
      * Удалить все занятия с семестром, отличным от текущего
      */
