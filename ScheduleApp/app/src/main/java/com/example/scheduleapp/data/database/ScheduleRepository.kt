@@ -149,6 +149,10 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         dao.deleteScheduleByGroupAndSemester(group, semester)
     }
 
+    suspend fun getTotalCachedLessons(semester: String): Int {
+        return dao.getTotalLessonsCount(semester)
+    }
+
     /**
      * Полная очистка устаревших данных
      */

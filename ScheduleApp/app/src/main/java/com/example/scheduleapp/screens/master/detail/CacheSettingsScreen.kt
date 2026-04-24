@@ -109,10 +109,10 @@ fun CacheSettingsScreen(
             val groups = repository.getAllCachedGroupsInfo()
             cachedGroupsCount = groups.size
 
-            val items = repository.getScheduleForSemester("", currentSemester)
-            cachedLessonsCount = items.size
 
-            totalCacheSize = formatCacheSize(groups.size, items.size)
+            cachedLessonsCount = repository.getTotalCachedLessons(currentSemester)
+
+            totalCacheSize = formatCacheSize(groups.size, cachedLessonsCount)
         }
     }
 
