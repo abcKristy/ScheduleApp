@@ -253,20 +253,26 @@ object AppState {
         }
 
         val repo = repository ?: return CacheStatus.NO_CACHE
+        val context = this.context ?: return CacheStatus.ERROR
 
         return try {
-            val activeSemester = SemesterUtils.getActiveSemester()  // ← ИСПОЛЬЗОВАТЬ АКТИВНЫЙ СЕМЕСТР
+            val activeSemester = SemesterUtils.getActiveSemester()
             val cachedSemester = repo.getCachedSemester(group)
+            val cacheTtlDays = PreferencesManager.getCacheTtlDays(context)  // ← получаем TTL
 
             when {
                 cachedSemester == null -> CacheStatus.NO_CACHE
                 cachedSemester != activeSemester -> CacheStatus.OUTDATED_SEMESTER
-                repo.isCacheExpired(group) -> CacheStatus.EXPIRED
+                isCacheExpiredWithTtl(group, cacheTtlDays) -> CacheStatus.EXPIRED  // ← новый метод
                 else -> CacheStatus.FRESH
             }
         } catch (e: Exception) {
             CacheStatus.ERROR
         }
+    }
+
+    private suspend fun isCacheExpiredWithTtl(group: String, cacheTtlDays: Int): Boolean {
+        return repository?.isCacheExpired(group, cacheTtlDays) ?: true
     }
 
     /**

@@ -95,6 +95,7 @@ suspend fun getScheduleItemsWithCache(
 ) {
     try {
         val currentSemester = SemesterUtils.getActiveSemester()
+        val cacheTtlDays = PreferencesManager.getCacheTtlDays(context)  // ← получаем TTL
 
         if (!forceRefresh && repository != null) {
             val cachedSemester = repository.getCachedSemester(group)
@@ -103,7 +104,7 @@ suspend fun getScheduleItemsWithCache(
                 Log.d("SCHEDULE_CACHE", "Loading from database for group: $group, semester: $currentSemester")
                 val cachedItems = repository.getScheduleForSemester(group, currentSemester)
 
-                if (!repository.isCacheExpired(group)) {
+                if (!repository.isCacheExpired(group, cacheTtlDays)) {  // ← передаём TTL
                     onSuccess(cachedItems)
                     return
                 } else {
@@ -146,7 +147,12 @@ suspend fun getScheduleItemsWithCache(
         val scheduleItems = parseScheduleFromResponse(response)
 
         if (repository != null && scheduleItems.isNotEmpty()) {
-            repository.cacheScheduleItemsWithSemester(group, scheduleItems, currentSemester)
+            repository.cacheScheduleItemsWithSemester(
+                group,
+                scheduleItems,
+                currentSemester,
+                cacheTtlDays  // ← передаём TTL при сохранении
+            )
             NetworkMonitor.removePendingGroup(group)
             PreferencesManager.resetFailedAttempts(context)
             PreferencesManager.setApiHasNewSemester(context, true)

@@ -64,6 +64,12 @@ interface ScheduleDao {
     @Query("SELECT COUNT(*) FROM schedule_items WHERE semester = :semester")
     suspend fun getTotalLessonsCount(semester: String): Int
 
+    @Query("SELECT COUNT(*) FROM schedule_items WHERE `group` = :group AND expiresAt < :currentTime")
+    suspend fun getExpiredItemsCount(group: String, currentTime: Long): Int
+
+    @Query("SELECT COUNT(*) FROM schedule_items WHERE `group` = :group AND cachedAt < :threshold")
+    suspend fun getItemsOlderThan(group: String, threshold: Long): Int
+
     /**
      * Удалить все занятия с семестром, отличным от текущего
      */

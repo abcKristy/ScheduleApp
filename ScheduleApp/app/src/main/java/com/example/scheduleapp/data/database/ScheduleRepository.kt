@@ -16,11 +16,20 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         return cachedItems.map { it.toScheduleItem() }
     }
 
-    suspend fun cacheScheduleItems(group: String, items: List<ScheduleItem>) {
+    suspend fun cacheScheduleItems(
+        group: String,
+        items: List<ScheduleItem>,
+        cacheTtlDays: Int = 7
+    ) {
         Log.d("REPOSITORY", "Caching ${items.size} items for group: $group")
-        val entities = items.map { it.toScheduleEntity(group) }
+        val currentTime = System.currentTimeMillis()
+        val cacheTtlMillis = cacheTtlDays * 24 * 60 * 60 * 1000L
+
+        val entities = items.map {
+            it.toScheduleEntity(group, currentTime, cacheTtlMillis)
+        }
         dao.insertScheduleItems(entities)
-        Log.d("REPOSITORY", "Successfully cached items for group: $group")
+        Log.d("REPOSITORY", "Successfully cached items")
     }
 
     suspend fun hasCachedSchedule(group: String): Boolean {
@@ -42,21 +51,23 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
     suspend fun cacheScheduleItemsWithSemester(
         group: String,
         items: List<ScheduleItem>,
-        semester: String = SemesterUtils.getCurrentSemester()
+        semester: String = SemesterUtils.getCurrentSemester(),
+        cacheTtlDays: Int = 7
     ) {
-        Log.d("REPOSITORY", "Caching ${items.size} items for group: $group, semester: $semester")
+        Log.d("REPOSITORY", "Caching ${items.size} items for group: $group, semester: $semester, TTL: $cacheTtlDays days")
 
         val currentTime = System.currentTimeMillis()
-        val expiresAt = currentTime + CACHE_TTL
+        val cacheTtlMillis = cacheTtlDays * 24 * 60 * 60 * 1000L  // пересчитываем из дней
+        val expiresAt = currentTime + cacheTtlMillis
 
         val entities = items.map { item ->
             item.toScheduleEntityWithSemester(group, semester, currentTime, expiresAt)
         }
 
         dao.saveScheduleWithMetadata(group, entities, semester)
-
-        Log.d("REPOSITORY", "Successfully cached items with semester metadata")
+        Log.d("REPOSITORY", "Successfully cached items with TTL $cacheTtlDays days")
     }
+
 
     /**
      * Получить расписание группы с учетом семестра
@@ -115,15 +126,19 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         dao.deleteExpiredSchedule(currentTime)
     }
 
-    /**
-     * Проверить, истек ли срок кэша для группы
-     */
-    suspend fun isCacheExpired(group: String): Boolean {
-        val items = dao.getScheduleByGroup(group)
-        if (items.isEmpty()) return true
-
+    suspend fun isCacheExpired(group: String, cacheTtlDays: Int): Boolean {
         val currentTime = System.currentTimeMillis()
-        return items.any { it.expiresAt < currentTime }
+        val ttlMillis = cacheTtlDays * 24 * 60 * 60 * 1000L
+
+        // Проверяем просроченные по expiresAt
+        val expiredCount = dao.getExpiredItemsCount(group, currentTime)
+        if (expiredCount > 0) return true
+
+        // Проверяем по cachedAt для старых записей (без expiresAt)
+        val cachedAtThreshold = currentTime - ttlMillis
+        val oldItemsCount = dao.getItemsOlderThan(group, cachedAtThreshold)
+
+        return oldItemsCount > 0
     }
 
     /**
@@ -136,10 +151,6 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         items.forEach { /* удаление через отдельный метод */ }
     }
 
-
-    companion object {
-        private const val CACHE_TTL = 7 * 24 * 60 * 60 * 1000L // 7 дней в миллисекундах
-    }
 
     /**
      * Удалить кэш для конкретной группы и семестра
@@ -196,8 +207,11 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         )
     }
 
-    private fun ScheduleItem.toScheduleEntity(group: String): ScheduleEntity {
-        val currentTime = System.currentTimeMillis()
+    private fun ScheduleItem.toScheduleEntity(
+        group: String,
+        currentTime: Long = System.currentTimeMillis(),
+        cacheTtlMillis: Long = 7 * 24 * 60 * 60 * 1000L
+    ): ScheduleEntity {
         return ScheduleEntity(
             id = "${group}_${startTime}_${discipline}_$currentTime",
             group = group,
@@ -217,7 +231,7 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
             lastUpdated = currentTime,
             semester = "LEGACY",
             cachedAt = currentTime,
-            expiresAt = currentTime + CACHE_TTL
+            expiresAt = currentTime + cacheTtlMillis  // ← теперь из параметра
         )
     }
 
