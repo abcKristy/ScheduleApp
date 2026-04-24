@@ -60,10 +60,13 @@ class SemesterAvailabilityWorker(
         val attempts = PreferencesManager.incrementFailedAttempts(applicationContext)
         PreferencesManager.setApiHasNewSemester(applicationContext, false)
 
-        Log.d(TAG, "Количество неудачных попыток: $attempts")
+        if (attempts >= 3) {
+            // После 3 попыток прекращаем — данных действительно нет
+            Log.d(TAG, "Достигнут лимит попыток ($attempts), прекращаем проверку")
+            return Result.success()  // ← НЕ retry
+        }
 
         scheduleNextRetry()
-
         return Result.retry()
     }
 

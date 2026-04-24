@@ -147,16 +147,9 @@ suspend fun getScheduleItemsWithCache(
         val scheduleItems = parseScheduleFromResponse(response)
 
         if (repository != null && scheduleItems.isNotEmpty()) {
-            repository.cacheScheduleItemsWithSemester(
-                group,
-                scheduleItems,
-                currentSemester,
-                cacheTtlDays  // ← передаём TTL при сохранении
-            )
-            NetworkMonitor.removePendingGroup(group)
-            PreferencesManager.resetFailedAttempts(context)
-            PreferencesManager.setApiHasNewSemester(context, true)
-            Log.d("SCHEDULE_CACHE", "Saved ${scheduleItems.size} items with semester $currentSemester")
+
+            repository.deleteCacheForGroupAndSemester(group, currentSemester)
+            Log.d("SCHEDULE_CACHE", "API returned empty, deleted stale cache for: $group")
         }
 
         onSuccess(scheduleItems)

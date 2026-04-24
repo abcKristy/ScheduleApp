@@ -1,5 +1,6 @@
 package com.example.scheduleapp.screens.master
 
+import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -138,13 +139,12 @@ fun ScreenList(navController: NavController? = null) {
                 }
             }
             AppState.CacheStatus.OUTDATED_SEMESTER -> {
-                loadFromCache(context,currentGroup)
+                // НЕ загружаем старый кэш — сразу пробуем обновить
+                AppState.setScheduleItems(emptyList())
 
-                // Проверяем, не было ли уже много неудачных попыток
                 val failedAttempts = PreferencesManager.getFailedAttemptsCount(context)
 
-                if (failedAttempts == 0) {
-                    // Первая попытка — пробуем загрузить
+                if (failedAttempts < 3) {  // Даём 3 попытки на загрузку
                     isBackgroundLoading = true
                     forceRefresh(context, currentGroup) { loading ->
                         isBackgroundLoading = loading
@@ -154,9 +154,9 @@ fun ScreenList(navController: NavController? = null) {
                         }
                     }
                 } else {
-                    // Уже были неудачные попытки — запускаем фоновую проверку с увеличенной частотой
-                    AppState.scheduleSemesterAvailabilityCheck(currentGroup)
-                    AppState.setLoading(false)
+                    // После 3 неудачных попыток показываем старые данные с пометкой
+                    loadFromCache(context, currentGroup)
+                    AppState.setErrorMessage("Новое расписание пока недоступно")
                 }
             }
             AppState.CacheStatus.NO_CACHE -> {
@@ -511,14 +511,25 @@ private suspend fun loadFromCache(context: android.content.Context, group: Strin
         AppState.setLoading(false)
         AppState.setErrorMessage(null)
     } else {
-        val oldItems = repo.getSchedule(group)
-        if (oldItems.isNotEmpty()) {
-            AppState.setScheduleItems(oldItems)
+        // Проверяем, не сменился ли семестр
+        val cachedSemester = repo.getCachedSemester(group)
+        if (cachedSemester != null && cachedSemester != currentSemester) {
+            // Семестр изменился — НЕ показываем старые данные
+            AppState.setScheduleItems(emptyList())
             AppState.setLoading(false)
-            AppState.setErrorMessage("Показаны данные за прошлый семестр")
+            AppState.setErrorMessage("Расписание на новый семестр загружается...")
         } else {
-            loadFromServer(context, group) { loading ->
-                AppState.setLoading(loading)
+            // Семестр не изменился, показываем что есть
+            val oldItems = repo.getSchedule(group)
+            if (oldItems.isNotEmpty()) {
+                AppState.setScheduleItems(oldItems)
+                AppState.setLoading(false)
+                AppState.setErrorMessage("Показаны сохраненные данные")
+            } else {
+                // Совсем нет данных — загружаем с сервера
+                loadFromServer(context, group) { loading ->
+                    AppState.setLoading(loading)
+                }
             }
         }
     }
