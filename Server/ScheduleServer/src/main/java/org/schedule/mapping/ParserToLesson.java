@@ -209,19 +209,18 @@ public class ParserToLesson {
         }
 
         String description = properties.getOrDefault("DESCRIPTION", "");
-        if (description.contains("Преподаватель:")) {
-            Pattern teacherPattern = Pattern.compile("Преподавател[ья]:\\s*(.+?)(?:\\s+Групп[аы]:|$)");
+
+        // ИСПРАВЛЕНО: [ьяи] вместо [ья]
+        if (description.contains("Преподавател")) {
+            Pattern teacherPattern = Pattern.compile("Преподавател[ьяи]:\\s*(.+?)(?:\\s+Групп[аы]:|$)");
             Matcher matcher = teacherPattern.matcher(description);
             if (matcher.find()) {
                 String rawTeacher = matcher.group(1);
-                log.debug("Преподаватель из DESCRIPTION до очистки: '{}'", rawTeacher);
-
                 String cleaned = rawTeacher
-                        .replace("\\n", "")
-                        .replace("\\r", "");
-
+                        .replace("\\n", " ")
+                        .replace("\\r", " ");
                 cleaned = cleanText(cleaned);
-                log.debug("Преподаватель из DESCRIPTION после очистки: '{}'", cleaned);
+                log.debug("Преподаватель(и) из DESCRIPTION после очистки: '{}'", cleaned);
                 return cleaned;
             }
         }

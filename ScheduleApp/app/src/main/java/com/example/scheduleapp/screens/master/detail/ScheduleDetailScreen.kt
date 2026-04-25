@@ -224,7 +224,10 @@ fun ScheduleDetailScreen(
             ) {
                 if (scheduleItem.rooms.isNotEmpty()) {
                     for (room in scheduleItem.rooms) {
-                        OutlineButton(text = room, onClick = { })
+                        OutlineButton(text = room, onClick = {
+                            AppState.setCurrentGroupAndNavigate(room)
+                            navController?.popBackStack()
+                        })
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                     Spacer(modifier = Modifier.height(12.dp))
