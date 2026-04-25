@@ -157,30 +157,28 @@ public class ScheduleMapper {
                     .map(GroupEntity::getGroupName)
                     .collect(Collectors.toList());
 
-            // Разбиваем строки на списки
-            List<String> teacherList = new ArrayList<>();
-            if (lesson.getTeacher() != null && !lesson.getTeacher().trim().isEmpty()) {
-                teacherList = Arrays.stream(lesson.getTeacher().split("[,\n]"))
-                        .map(String::trim)
-                        .filter(s -> !s.isEmpty())
-                        .collect(Collectors.toList());
-            }
+            // ✅ Берём из списков сущностей, а не из строк!
+            List<String> teacherList = lesson.getTeachers() != null ?
+                    lesson.getTeachers().stream()
+                            .map(TeacherEntity::getFullName)
+                            .filter(name -> name != null && !name.trim().isEmpty())
+                            .collect(Collectors.toList()) :
+                    List.of();
 
-            List<String> roomList = new ArrayList<>();
-            if (lesson.getRoom() != null && !lesson.getRoom().trim().isEmpty()) {
-                roomList = Arrays.stream(lesson.getRoom().split("[,\n]"))
-                        .map(String::trim)
-                        .filter(s -> !s.isEmpty())
-                        .collect(Collectors.toList());
-            }
+            List<String> roomList = lesson.getRooms() != null ?
+                    lesson.getRooms().stream()
+                            .map(RoomEntity::getRoomName)
+                            .filter(name -> name != null && !name.trim().isEmpty())
+                            .collect(Collectors.toList()) :
+                    List.of();
 
             return new ScheduleResponseDto(
                     lesson.getDiscipline(),
                     lesson.getLessonType(),
                     lesson.getStartTime(),
                     lesson.getEndTime(),
-                    roomList,       // ← список аудиторий
-                    teacherList,    // ← список преподавателей
+                    roomList,
+                    teacherList,
                     groupNames,
                     lesson.getGroupsSummary(),
                     lesson.getDescription(),

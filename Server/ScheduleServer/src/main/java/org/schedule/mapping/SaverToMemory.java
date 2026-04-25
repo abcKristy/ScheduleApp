@@ -21,6 +21,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Component
@@ -334,11 +336,25 @@ public class SaverToMemory {
     }
 
     private void processTeachersBatch(List<LessonEntity> lessons) {
+        // Шаблон для ФИО: "Фамилия Имя Отчество" (все с большой буквы)
+        java.util.regex.Pattern teacherNamePattern = java.util.regex.Pattern.compile(
+                "[А-ЯЁ][а-яё]+\\s+[А-ЯЁ][а-яё]+\\s+[А-ЯЁ][а-яё]+"
+        );
+
         Set<String> allTeacherNames = lessons.stream()
-                .filter(lesson -> lesson.getTeacher() != null)
-                .flatMap(lesson -> Arrays.stream(lesson.getTeacher().split("[,\n]")))
-                .map(String::trim)
-                .filter(name -> !name.isEmpty())
+                .filter(lesson -> lesson.getTeacher() != null && !lesson.getTeacher().trim().isEmpty())
+                .flatMap(lesson -> {
+                    java.util.regex.Matcher matcher = teacherNamePattern.matcher(lesson.getTeacher());
+                    List<String> teachers = new ArrayList<>();
+                    while (matcher.find()) {
+                        teachers.add(matcher.group().trim());
+                    }
+                    if (teachers.isEmpty()) {
+                        // fallback: разбиваем по запятой или переносу строки
+                        teachers.addAll(Arrays.asList(lesson.getTeacher().split("[,\n]")));
+                    }
+                    return teachers.stream().map(String::trim).filter(s -> !s.isEmpty());
+                })
                 .collect(Collectors.toSet());
 
         if (allTeacherNames.isEmpty()) {
@@ -369,24 +385,43 @@ public class SaverToMemory {
         }
 
         for (LessonEntity lesson : lessons) {
-            if (lesson.getTeacher() != null) {
-                List<TeacherEntity> processedTeachers = Arrays.stream(lesson.getTeacher().split("[,\n]"))
-                        .map(String::trim)
-                        .filter(name -> !name.isEmpty())
-                        .map(existingTeachersMap::get)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-                lesson.setTeachers(processedTeachers);
+            if (lesson.getTeacher() != null && !lesson.getTeacher().trim().isEmpty()) {
+                java.util.regex.Matcher matcher = teacherNamePattern.matcher(lesson.getTeacher());
+                List<TeacherEntity> processedTeachers = new ArrayList<>();
+                while (matcher.find()) {
+                    String teacherName = matcher.group().trim();
+                    TeacherEntity teacher = existingTeachersMap.get(teacherName);
+                    if (teacher != null) {
+                        processedTeachers.add(teacher);
+                    }
+                }
+                if (!processedTeachers.isEmpty()) {
+                    lesson.setTeachers(processedTeachers);
+                }
             }
         }
     }
 
     private void processRoomsBatch(List<LessonEntity> lessons) {
+        // Шаблон для аудитории: "БУКВА-ЦИФРЫ (КОРПУС)" или "БУКВА-ЦИФРЫ-БУКВА (КОРПУС)"
+        java.util.regex.Pattern roomPattern = java.util.regex.Pattern.compile(
+                "[А-ЯA-Z]-\\d+[а-яa-z]?\\s*\\([^)]+\\)"
+        );
+
         Set<String> allRoomNames = lessons.stream()
-                .filter(lesson -> lesson.getRoom() != null)
-                .flatMap(lesson -> Arrays.stream(lesson.getRoom().split(",")))
-                .map(String::trim)
-                .filter(name -> !name.isEmpty())
+                .filter(lesson -> lesson.getRoom() != null && !lesson.getRoom().trim().isEmpty())
+                .flatMap(lesson -> {
+                    java.util.regex.Matcher matcher = roomPattern.matcher(lesson.getRoom());
+                    List<String> rooms = new ArrayList<>();
+                    while (matcher.find()) {
+                        rooms.add(matcher.group().trim());
+                    }
+                    if (rooms.isEmpty()) {
+                        // fallback: разбиваем по запятой
+                        rooms.addAll(Arrays.asList(lesson.getRoom().split(",")));
+                    }
+                    return rooms.stream().map(String::trim).filter(s -> !s.isEmpty());
+                })
                 .collect(Collectors.toSet());
 
         if (allRoomNames.isEmpty()) {
@@ -417,14 +452,19 @@ public class SaverToMemory {
         }
 
         for (LessonEntity lesson : lessons) {
-            if (lesson.getRoom() != null) {
-                List<RoomEntity> processedRooms = Arrays.stream(lesson.getRoom().split(","))
-                        .map(String::trim)
-                        .filter(name -> !name.isEmpty())
-                        .map(existingRoomsMap::get)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-                lesson.setRooms(processedRooms);
+            if (lesson.getRoom() != null && !lesson.getRoom().trim().isEmpty()) {
+                java.util.regex.Matcher matcher = roomPattern.matcher(lesson.getRoom());
+                List<RoomEntity> processedRooms = new ArrayList<>();
+                while (matcher.find()) {
+                    String roomName = matcher.group().trim();
+                    RoomEntity room = existingRoomsMap.get(roomName);
+                    if (room != null) {
+                        processedRooms.add(room);
+                    }
+                }
+                if (!processedRooms.isEmpty()) {
+                    lesson.setRooms(processedRooms);
+                }
             }
         }
     }
