@@ -34,12 +34,6 @@ abstract class ScheduleDatabase : RoomDatabase() {
                 instance
             }
         }
-
-        /**
-         * Миграция с версии 1 на версию 2
-         * Добавляет поля semester, cachedAt, expiresAt в schedule_items
-         * Создает таблицу cached_groups
-         */
         private val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
             override fun migrate(database: androidx.sqlite.db.SupportSQLiteDatabase) {
                 database.execSQL("""
@@ -58,7 +52,7 @@ abstract class ScheduleDatabase : RoomDatabase() {
                 """)
 
                 val currentTime = System.currentTimeMillis()
-                val defaultExpiresAt = currentTime + 7 * 24 * 60 * 60 * 1000  // +7 дней
+                val defaultExpiresAt = currentTime + 7 * 24 * 60 * 60 * 1000
 
                 database.execSQL("""
                     UPDATE schedule_items 

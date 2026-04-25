@@ -41,17 +41,14 @@ fun shouldShowOnDate(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean
     val itemDayOfWeek = scheduleItem.startTime.dayOfWeek
     val targetDayOfWeek = targetDate.dayOfWeek
 
-    // Проверяем, не является ли дата исключением
     if (isDateException(scheduleItem, targetDate)) {
         return false
     }
 
-    // Если дата совпадает точно с оригинальной датой занятия
     if (itemDate == targetDate) {
-        return true // Оригинальное занятие всегда показывается (если не исключение)
+        return true
     }
 
-    // Проверяем, совпадает ли день недели
     if (itemDayOfWeek != targetDayOfWeek) {
         return false
     }
@@ -59,10 +56,8 @@ fun shouldShowOnDate(scheduleItem: ScheduleItem, targetDate: LocalDate): Boolean
     val recurrence = scheduleItem.recurrence
 
     return if (recurrence != null) {
-        // Для занятий с правилом повторения
         isDateInRecurrence(scheduleItem, targetDate)
     } else {
-        // Для занятий без правила повторения - только оригинальная дата
         false
     }
 }

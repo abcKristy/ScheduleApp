@@ -24,7 +24,7 @@ fun AnimatedShinyTop(
     shiny: Color,
     initialX: Float,
     initialY: Float,
-    shouldMove: Boolean = true // ДОБАВЛЕНО: булевая константа для управления движением
+    shouldMove: Boolean = true
 ) {
     var targetX by remember { mutableStateOf(initialX) }
     var targetY by remember { mutableStateOf(initialY) }
@@ -40,7 +40,6 @@ fun AnimatedShinyTop(
         label = "shiny_top_y_animation"
     )
 
-    // Функция для генерации следующей позиции для верхнего круга
     fun getNextTopPosition(currentX: Float, currentY: Float, minDistance: Int = 50, maxDistance: Int = 150): Pair<Float, Float> {
         val distance = Random.nextInt(minDistance, maxDistance + 1).toFloat()
         val angle = Random.nextDouble(0.0, 2 * PI).toFloat()
@@ -48,14 +47,12 @@ fun AnimatedShinyTop(
         val newX = currentX + cos(angle) * distance
         val newY = currentY + sin(angle) * distance
 
-        // X: по всей ширине экрана (-400 до 400), Y: только верхняя половина (-400 до 0)
         return Pair(
-            newX.coerceIn(-200f, 500f),   // Вся ширина экрана
-            newY.coerceIn(-400f, 0f)      // Только верхняя половина (отрицательные значения)
+            newX.coerceIn(-200f, 500f),
+            newY.coerceIn(-400f, 0f)
         )
     }
 
-    // ИЗМЕНЕНО: Запускаем анимацию только если shouldMove = true
     LaunchedEffect(shouldMove) {
         if (shouldMove) {
             delay(1000)
@@ -77,7 +74,7 @@ fun AnimatedShinyBottom(
     shiny: Color,
     initialX: Float,
     initialY: Float,
-    shouldMove: Boolean = true // ДОБАВЛЕНО: булевая константа для управления движением
+    shouldMove: Boolean = true
 ) {
     var targetX by remember { mutableStateOf(initialX) }
     var targetY by remember { mutableStateOf(initialY) }
@@ -93,7 +90,6 @@ fun AnimatedShinyBottom(
         label = "shiny_bottom_y_animation"
     )
 
-    // Функция для генерации следующей позиции для нижнего круга
     fun getNextBottomPosition(currentX: Float, currentY: Float, minDistance: Int = 50, maxDistance: Int = 150): Pair<Float, Float> {
         val distance = Random.nextInt(minDistance, maxDistance + 1).toFloat()
         val angle = Random.nextDouble(0.0, 2 * PI).toFloat()
@@ -101,14 +97,12 @@ fun AnimatedShinyBottom(
         val newX = currentX + cos(angle) * distance
         val newY = currentY + sin(angle) * distance
 
-        // X: по всей ширине экрана (-400 до 400), Y: только нижняя половина (0 до 600)
         return Pair(
-            newX.coerceIn(-300f, 200f),   // Вся ширина экрана
-            newY.coerceIn(0f, 400f)       // Только нижняя половина (положительные значения)
+            newX.coerceIn(-300f, 200f),
+            newY.coerceIn(0f, 400f)
         )
     }
 
-    // ИЗМЕНЕНО: Запускаем анимацию только если shouldMove = true
     LaunchedEffect(shouldMove) {
         if (shouldMove) {
             delay(1500)

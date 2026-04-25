@@ -13,7 +13,6 @@ data class DynamicScheduleDay(
 
 object DynamicScheduleDayFactory {
 
-    // Временные интервалы пар
     private val lessonTimes = listOf(
         LessonTimeSlot(1, LocalTime.of(9, 0), LocalTime.of(10, 30)),
         LessonTimeSlot(2, LocalTime.of(10, 40), LocalTime.of(12, 10)),
@@ -24,7 +23,6 @@ object DynamicScheduleDayFactory {
         LessonTimeSlot(7, LocalTime.of(19, 40), LocalTime.of(21, 10))
     )
 
-    // Временные интервалы перемен
     private val breakTimes = listOf(
         BreakTimeSlot(1, LocalTime.of(10, 30), LocalTime.of(10, 40), 10, false),
         BreakTimeSlot(2, LocalTime.of(12, 10), LocalTime.of(12, 40), 30, true),
@@ -47,7 +45,6 @@ object DynamicScheduleDayFactory {
     }
 
     private fun createWithEmptyLessons(date: LocalDate, scheduleItems: List<ScheduleItem>): DynamicScheduleDay {
-        // Используем существующую логику для показа всех пар и перемен
         val scheduleDay = ScheduleDayFactory.createScheduleDay(date, scheduleItems)
         return DynamicScheduleDay(date, scheduleDay.allItems)
     }
@@ -62,19 +59,15 @@ object DynamicScheduleDayFactory {
             return DynamicScheduleDay(date, emptyList())
         }
 
-        // Добавляем первую пару
         items.add(DayItem.Lesson(sortedItems.first()))
 
-        // Обрабатываем оставшиеся пары и добавляем перемены между ними
         for (i in 1 until sortedItems.size) {
             val prevLesson = sortedItems[i - 1]
             val currentLesson = sortedItems[i]
 
-            // Находим подходящую перемену между парами
             val breakItem = findBreakBetweenLessons(prevLesson.endTime.toLocalTime(), currentLesson.startTime.toLocalTime())
             breakItem?.let { items.add(DayItem.Break(it)) }
 
-            // Добавляем текущую пару
             items.add(DayItem.Lesson(currentLesson))
         }
 

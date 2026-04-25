@@ -69,8 +69,8 @@ fun parseScheduleItem(response: ScheduleItemResponse): ScheduleItem {
         lessonType = response.lessonType,
         startTime = LocalDateTime.parse(response.startTime, dateTimeFormatter),
         endTime = LocalDateTime.parse(response.endTime, dateTimeFormatter),
-        rooms = response.rooms ?: emptyList(),      // ← List<String>
-        teachers = response.teachers ?: emptyList(), // ← List<String>
+        rooms = response.rooms ?: emptyList(),
+        teachers = response.teachers ?: emptyList(),
         groups = response.groups,
         groupsSummary = response.groupsSummary,
         description = response.description?.takeIf { it != "null" && it.isNotEmpty() },
@@ -116,7 +116,6 @@ suspend fun getScheduleItemsWithCache(
             }
         }
 
-        // Проверяем наличие сети
         if (!NetworkMonitor.isConnected.value) {
             Log.w("SCHEDULE_CACHE", "Нет подключения к сети")
 
@@ -139,7 +138,6 @@ suspend fun getScheduleItemsWithCache(
             return
         }
 
-        // Загружаем с сервера
         Log.d("SCHEDULE_CACHE", "Loading from server for group: $group")
         val apiService = createApiService()
         val response = apiService.getSchedule(group)

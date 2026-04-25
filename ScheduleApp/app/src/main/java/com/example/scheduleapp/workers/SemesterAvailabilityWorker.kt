@@ -61,9 +61,8 @@ class SemesterAvailabilityWorker(
         PreferencesManager.setApiHasNewSemester(applicationContext, false)
 
         if (attempts >= 3) {
-            // После 3 попыток прекращаем — данных действительно нет
             Log.d(TAG, "Достигнут лимит попыток ($attempts), прекращаем проверку")
-            return Result.success()  // ← НЕ retry
+            return Result.success()
         }
 
         scheduleNextRetry()

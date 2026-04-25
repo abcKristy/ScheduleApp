@@ -5,7 +5,6 @@ import java.time.LocalTime
 
 object ScheduleDayFactory {
 
-    // Временные интервалы пар (обновленные согласно комментариям)
     private val lessonTimes = listOf(
         LessonTimeSlot(1, LocalTime.of(9, 0), LocalTime.of(10, 30)),    // 9:00-10:30
         LessonTimeSlot(2, LocalTime.of(10, 40), LocalTime.of(12, 10)),  // 10:40-12:10
@@ -16,10 +15,9 @@ object ScheduleDayFactory {
         LessonTimeSlot(7, LocalTime.of(19, 40), LocalTime.of(21, 10))   // 19:40-21:10
     )
 
-    // Временные интервалы перемен (обновленные согласно комментариям)
     private val breakTimes = listOf(
         BreakTimeSlot(1, LocalTime.of(10, 30), LocalTime.of(10, 40), 10, false),  // 10:30-10:40 (10 мин)
-        BreakTimeSlot(2, LocalTime.of(12, 10), LocalTime.of(12, 40), 30, true),   // 12:10-12:40 (30 мин) - большая перемена
+        BreakTimeSlot(2, LocalTime.of(12, 10), LocalTime.of(12, 40), 30, true),   // 12:10-12:40 (30 мин)
         BreakTimeSlot(3, LocalTime.of(14, 10), LocalTime.of(14, 20), 10, false),  // 14:10-14:20 (10 мин)
         BreakTimeSlot(4, LocalTime.of(15, 50), LocalTime.of(16, 20), 30, true),   // 15:50-16:20 (30 мин)
         BreakTimeSlot(5, LocalTime.of(17, 50), LocalTime.of(18, 0), 10, false),   // 17:50-18:00 (10 мин)

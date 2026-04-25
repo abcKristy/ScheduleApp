@@ -224,10 +224,10 @@ object PreferencesManager {
     fun getRetryIntervalHours(context: Context): Int {
         val attempts = getFailedAttemptsCount(context)
         return when {
-            attempts == 0 -> 168 // 7 дней
-            attempts == 1 -> 72  // 3 дня
-            attempts == 2 -> 24  // 1 день
-            attempts >= 3 -> 6   // 6 часов
+            attempts == 0 -> 168
+            attempts == 1 -> 72
+            attempts == 2 -> 24
+            attempts >= 3 -> 6
             else -> 168
         }
     }

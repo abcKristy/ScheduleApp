@@ -26,18 +26,17 @@ class PeriodicCacheUpdateWorker(
 
             repository.cleanupExpiredCache()
 
-            val cacheTtlDays = PreferencesManager.getCacheTtlDays(applicationContext)  // ← из настроек
+            val cacheTtlDays = PreferencesManager.getCacheTtlDays(applicationContext)
             val cacheTtlMillis = cacheTtlDays * 24 * 60 * 60 * 1000L
 
             val cachedGroups = repository.getAllCachedGroupsInfo()
             val currentTime = System.currentTimeMillis()
 
             val expiredGroups = cachedGroups.filter { groupInfo ->
-                (currentTime - groupInfo.cachedAt) > cacheTtlMillis  // ← используем настройку
+                (currentTime - groupInfo.cachedAt) > cacheTtlMillis
             }
 
             if (expiredGroups.isNotEmpty()) {
-                // Запускаем обновление устаревших групп
                 val workRequest = OneTimeWorkRequestBuilder<SemesterCheckWorker>()
                     .addTag(SemesterCheckWorker.WORK_NAME)
                     .build()

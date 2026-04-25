@@ -181,7 +181,6 @@ fun CacheSettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Информационная карточка
             InfoCard(
                 currentSemester = semesterDisplayName,
                 cachedGroups = cachedGroupsCount,
@@ -189,7 +188,6 @@ fun CacheSettingsScreen(
                 cacheSize = totalCacheSize
             )
 
-            // Настройки автообновления
             SettingsCard(
                 autoUpdateEnabled = autoUpdateEnabled,
                 onAutoUpdateChanged = { enabled ->
@@ -205,7 +203,6 @@ fun CacheSettingsScreen(
                 }
             )
 
-            // Кнопки действий
             ActionsCard(
                 isLoading = isLoading,
                 onClearAllCache = {
@@ -216,7 +213,6 @@ fun CacheSettingsScreen(
                 }
             )
 
-            // Информация о воркерах
             WorkersInfoCard(
                 onCancelWorkers = {
                     scope.launch {
@@ -228,7 +224,6 @@ fun CacheSettingsScreen(
         }
     }
 
-    // Диалог подтверждения очистки
     if (showClearAllDialog) {
         AlertDialog(
             onDismissRequest = { showClearAllDialog = false },
@@ -285,7 +280,6 @@ fun CacheSettingsScreen(
         )
     }
 
-    // Диалог подтверждения обновления всех групп
     if (showRefreshAllDialog) {
         AlertDialog(
             onDismissRequest = { showRefreshAllDialog = false },
@@ -437,7 +431,6 @@ private fun SettingsCard(
 
             HorizontalDivider(color = white.copy(alpha = 0.2f))
 
-            // Автообновление
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -464,7 +457,6 @@ private fun SettingsCard(
                 )
             }
 
-            // TTL кэша
             ExposedDropdownMenuBox(
                 expanded = ttlExpanded,
                 onExpandedChange = { onTtlExpandedChanged(it) }

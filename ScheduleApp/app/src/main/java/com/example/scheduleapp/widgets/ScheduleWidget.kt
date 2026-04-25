@@ -47,9 +47,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.ceil
 
-/**
- * Виджет расписания с виртуальным скроллом через клики
- */
 @SuppressLint("RestrictedApi")
 class ScheduleWidget : GlanceAppWidget() {
 
@@ -101,7 +98,6 @@ class ScheduleWidget : GlanceAppWidget() {
         Column(
             modifier = GlanceModifier.fillMaxSize()
         ) {
-            // ЗАГОЛОВОК - всегда видимый
             WidgetHeader(
                 startDate = data.startDate,
                 endDate = data.endDate,
@@ -110,7 +106,6 @@ class ScheduleWidget : GlanceAppWidget() {
 
             Spacer(modifier = GlanceModifier.height(8.dp))
 
-            // ОСНОВНОЙ КОНТЕНТ с пагинацией
             val sortedDays = data.scheduleByDate.entries.sortedBy { it.key }
             val totalDays = sortedDays.size
             val daysToShow = getDaysToShow(sortedDays, scrollOffset, totalDays)
@@ -125,7 +120,6 @@ class ScheduleWidget : GlanceAppWidget() {
 
             Spacer(modifier = GlanceModifier.height(4.dp))
 
-            // КНОПКИ ПРОКРУТКИ
             ScrollControls(
                 currentOffset = scrollOffset,
                 totalDays = totalDays,
@@ -145,7 +139,6 @@ class ScheduleWidget : GlanceAppWidget() {
         Column(
             modifier = GlanceModifier.fillMaxWidth()
         ) {
-            // Показываем индикатор если прокрутили вниз
             if (currentOffset > 0) {
                 Text(
                     text = "↓ Показаны дни ${currentOffset + 1}-${currentOffset + daysToShow.size} из $totalDays",
@@ -164,7 +157,6 @@ class ScheduleWidget : GlanceAppWidget() {
                     Spacer(modifier = GlanceModifier.height(6.dp))
                 }
             } else {
-                // Отладочная информация
                 Text(
                     text = "Нет данных для отображения (offset: $currentOffset)",
                     style = TextStyle(
@@ -189,7 +181,6 @@ class ScheduleWidget : GlanceAppWidget() {
             modifier = modifier,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Кнопка "Вверх" - показываем только когда можно скроллить вверх
             Text(
                 text = if (canScrollUp) "↑ Раньше" else " ",
                 style = TextStyle(
@@ -203,7 +194,6 @@ class ScheduleWidget : GlanceAppWidget() {
                             this.then(GlanceModifier.clickable {
                                 android.util.Log.d("ScrollControls", "Up clicked")
                                 WidgetScrollManager.scrollUp(context)
-                                // Запускаем в coroutine scope
                                 widgetScope.launch {
                                     ScheduleWidget().updateAll(context)
                                 }
@@ -214,7 +204,6 @@ class ScheduleWidget : GlanceAppWidget() {
                     }
             )
 
-            // Индикатор позиции - показываем текущую страницу
             val currentPage = if (totalDays > 0) (currentOffset / 3) + 1 else 0
             val totalPages = if (totalDays > 0) ceil(totalDays.toDouble() / 3).toInt() else 0
 
@@ -227,7 +216,6 @@ class ScheduleWidget : GlanceAppWidget() {
                 modifier = GlanceModifier.padding(horizontal = 8.dp)
             )
 
-            // Кнопка "Вниз" - показываем только когда можно скроллить вниз
             Text(
                 text = if (canScrollDown) "↓ Дальше" else " ",
                 style = TextStyle(
@@ -242,7 +230,6 @@ class ScheduleWidget : GlanceAppWidget() {
                                 android.util.Log.d("ScrollControls", "Down clicked")
                                 val widgetData = WidgetDataManager.getWidgetData(context)
                                 WidgetScrollManager.scrollDown(context, widgetData.scheduleByDate.size)
-                                // Запускаем в coroutine scope
                                 widgetScope.launch {
                                     ScheduleWidget().updateAll(context)
                                 }
@@ -261,7 +248,7 @@ class ScheduleWidget : GlanceAppWidget() {
         totalDays: Int
     ): List<Map.Entry<LocalDate, List<ScheduleItem>>> {
         val startIndex = scrollOffset
-        val endIndex = minOf(startIndex + 3, totalDays) // Показываем по 3 дня за раз
+        val endIndex = minOf(startIndex + 3, totalDays)
 
         android.util.Log.d("getDaysToShow", "Range: $startIndex to $endIndex (total: $totalDays, offset: $scrollOffset)")
 
@@ -280,10 +267,8 @@ class ScheduleWidget : GlanceAppWidget() {
         Column(
             modifier = GlanceModifier.fillMaxWidth()
         ) {
-            // Заголовок дня
             DayHeader(date = date)
 
-            // Занятия на этот день
             if (scheduleItems.isNotEmpty()) {
                 scheduleItems.sortedBy { it.startTime }.forEach { scheduleItem ->
                     ScheduleItemCompact(scheduleItem = scheduleItem)
@@ -341,9 +326,6 @@ class ScheduleWidget : GlanceAppWidget() {
         }
     }
 
-    /**
-     * Форматирует заголовок дня (Ср, 22 ноября)
-     */
     private fun formatDayHeader(date: LocalDate): String {
         val dayOfWeekFormatter = DateTimeFormatter.ofPattern("EEE", Locale("ru"))
         val dateFormatter = DateTimeFormatter.ofPattern("d MMM", Locale("ru"))
@@ -359,7 +341,6 @@ class ScheduleWidget : GlanceAppWidget() {
         Column(
             modifier = GlanceModifier.fillMaxWidth()
         ) {
-            // Диапазон дат
             Text(
                 text = formatDateRangeForWidget(startDate, endDate),
                 style = TextStyle(
@@ -370,7 +351,6 @@ class ScheduleWidget : GlanceAppWidget() {
 
             Spacer(modifier = GlanceModifier.height(2.dp))
 
-            // Группа
             Text(
                 text = currentGroup.ifEmpty { "Группа не выбрана" },
                 style = TextStyle(
@@ -381,9 +361,6 @@ class ScheduleWidget : GlanceAppWidget() {
         }
     }
 
-    /**
-     * Форматирует диапазон дат для заголовка
-     */
     private fun formatDateRangeForWidget(startDate: LocalDate, endDate: LocalDate): String {
         val dateFormatter = DateTimeFormatter.ofPattern("d MMM", Locale("ru"))
         val start = startDate.format(dateFormatter)
@@ -399,7 +376,6 @@ class ScheduleWidget : GlanceAppWidget() {
                 .padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Время занятия
             Text(
                 text = scheduleItem.formattedStartTime,
                 style = TextStyle(
@@ -411,11 +387,9 @@ class ScheduleWidget : GlanceAppWidget() {
 
             Spacer(modifier = GlanceModifier.width(6.dp))
 
-            // Компактная информация о занятии
             Column(
                 modifier = GlanceModifier.defaultWeight()
             ) {
-                // Дисциплина (сокращенная)
                 Text(
                     text = getVeryShortDisciplineName(scheduleItem.discipline),
                     style = TextStyle(
@@ -425,7 +399,6 @@ class ScheduleWidget : GlanceAppWidget() {
                     maxLines = 1
                 )
 
-                // Тип занятия и преподаватель
                 Text(
                     text = "${formatLessonType(scheduleItem.lessonType)} • ${getShortTeacherName(scheduleItem.teachers.joinToString(", "))}",
                     style = TextStyle(
@@ -436,7 +409,6 @@ class ScheduleWidget : GlanceAppWidget() {
                 )
             }
 
-            // Аудитория
             if (scheduleItem.rooms.isNotEmpty()) {
                 Spacer(modifier = GlanceModifier.width(6.dp))
                 Text(
@@ -450,9 +422,6 @@ class ScheduleWidget : GlanceAppWidget() {
         }
     }
 
-    /**
-     * Сокращает название дисциплины
-     */
     private fun getVeryShortDisciplineName(discipline: String): String {
         return when {
             discipline.length <= 18 -> discipline
@@ -468,9 +437,6 @@ class ScheduleWidget : GlanceAppWidget() {
         }
     }
 
-    /**
-     * Сокращает имя преподавателя
-     */
     private fun getShortTeacherName(teacher: String): String {
         return if (teacher.length <= 12) {
             teacher
@@ -486,16 +452,10 @@ class ScheduleWidget : GlanceAppWidget() {
         }
     }
 
-    /**
-     * Сокращает номер аудитории
-     */
     private fun getShortRoom(room: String): String {
         return room.split(" ").first()
     }
 
-    /**
-     * Форматирует тип занятия для отображения
-     */
     private fun formatLessonType(lessonType: String): String {
         return when (lessonType.uppercase()) {
             "LECTURE", "LK", "ЛЕКЦИЯ" -> "Лекция"
@@ -600,7 +560,6 @@ private fun rememberWidgetData(): WidgetData {
             WidgetDataManager.getWidgetData(context)
         }
 
-        // Получаем АКТУАЛЬНОЕ состояние скролла каждый раз
         val scrollOffset = WidgetScrollManager.getCurrentOffset(context)
 
         widgetData = data.copy(scrollOffset = scrollOffset)
@@ -608,12 +567,10 @@ private fun rememberWidgetData(): WidgetData {
         android.util.Log.d("ScheduleWidget",
             "Widget data loaded: ${data.scheduleByDate.size} days, scroll: $scrollOffset")
 
-        // Логируем детали по дням
         data.scheduleByDate.forEach { (date, items) ->
             android.util.Log.d("ScheduleWidget", "Day $date: ${items.size} items")
         }
 
-        // Логируем какие дни будем показывать
         val sortedDays = data.scheduleByDate.entries.sortedBy { it.key }
         val daysToShow = getDaysToShow(sortedDays, scrollOffset, data.scheduleByDate.size)
         android.util.Log.d("ScheduleWidget", "Will show ${daysToShow.size} days: ${daysToShow.map { it.key }}")
@@ -628,7 +585,7 @@ private fun getDaysToShow(
     totalDays: Int
 ): List<Map.Entry<LocalDate, List<ScheduleItem>>> {
     val startIndex = scrollOffset
-    val endIndex = minOf(startIndex + 3, totalDays) // Показываем по 3 дня за раз
+    val endIndex = minOf(startIndex + 3, totalDays)
 
     android.util.Log.d("getDaysToShow", "Range: $startIndex to $endIndex (total: $totalDays, offset: $scrollOffset)")
 

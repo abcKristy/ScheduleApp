@@ -45,9 +45,6 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         return groups
     }
 
-    /**
-     * Сохранение расписания с указанием семестра и временных меток
-     */
     suspend fun cacheScheduleItemsWithSemester(
         group: String,
         items: List<ScheduleItem>,
@@ -57,7 +54,7 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         Log.d("REPOSITORY", "Caching ${items.size} items for group: $group, semester: $semester, TTL: $cacheTtlDays days")
 
         val currentTime = System.currentTimeMillis()
-        val cacheTtlMillis = cacheTtlDays * 24 * 60 * 60 * 1000L  // пересчитываем из дней
+        val cacheTtlMillis = cacheTtlDays * 24 * 60 * 60 * 1000L
         val expiresAt = currentTime + cacheTtlMillis
 
         val entities = items.map { item ->
@@ -68,10 +65,6 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         Log.d("REPOSITORY", "Successfully cached items with TTL $cacheTtlDays days")
     }
 
-
-    /**
-     * Получить расписание группы с учетом семестра
-     */
     suspend fun getScheduleForSemester(group: String, semester: String): List<ScheduleItem> {
         Log.d("REPOSITORY", "Getting schedule for group: $group, semester: $semester")
         val cachedItems = dao.getScheduleByGroupAndSemester(group, semester)
@@ -79,47 +72,29 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         return cachedItems.map { it.toScheduleItem() }
     }
 
-    /**
-     * Проверить, есть ли кэш для группы с указанным семестром
-     */
     suspend fun hasCachedScheduleForSemester(group: String, semester: String): Boolean {
         val count = dao.hasCachedScheduleForSemester(group, semester)
         Log.d("REPOSITORY", "Checking cache for group: $group, semester: $semester - count: $count")
         return count > 0
     }
 
-    /**
-     * Получить семестр кэшированных данных для группы
-     */
     suspend fun getCachedSemester(group: String): String? {
         return dao.getCachedSemesterForGroup(group)
     }
 
-    /**
-     * Обновить время последнего доступа к группе
-     */
     suspend fun updateLastAccessed(group: String) {
         dao.updateLastAccessed(group, System.currentTimeMillis())
     }
 
-    /**
-     * Получить все кэшированные группы с информацией о семестре
-     */
     suspend fun getAllCachedGroupsInfo(): List<CachedGroupEntity> {
         return dao.getAllCachedGroups()
     }
 
-    /**
-     * Удалить устаревшие группы (с другим семестром)
-     */
     suspend fun cleanupOutdatedGroups(currentSemester: String) {
         Log.d("REPOSITORY", "Cleaning up groups with semester != $currentSemester")
         dao.deleteGroupsWithDifferentSemester(currentSemester)
     }
 
-    /**
-     * Удалить просроченный кэш
-     */
     suspend fun cleanupExpiredCache() {
         val currentTime = System.currentTimeMillis()
         Log.d("REPOSITORY", "Cleaning up expired cache")
@@ -130,20 +105,15 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         val currentTime = System.currentTimeMillis()
         val ttlMillis = cacheTtlDays * 24 * 60 * 60 * 1000L
 
-        // Проверяем просроченные по expiresAt
         val expiredCount = dao.getExpiredItemsCount(group, currentTime)
         if (expiredCount > 0) return true
 
-        // Проверяем по cachedAt для старых записей (без expiresAt)
         val cachedAtThreshold = currentTime - ttlMillis
         val oldItemsCount = dao.getItemsOlderThan(group, cachedAtThreshold)
 
         return oldItemsCount > 0
     }
 
-    /**
-     * Удаляет все LEGACY-записи (устаревший формат без семестра)
-     */
     suspend fun cleanupLegacyData() {
         Log.d("REPOSITORY", "Cleaning up LEGACY data")
         dao.deleteExpiredSchedule(System.currentTimeMillis())
@@ -151,20 +121,6 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
         dao.deleteLegacyGroups()
     }
 
-    /**
-     * Удалить кэш для конкретной группы
-     */
-    suspend fun deleteCacheForGroup(group: String) {
-        Log.d("REPOSITORY", "Deleting cache for group: $group")
-        dao.deleteCachedGroup(group)
-        val items = dao.getScheduleByGroup(group)
-        items.forEach { /* удаление через отдельный метод */ }
-    }
-
-
-    /**
-     * Удалить кэш для конкретной группы и семестра
-     */
     suspend fun deleteCacheForGroupAndSemester(group: String, semester: String) {
         Log.d("REPOSITORY", "Deleting cache for group: $group, semester: $semester")
         dao.deleteScheduleByGroupAndSemester(group, semester)
@@ -173,10 +129,6 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
     suspend fun getTotalCachedLessons(semester: String): Int {
         return dao.getTotalLessonsCount(semester)
     }
-
-    /**
-     * Полная очистка устаревших данных
-     */
     suspend fun performFullCleanup(currentSemester: String): Int {
         Log.d("REPOSITORY", "Performing full cleanup for semester: $currentSemester")
 

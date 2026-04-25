@@ -156,8 +156,8 @@ fun BreakItemListPreview() {
         Column {
             BreakItemList(
                 breakItem = BreakItem(
-                    startTime = LocalTime.now().minusMinutes(10), // началась 10 минут назад
-                    endTime = LocalTime.now().plusMinutes(20), // закончится через 20 минут
+                    startTime = LocalTime.now().minusMinutes(10),
+                    endTime = LocalTime.now().plusMinutes(20),
                     durationMinutes = 30,
                     isBig = true
                 )
@@ -165,7 +165,7 @@ fun BreakItemListPreview() {
 
             BreakItemList(
                 breakItem = BreakItem(
-                    startTime = LocalTime.now().plusMinutes(5), // начнется через 5 минут
+                    startTime = LocalTime.now().plusMinutes(5),
                     endTime = LocalTime.now().plusMinutes(15),
                     durationMinutes = 10,
                     isBig = false
@@ -174,8 +174,8 @@ fun BreakItemListPreview() {
 
             BreakItemList(
                 breakItem = BreakItem(
-                    startTime = LocalTime.now().minusMinutes(40), // началась 40 минут назад
-                    endTime = LocalTime.now().minusMinutes(10), // закончилась 10 минут назад
+                    startTime = LocalTime.now().minusMinutes(40),
+                    endTime = LocalTime.now().minusMinutes(10),
                     durationMinutes = 30,
                     isBig = true
                 )

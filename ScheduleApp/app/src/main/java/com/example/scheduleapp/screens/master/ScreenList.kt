@@ -1,6 +1,5 @@
 package com.example.scheduleapp.screens.master
 
-import android.content.Context
 import android.content.res.Configuration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -32,41 +31,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.scheduleapp.R
-import androidx.compose.ui.platform.LocalContext
-import com.example.scheduleapp.data.state.AppState
 import com.example.scheduleapp.data.entity.DayItem
 import com.example.scheduleapp.data.entity.DynamicScheduleDay
 import com.example.scheduleapp.data.entity.EmptySchedule
-import com.example.scheduleapp.data.entity.TestSchedule
 import com.example.scheduleapp.data.entity.ScheduleItem
+import com.example.scheduleapp.data.entity.TestSchedule
+import com.example.scheduleapp.data.state.AppState
 import com.example.scheduleapp.data.state.PreferencesManager
+import com.example.scheduleapp.logic.createScheduleDayForDate
+import com.example.scheduleapp.logic.getScheduleItemsWithCache
+import com.example.scheduleapp.navigation.NavigationRoute
 import com.example.scheduleapp.screens.master.items.BreakItemList
 import com.example.scheduleapp.screens.master.items.Calendar
 import com.example.scheduleapp.screens.master.items.EmptyScheduleItemCompact
 import com.example.scheduleapp.screens.master.items.LoadingIndicator
-import com.example.scheduleapp.screens.master.items.OutdatedSemesterBanner
+import com.example.scheduleapp.screens.master.items.NewSemesterPendingBanner
 import com.example.scheduleapp.screens.master.items.RefreshButton
 import com.example.scheduleapp.screens.master.items.ScheduleListItem
-import com.example.scheduleapp.screens.master.items.SemesterHeader
-import com.example.scheduleapp.screens.master.items.SemesterInfoChip
-import com.example.scheduleapp.logic.createScheduleDayForDate
-import com.example.scheduleapp.logic.getScheduleItemsWithCache
-import com.example.scheduleapp.navigation.NavigationRoute
-import com.example.scheduleapp.screens.master.items.NewSemesterPendingBanner
 import com.example.scheduleapp.screens.master.items.SemesterChangedBanner
+import com.example.scheduleapp.screens.master.items.SemesterHeader
 import com.example.scheduleapp.screens.master.items.SummerHolidayBanner
 import com.example.scheduleapp.ui.theme.ScheduleAppTheme
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.util.SemesterUtils
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
@@ -139,12 +135,11 @@ fun ScreenList(navController: NavController? = null) {
                 }
             }
             AppState.CacheStatus.OUTDATED_SEMESTER -> {
-                // НЕ загружаем старый кэш — сразу пробуем обновить
                 AppState.setScheduleItems(emptyList())
 
                 val failedAttempts = PreferencesManager.getFailedAttemptsCount(context)
 
-                if (failedAttempts < 3) {  // Даём 3 попытки на загрузку
+                if (failedAttempts < 3) {
                     isBackgroundLoading = true
                     forceRefresh(context, currentGroup) { loading ->
                         isBackgroundLoading = loading
@@ -154,7 +149,6 @@ fun ScreenList(navController: NavController? = null) {
                         }
                     }
                 } else {
-                    // После 3 неудачных попыток показываем старые данные с пометкой
                     loadFromCache(context, currentGroup)
                     AppState.setErrorMessage("Новое расписание пока недоступно")
                 }
@@ -514,22 +508,18 @@ private suspend fun loadFromCache(context: android.content.Context, group: Strin
         AppState.setLoading(false)
         AppState.setErrorMessage(null)
     } else {
-        // Проверяем, не сменился ли семестр
         val cachedSemester = repo.getCachedSemester(group)
         if (cachedSemester != null && cachedSemester != currentSemester) {
-            // Семестр изменился — НЕ показываем старые данные
             AppState.setScheduleItems(emptyList())
             AppState.setLoading(false)
             AppState.setErrorMessage("Расписание на новый семестр загружается...")
         } else {
-            // Семестр не изменился, показываем что есть
             val oldItems = repo.getSchedule(group)
             if (oldItems.isNotEmpty()) {
                 AppState.setScheduleItems(oldItems)
                 AppState.setLoading(false)
                 AppState.setErrorMessage("Показаны сохраненные данные")
             } else {
-                // Совсем нет данных — загружаем с сервера
                 loadFromServer(context, group) { loading ->
                     AppState.setLoading(loading)
                 }
@@ -654,7 +644,6 @@ private suspend fun forceRefreshIgnoreCache(
     onLoadingChanged(true)
     AppState.setErrorMessage("Принудительное обновление...")
 
-    // Очищаем кэш для этой группы перед загрузкой
     AppState.repository?.let { repo ->
         val currentSemester = SemesterUtils.getCurrentSemester()
         repo.deleteCacheForGroupAndSemester(group, currentSemester)

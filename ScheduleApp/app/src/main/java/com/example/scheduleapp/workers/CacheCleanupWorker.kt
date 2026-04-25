@@ -54,7 +54,6 @@ class CacheCleanupWorker(
 
             repository.cleanupOutdatedGroups(currentSemester)
 
-            // Сохраняем время последней очистки
             PreferencesManager.saveLastCacheCleanup(applicationContext, System.currentTimeMillis())
 
             val duration = System.currentTimeMillis() - startTime

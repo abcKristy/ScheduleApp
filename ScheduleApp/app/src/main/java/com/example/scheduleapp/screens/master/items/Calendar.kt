@@ -160,7 +160,6 @@ fun Calendar(
                         currentMonth = localCurrentMonth,
                         onDateSelected = { date ->
                             AppState.setSelectedDate(date)
-                            // Обновляем месяц при выборе даты
                             val newMonth = YearMonth.from(date)
                             localCurrentMonth = newMonth
                             onMonthChange(newMonth)
@@ -190,7 +189,6 @@ fun Calendar(
                         currentMonth = localCurrentMonth,
                         onDateSelected = { date ->
                             AppState.setSelectedDate(date)
-                            // Обновляем месяц при выборе даты
                             val newMonth = YearMonth.from(date)
                             localCurrentMonth = newMonth
                             onMonthChange(newMonth)
@@ -478,20 +476,15 @@ data class CalendarDay(
 fun getCalendarDays(currentMonth: YearMonth): List<CalendarDay> {
     val days = mutableListOf<CalendarDay>()
 
-    // Первый день текущего месяца
     val firstDayOfMonth = currentMonth.atDay(1)
-    // Последний день текущего месяца
     val lastDayOfMonth = currentMonth.atEndOfMonth()
 
-    // Определяем день недели первого дня месяца (1 = понедельник, 7 = воскресенье)
     val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value
     val lastDayOfWeek = lastDayOfMonth.dayOfWeek.value
 
-    // Добавляем дни предыдущего месяца
     val previousMonth = currentMonth.minusMonths(1)
     val daysInPreviousMonth = previousMonth.lengthOfMonth()
 
-    // Количество дней предыдущего месяца, которые нужно показать
     val previousMonthDaysToShow = (firstDayOfWeek - 1) % 7
     for (i in previousMonthDaysToShow downTo 1) {
         val day = daysInPreviousMonth - i + 1
@@ -499,13 +492,11 @@ fun getCalendarDays(currentMonth: YearMonth): List<CalendarDay> {
         days.add(CalendarDay(date = date, isOtherMonth = true))
     }
 
-    // Добавляем дни текущего месяца
     for (day in 1..currentMonth.lengthOfMonth()) {
         val date = currentMonth.atDay(day)
         days.add(CalendarDay(date = date, isOtherMonth = false))
     }
 
-    // Добавляем дни следующего месяца
     val nextMonth = currentMonth.plusMonths(1)
     val nextMonthDaysToShow = (7 - lastDayOfWeek) % 7
     for (day in 1..nextMonthDaysToShow) {
@@ -570,37 +561,27 @@ private fun getAcademicWeekNumber(selectedDate: LocalDate?): Int {
     if (selectedDate == null) return 1
 
     val currentYear = selectedDate.year
-    val autumnSemesterStart = LocalDate.of(currentYear, 9, 2) // 1 сентября
-    val springSemesterStart = LocalDate.of(currentYear, 2, 11) // 10 февраля
+    val autumnSemesterStart = LocalDate.of(currentYear, 9, 2)
+    val springSemesterStart = LocalDate.of(currentYear, 2, 11)
 
-    // Определяем, в каком семестре находится выбранная дата
     val semesterStart = when {
-        // Если дата между 1 сентября и концом года - осенний семестр
         selectedDate.monthValue >= 9 -> autumnSemesterStart
-        // Если дата между 10 февраля и 31 августа - весенний семестр
         selectedDate.isAfter(springSemesterStart) || selectedDate.isEqual(springSemesterStart) -> springSemesterStart
-        // Если дата до 10 февраля - это осенний семестр предыдущего учебного года
         else -> LocalDate.of(currentYear - 1, 9, 1)
     }
 
-    // Вычисляем разницу в неделях
     val weeksBetween = ChronoUnit.WEEKS.between(
         semesterStart,
         selectedDate
     )
 
-    // Нумерация недель с 1
     var weekNumber = weeksBetween.toInt() + 1
 
-    // Ограничиваем номер недели в зависимости от семестра
     weekNumber = when {
-        // Осенний семестр (сентябрь-декабрь) - максимум 17 недель
         semesterStart.monthValue == 9 -> minOf(weekNumber, 17)
-        // Весенний семестр (февраль-июнь) - максимум 20 недель
         else -> minOf(weekNumber, 20)
     }
 
-    // Гарантируем, что номер недели не меньше 1
     return maxOf(1, weekNumber)
 }
 private fun getWeekDisplayText(startDate: LocalDate, selectedDate: LocalDate?): String {

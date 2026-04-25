@@ -152,8 +152,6 @@ object AppState {
     val errorMessage: String? get() = _errorMessage
     fun setErrorMessage(message: String?) { _errorMessage = message }
 
-    // ========== НОВЫЕ ПОЛЯ И МЕТОДЫ ДЛЯ РАБОТЫ С СЕМЕСТРОМ ==========
-
     private var _lastSemesterCheck by mutableStateOf<Long>(0)
     val lastSemesterCheck: Long get() = _lastSemesterCheck
 
@@ -189,9 +187,6 @@ object AppState {
             .enqueue(workRequest)
     }
 
-    /**
-     * Планирование периодической проверки кэша (раз в 3 дня)
-     */
     private fun schedulePeriodicCacheCheck(context: Context) {
         val periodicWorkRequest = androidx.work.PeriodicWorkRequestBuilder<PeriodicCacheUpdateWorker>(
             3, java.util.concurrent.TimeUnit.DAYS
@@ -207,9 +202,6 @@ object AppState {
             )
     }
 
-    /**
-     * Планирование периодической очистки кэша (раз в 3 дня)
-     */
     private fun scheduleCacheCleanup(context: Context) {
         val cleanupWorkRequest = androidx.work.PeriodicWorkRequestBuilder<CacheCleanupWorker>(
             3, java.util.concurrent.TimeUnit.DAYS
@@ -225,9 +217,6 @@ object AppState {
             )
     }
 
-    /**
-     * Проверка необходимости очистки при запуске
-     */
     private fun checkAndRunCleanupIfNeeded(context: Context) {
         val lastCleanup = PreferencesManager.getLastCacheCleanup(context)
         val currentTime = System.currentTimeMillis()
@@ -262,7 +251,6 @@ object AppState {
                     CacheStatus.NO_CACHE
                 }
                 cachedSemester != activeSemester -> {
-                    // Семестр изменился — удаляем LEGACY и устаревшие данные
                     repo.cleanupLegacyData()
                     CacheStatus.OUTDATED_SEMESTER
                 }
@@ -270,7 +258,6 @@ object AppState {
                     CacheStatus.EXPIRED
                 }
                 else -> {
-                    // Семестр совпадает — удаляем LEGACY на всякий случай
                     repo.cleanupLegacyData()
                     CacheStatus.FRESH
                 }
@@ -285,9 +272,6 @@ object AppState {
         return repository?.isCacheExpired(group, cacheTtlDays) ?: true
     }
 
-    /**
-     * Получить читаемое описание статуса кэша
-     */
     fun getCacheStatusMessage(status: CacheStatus): String {
         return when (status) {
             CacheStatus.FRESH -> "Данные актуальны"
@@ -313,41 +297,14 @@ object AppState {
         setSelectedDate(LocalDate.now())
     }
 
-    /**
-     * Статус кэша для группы
-     */
     enum class CacheStatus {
-        FRESH,          // Актуальные данные
-        EXPIRED,        // TTL истек
-        OUTDATED_SEMESTER, // Данные за другой семестр
-        NO_CACHE,       // Нет данных в кэше
-        ERROR           // Ошибка проверки
+        FRESH,
+        EXPIRED,
+        OUTDATED_SEMESTER,
+        NO_CACHE,
+        ERROR
     }
 
-    /**
-     * Принудительное обновление текущей группы
-     */
-    suspend fun refreshCurrentGroup() {
-        if (currentGroup.isBlank() || currentGroup == " ") return
-
-        _isLoading = true
-        _errorMessage = "Обновление расписания..."
-
-        // Здесь будет вызов загрузки
-        // Логика вынесена в ScreenList
-    }
-
-    /**
-     * Сброс состояния загрузки
-     */
-    fun resetLoadingState() {
-        _isLoading = false
-        _errorMessage = null
-    }
-
-    /**
-     * Запуск проверки доступности нового семестра
-     */
     fun scheduleSemesterAvailabilityCheck(group: String) {
         context?.let { ctx ->
             val workRequest = androidx.work.OneTimeWorkRequestBuilder<SemesterAvailabilityWorker>()
@@ -373,14 +330,10 @@ object AppState {
         }
     }
 
-    /**
-     * Вызывается при возврате приложения из фона (onResume)
-     */
     fun onAppResumed(context: Context) {
         val currentTime = System.currentTimeMillis()
         val timeInBackground = currentTime - _lastForegroundTime
 
-        // Проверяем семестр, если приложение было в фоне более 1 часа
         if (timeInBackground > 60 * 60 * 1000) {
             val currentSemester = SemesterUtils.getCurrentSemester()
 
@@ -389,12 +342,10 @@ object AppState {
                 _needsSemesterUpdate = true
                 PreferencesManager.saveLastKnownSemester(context, currentSemester)
 
-                // Запускаем проверку текущей группы
                 if (currentGroup.isNotBlank() && currentGroup != " ") {
                     scheduleSemesterAvailabilityCheck(currentGroup)
                 }
 
-                // Запускаем фоновое обновление всех групп
                 scheduleSemesterCheckWorker(context)
             }
 
@@ -404,17 +355,11 @@ object AppState {
         _lastForegroundTime = currentTime
     }
 
-    /**
-     * Вызывается при уходе приложения в фон (onPause)
-     */
     fun onAppPaused() {
         _lastForegroundTime = System.currentTimeMillis()
         _lastKnownSemester = SemesterUtils.getCurrentSemester()
     }
 
-    /**
-     * Проверка необходимости обновления при возврате из фона
-     */
     fun shouldRefreshOnResume(): Boolean {
         return _needsSemesterUpdate
     }
