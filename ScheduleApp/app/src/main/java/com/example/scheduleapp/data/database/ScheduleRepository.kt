@@ -193,22 +193,23 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
     }
 
     private fun ScheduleEntity.toScheduleItem(): ScheduleItem {
+        val roomList = if (room.isNotBlank()) room.split(",").map { it.trim() } else emptyList()
+        val teacherList = if (teacher.isNotBlank()) teacher.split(",").map { it.trim() } else emptyList()
+
+        Log.d("ROOM_DEBUG", "discipline=$discipline, lessonType=$lessonType, room='$room', roomList=$roomList, startTime=$startTime")
+
         return ScheduleItem(
             discipline = discipline,
             lessonType = lessonType,
             startTime = startTime,
             endTime = endTime,
-            rooms = if (room.isNotBlank()) room.split(",").map { it.trim() } else emptyList(),
-            teachers = if (teacher.isNotBlank()) teacher.split(",").map { it.trim() } else emptyList(),
+            rooms = roomList,
+            teachers = teacherList,
             groups = groups,
             groupsSummary = groupsSummary,
             description = description,
             recurrence = if (frequency != null || interval != null || until != null) {
-                RecurrenceRule(
-                    frequency = frequency,
-                    interval = interval,
-                    until = until
-                )
+                RecurrenceRule(frequency = frequency, interval = interval, until = until)
             } else null,
             exceptions = exceptions
         )
