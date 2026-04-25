@@ -427,7 +427,7 @@ class ScheduleWidget : GlanceAppWidget() {
 
                 // Тип занятия и преподаватель
                 Text(
-                    text = "${formatLessonType(scheduleItem.lessonType)} • ${getShortTeacherName(scheduleItem.teacher)}",
+                    text = "${formatLessonType(scheduleItem.lessonType)} • ${getShortTeacherName(scheduleItem.teachers.joinToString(", "))}",
                     style = TextStyle(
                         color = ColorProvider(white.copy(alpha = 0.7f)),
                         fontWeight = FontWeight.Normal
@@ -437,10 +437,10 @@ class ScheduleWidget : GlanceAppWidget() {
             }
 
             // Аудитория
-            if (scheduleItem.room.isNotBlank()) {
+            if (scheduleItem.rooms.isNotEmpty()) {
                 Spacer(modifier = GlanceModifier.width(6.dp))
                 Text(
-                    text = getShortRoom(scheduleItem.room),
+                    text = getShortRoom(scheduleItem.rooms.first()),
                     style = TextStyle(
                         color = ColorProvider(white.copy(alpha = 0.7f)),
                         fontWeight = FontWeight.Normal

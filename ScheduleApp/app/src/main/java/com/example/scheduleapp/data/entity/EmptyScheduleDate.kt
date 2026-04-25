@@ -15,8 +15,8 @@ object EmptySchedule {
             lessonType = "EMPTY",
             startTime = startDateTime,
             endTime = endDateTime,
-            room = "",
-            teacher = "",
+            rooms = emptyList(),       // ← List<String>
+            teachers = emptyList(),    // ← List<String>
             groups = emptyList(),
             groupsSummary = "",
             description = null,

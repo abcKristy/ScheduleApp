@@ -129,7 +129,7 @@ fun ScheduleListItem(
                         color = colorScheme.onSurface
                     )
                     Text(
-                        text = scheduleItem.room,
+                        text = scheduleItem.rooms.joinToString(", "),
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurfaceVariant
                     )
@@ -147,7 +147,7 @@ fun ScheduleListItem(
                         color = colorScheme.onSurface
                     )
                     Text(
-                        text = scheduleItem.teacher,
+                        text = scheduleItem.teachers.joinToString(", "),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colorScheme.onSurfaceVariant
                     )
@@ -199,8 +199,8 @@ fun ScheduleItemPreviewActiveLesson() {
                     lessonType = "LECTURE",
                     startTime = LocalDateTime.now().minusMinutes(30),
                     endTime = LocalDateTime.now().plusMinutes(60),
-                    room = "А-15 (В-78)",
-                    teacher = "Иванов Петр Сергеевич",
+                    rooms = listOf("А-15 (В-78)"),
+                    teachers = listOf("Иванов Петр Сергеевич"),
                     groups = listOf("ИКБО-60-23"),
                     groupsSummary = "ИКБО-60-23",
                     description = "Введение в базы данных",
@@ -222,10 +222,10 @@ fun ScheduleItemPreviewNotStarted() {
                 scheduleItem = ScheduleItem(
                     discipline = "Программирование",
                     lessonType = "PR",
-                    startTime = LocalDateTime.now().plusMinutes(30), // Начнется через 30 минут
+                    startTime = LocalDateTime.now().plusMinutes(30),
                     endTime = LocalDateTime.now().plusMinutes(120),
-                    room = "Б-24 (В-78)",
-                    teacher = "Сидорова Мария Ивановна",
+                    rooms = listOf("Б-24 (В-78)"),
+                    teachers = listOf("Сидорова Мария Ивановна"),
                     groups = listOf("ИКБО-60-23"),
                     groupsSummary = "ИКБО-60-23",
                     description = "Практика по Java",
@@ -247,10 +247,10 @@ fun ScheduleItemPreviewFinished() {
                 scheduleItem = ScheduleItem(
                     discipline = "Математика",
                     lessonType = "LK",
-                    startTime = LocalDateTime.now().minusMinutes(120), // Началась 2 часа назад
-                    endTime = LocalDateTime.now().minusMinutes(30), // Закончилась 30 минут назад
-                    room = "В-10 (В-78)",
-                    teacher = "Петров Алексей Владимирович",
+                    startTime = LocalDateTime.now().minusMinutes(120),
+                    endTime = LocalDateTime.now().minusMinutes(30),
+                    rooms = listOf("В-10 (В-78)"),
+                    teachers = listOf("Петров Алексей Владимирович"),
                     groups = listOf("ИКБО-60-23"),
                     groupsSummary = "ИКБО-60-23",
                     description = "Линейная алгебра",
@@ -274,8 +274,8 @@ fun ScheduleItemPreviewDarkActive() {
                     lessonType = "LECTURE",
                     startTime = LocalDateTime.now().minusMinutes(30),
                     endTime = LocalDateTime.now().plusMinutes(60),
-                    room = "А-15 (В-78)",
-                    teacher = "Иванов Петр Сергеевич",
+                    rooms = listOf("А-15 (В-78)"),
+                    teachers = listOf("Иванов Петр Сергеевич"),
                     groups = listOf("ИКБО-60-23"),
                     groupsSummary = "ИКБО-60-23",
                     description = "Введение в базы данных",

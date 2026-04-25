@@ -285,11 +285,9 @@ private fun getTestScheduleItems(): List<ScheduleItem> {
     val items = mutableListOf<ScheduleItem>()
     val now = LocalDateTime.now()
 
-    // Генерируем тестовые занятия на 14 дней
     for (day in 0..13) {
         val date = now.plusDays(day.toLong())
 
-        // Добавляем 2-3 занятия в день
         for (lesson in 0..2) {
             val startTime = date.withHour(9 + lesson * 2).withMinute(0)
             val endTime = startTime.plusHours(1).plusMinutes(30)
@@ -299,8 +297,8 @@ private fun getTestScheduleItems(): List<ScheduleItem> {
                 lessonType = if (lesson % 2 == 0) "Лекция" else "Практика",
                 startTime = startTime,
                 endTime = endTime,
-                room = "Ауд. ${100 + day + lesson}",
-                teacher = "Преподаватель ${day + 1}",
+                rooms = listOf("Ауд. ${100 + day + lesson}"),           // ← список
+                teachers = listOf("Преподаватель ${day + 1}"),          // ← список
                 groups = listOf("ИКБО-60-23"),
                 groupsSummary = "ИКБО-60-23",
                 description = "Тестовое занятие",

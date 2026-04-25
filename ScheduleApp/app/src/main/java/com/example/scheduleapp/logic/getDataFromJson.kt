@@ -25,8 +25,8 @@ data class ScheduleItemResponse(
     val lessonType: String,
     val startTime: String,
     val endTime: String,
-    val room: String,
-    val teacher: String,
+    val rooms: List<String>? = emptyList(),
+    val teachers: List<String>? = emptyList(),
     val groups: List<String>,
     val groupsSummary: String,
     val description: String?,
@@ -69,8 +69,8 @@ fun parseScheduleItem(response: ScheduleItemResponse): ScheduleItem {
         lessonType = response.lessonType,
         startTime = LocalDateTime.parse(response.startTime, dateTimeFormatter),
         endTime = LocalDateTime.parse(response.endTime, dateTimeFormatter),
-        room = response.room,
-        teacher = response.teacher,
+        rooms = response.rooms ?: emptyList(),      // ← List<String>
+        teachers = response.teachers ?: emptyList(), // ← List<String>
         groups = response.groups,
         groupsSummary = response.groupsSummary,
         description = response.description?.takeIf { it != "null" && it.isNotEmpty() },
@@ -80,8 +80,7 @@ fun parseScheduleItem(response: ScheduleItemResponse): ScheduleItem {
                 interval = recurrence.interval,
                 until = recurrence.until?.let { LocalDateTime.parse(it, dateTimeFormatter) }
             )
-        },
-        exceptions = response.exceptions?.map { LocalDate.parse(it, dateFormatter) } ?: emptyList()
+        },        exceptions = response.exceptions?.map { LocalDate.parse(it, dateFormatter) } ?: emptyList()
     )
 }
 

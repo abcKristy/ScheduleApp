@@ -146,6 +146,7 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
      */
     suspend fun cleanupLegacyData() {
         Log.d("REPOSITORY", "Cleaning up LEGACY data")
+        dao.deleteExpiredSchedule(System.currentTimeMillis())
         dao.deleteLegacyItems()
         dao.deleteLegacyGroups()
     }
@@ -179,13 +180,10 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
     suspend fun performFullCleanup(currentSemester: String): Int {
         Log.d("REPOSITORY", "Performing full cleanup for semester: $currentSemester")
 
-        // Удаляем занятия с устаревшим семестром
         dao.deleteBySemesterNot(currentSemester)
 
-        // Удаляем просроченный кэш
         cleanupExpiredCache()
 
-        // Удаляем метаданные устаревших групп
         cleanupOutdatedGroups(currentSemester)
 
         val remainingGroups = getAllCachedGroupsInfo()
@@ -200,8 +198,8 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
             lessonType = lessonType,
             startTime = startTime,
             endTime = endTime,
-            room = room,
-            teacher = teacher,
+            rooms = if (room.isNotBlank()) room.split(",").map { it.trim() } else emptyList(),
+            teachers = if (teacher.isNotBlank()) teacher.split(",").map { it.trim() } else emptyList(),
             groups = groups,
             groupsSummary = groupsSummary,
             description = description,
@@ -228,8 +226,8 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
             lessonType = lessonType,
             startTime = startTime,
             endTime = endTime,
-            room = room,
-            teacher = teacher,
+            room = rooms.joinToString(", "),
+            teacher = teachers.joinToString(", "),
             groups = groups,
             groupsSummary = groupsSummary,
             description = description,
@@ -240,7 +238,7 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
             lastUpdated = currentTime,
             semester = "LEGACY",
             cachedAt = currentTime,
-            expiresAt = currentTime + cacheTtlMillis  // ← теперь из параметра
+            expiresAt = currentTime + cacheTtlMillis
         )
     }
 
@@ -257,8 +255,8 @@ class ScheduleRepository(private val database: ScheduleDatabase) {
             lessonType = lessonType,
             startTime = startTime,
             endTime = endTime,
-            room = room,
-            teacher = teacher,
+            room = rooms.joinToString(", "),
+            teacher = teachers.joinToString(", "),
             groups = groups,
             groupsSummary = groupsSummary,
             description = description,

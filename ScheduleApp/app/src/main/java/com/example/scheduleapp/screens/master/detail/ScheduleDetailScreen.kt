@@ -222,26 +222,23 @@ fun ScheduleDetailScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {
-                if (scheduleItem.room.isNotBlank()) {
-                    OutlineButton(
-                        text = scheduleItem.room,
-                        onClick = {
-                        AppState.setCurrentGroupAndNavigate(scheduleItem.room)
-                        navController?.popBackStack()
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(20.dp))
+                if (scheduleItem.rooms.isNotEmpty()) {
+                    for (room in scheduleItem.rooms) {
+                        OutlineButton(text = room, onClick = { })
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                if (scheduleItem.teacher.isNotBlank()) {
-                    OutlineButton(
-                        text = scheduleItem.teacher,
-                        onClick = {
-                            AppState.setCurrentGroupAndNavigate(scheduleItem.teacher)
+                if (scheduleItem.teachers.isNotEmpty()) {
+                    for (teacher in scheduleItem.teachers) {
+                        OutlineButton(text = teacher, onClick = {
+                            AppState.setCurrentGroupAndNavigate(teacher)
                             navController?.popBackStack()
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(20.dp))
+                        })
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
                 GroupsRow(
@@ -430,8 +427,8 @@ private fun getDefaultScheduleItem(): ScheduleItem {
         lessonType = "LECTURE",
         startTime = LocalDateTime.of(2025, 9, 6, 9, 0),
         endTime = LocalDateTime.of(2025, 9, 6, 10, 30),
-        room = "А-15 (В-78)",
-        teacher = "Иванов Петр Сергеевич",
+        rooms = listOf("А-15 (В-78)"),
+        teachers = listOf("Иванов Петр Сергеевич"),
         groups = listOf("ИКБО-60-23", "ИКБО-61-23", "ИКБО-62-23"),
         groupsSummary = "ИКБО-60-23, ИКБО-61-23, ИКБО-62-23",
         description = "Введение в разработку мобильных приложений. Основные концепции и архитектурные паттерны, используемые в современной мобильной разработке.",
