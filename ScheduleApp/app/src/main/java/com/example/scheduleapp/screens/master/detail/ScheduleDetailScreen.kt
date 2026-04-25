@@ -222,25 +222,27 @@ fun ScheduleDetailScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {
-                OutlineButton(
-                    text = scheduleItem.room,
-                    onClick = {
+                if (scheduleItem.room.isNotBlank()) {
+                    OutlineButton(
+                        text = scheduleItem.room,
+                        onClick = {
                         AppState.setCurrentGroupAndNavigate(scheduleItem.room)
                         navController?.popBackStack()
-                    }
-                )
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                OutlineButton(
-                    text = scheduleItem.teacher,
-                    onClick = {
-                        AppState.setCurrentGroupAndNavigate(scheduleItem.teacher)
-                        navController?.popBackStack()
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
+                if (scheduleItem.teacher.isNotBlank()) {
+                    OutlineButton(
+                        text = scheduleItem.teacher,
+                        onClick = {
+                            AppState.setCurrentGroupAndNavigate(scheduleItem.teacher)
+                            navController?.popBackStack()
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
 
                 GroupsRow(
                     groups = scheduleItem.groups,
