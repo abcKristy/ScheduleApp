@@ -4,22 +4,22 @@ import org.schedule.entity.ScheduleResponseDto;
 import org.schedule.entity.apidata.MireaApi;
 import org.schedule.entity.apidata.MireaApiData;
 import org.schedule.entity.apidata.ResponseDto;
+import org.schedule.entity.forBD.basic.GroupEntity;
 import org.schedule.entity.forBD.basic.LessonEntity;
-import org.schedule.entity.schedule.MireaSchedule;
-import org.schedule.entity.schedule.MireaScheduleData;
+import org.schedule.entity.forBD.basic.RoomEntity;
+import org.schedule.entity.forBD.basic.TeacherEntity;
 import org.schedule.entity.schedule.ScheduleDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.schedule.entity.forBD.basic.GroupEntity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.springframework.web.client.RestClientException;
 
 @Component
 public class ScheduleMapper {
@@ -150,22 +150,37 @@ public class ScheduleMapper {
     }
 
     public ScheduleResponseDto toResponseDto(LessonEntity lesson) {
-        if (lesson == null) {
-            return null;
-        }
+        if (lesson == null) return null;
 
         try {
             List<String> groupNames = lesson.getGroups().stream()
                     .map(GroupEntity::getGroupName)
                     .collect(Collectors.toList());
 
+            // Разбиваем строки на списки
+            List<String> teacherList = new ArrayList<>();
+            if (lesson.getTeacher() != null && !lesson.getTeacher().trim().isEmpty()) {
+                teacherList = Arrays.stream(lesson.getTeacher().split("[,\n]"))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.toList());
+            }
+
+            List<String> roomList = new ArrayList<>();
+            if (lesson.getRoom() != null && !lesson.getRoom().trim().isEmpty()) {
+                roomList = Arrays.stream(lesson.getRoom().split("[,\n]"))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.toList());
+            }
+
             return new ScheduleResponseDto(
                     lesson.getDiscipline(),
                     lesson.getLessonType(),
                     lesson.getStartTime(),
                     lesson.getEndTime(),
-                    lesson.getRoom(),
-                    lesson.getTeacher(),
+                    roomList,       // ← список аудиторий
+                    teacherList,    // ← список преподавателей
                     groupNames,
                     lesson.getGroupsSummary(),
                     lesson.getDescription(),
@@ -173,21 +188,38 @@ public class ScheduleMapper {
                     lesson.getExceptions()
             );
         } catch (Exception e) {
-            log.error("Ошибка при маппинге LessonEntity в ScheduleResponseDto для занятия: {}",
-                    lesson.getDiscipline(), e);
+            log.error("Ошибка при маппинге", e);
             return createFallbackResponse(lesson);
         }
     }
 
     private ScheduleResponseDto createFallbackResponse(LessonEntity lesson) {
+        List<String> teacherNames = lesson.getTeachers() != null ?
+                lesson.getTeachers().stream()
+                        .map(TeacherEntity::getFullName)
+                        .collect(Collectors.toList()) :
+                List.of();
+
+        List<String> roomNames = lesson.getRooms() != null ?
+                lesson.getRooms().stream()
+                        .map(RoomEntity::getRoomName)
+                        .collect(Collectors.toList()) :
+                List.of();
+
+        List<String> groupNames = lesson.getGroups() != null ?
+                lesson.getGroups().stream()
+                        .map(GroupEntity::getGroupName)
+                        .collect(Collectors.toList()) :
+                List.of();
+
         return new ScheduleResponseDto(
                 lesson.getDiscipline(),
                 lesson.getLessonType(),
                 lesson.getStartTime(),
                 lesson.getEndTime(),
-                lesson.getRoom(),
-                lesson.getTeacher(),
-                List.of(),
+                roomNames,
+                teacherNames,
+                groupNames,
                 lesson.getGroupsSummary(),
                 lesson.getDescription(),
                 lesson.getRecurrence(),

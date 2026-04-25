@@ -18,8 +18,8 @@ public class ScheduleResponseDto {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime endTime;
 
-    private String room;
-    private String teacher;
+    private List<String> rooms;
+    private List<String> teachers;
     private List<String> groups;
     private String groupsSummary;
     private String description;
@@ -33,14 +33,14 @@ public class ScheduleResponseDto {
 
     public ScheduleResponseDto(String discipline, LessonType lessonType,
                                LocalDateTime startTime, LocalDateTime endTime,
-                               String room, String teacher, List<String> groups,
+                               List<String> rooms, List<String> teachers, List<String> groups,
                                String groupsSummary, String description) {
         this.discipline = discipline;
         this.lessonType = lessonType;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.room = room;
-        this.teacher = teacher;
+        this.rooms = rooms;
+        this.teachers = teachers;
         this.groups = groups;
         this.groupsSummary = groupsSummary;
         this.description = description;
@@ -49,15 +49,15 @@ public class ScheduleResponseDto {
     // Полный конструктор со всеми полями
     public ScheduleResponseDto(String discipline, LessonType lessonType,
                                LocalDateTime startTime, LocalDateTime endTime,
-                               String room, String teacher, List<String> groups,
+                               List<String> rooms, List<String> teachers, List<String> groups,
                                String groupsSummary, String description,
                                RecurrenceRule recurrence, List<LocalDate> exceptions) {
         this.discipline = discipline;
         this.lessonType = lessonType;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.room = room;
-        this.teacher = teacher;
+        this.rooms = rooms;
+        this.teachers = teachers;
         this.groups = groups;
         this.groupsSummary = groupsSummary;
         this.description = description;
@@ -78,12 +78,11 @@ public class ScheduleResponseDto {
     public LocalDateTime getEndTime() { return endTime; }
     public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 
-    public String getRoom() { return room; }
-    public void setRoom(String room) { this.room = room; }
+    public List<String> getRooms() { return rooms; }
+    public void setRooms(List<String> rooms) { this.rooms = rooms; }
 
-    public String getTeacher() { return teacher; }
-    public void setTeacher(String teacher) { this.teacher = teacher; }
-
+    public List<String> getTeachers() { return teachers; }
+    public void setTeachers(List<String> teachers) { this.teachers = teachers; }
     public List<String> getGroups() { return groups; }
     public void setGroups(List<String> groups) { this.groups = groups; }
 
