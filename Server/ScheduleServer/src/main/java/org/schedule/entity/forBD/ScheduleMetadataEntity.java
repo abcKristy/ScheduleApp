@@ -32,7 +32,6 @@ public class ScheduleMetadataEntity {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    // Конструкторы
     public ScheduleMetadataEntity() {}
 
     public ScheduleMetadataEntity(String entityType, String entityName, String semester) {
@@ -43,7 +42,6 @@ public class ScheduleMetadataEntity {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Геттеры и сеттеры
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

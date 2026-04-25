@@ -2,27 +2,20 @@ package org.schedule.mapping;
 
 import org.schedule.entity.apidata.ResponseDto;
 import org.schedule.entity.forBD.ScheduleMetadataEntity;
-import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.forBD.basic.GroupEntity;
+import org.schedule.entity.forBD.basic.LessonEntity;
 import org.schedule.entity.forBD.basic.RoomEntity;
 import org.schedule.entity.forBD.basic.TeacherEntity;
-import org.schedule.repository.LessonRepository;
-import org.schedule.repository.GroupRepository;
-import org.schedule.repository.RoomRepository;
-import org.schedule.repository.TeacherRepository;
-import org.schedule.repository.ScheduleMetadataRepository;
+import org.schedule.repository.*;
 import org.schedule.util.SemesterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Component
@@ -47,9 +40,6 @@ public class SaverToMemory {
         this.metadataRepository = metadataRepository;
     }
 
-    /**
-     * ПАКЕТНОЕ СОХРАНЕНИЕ УРОКОВ С УЧЕТОМ СЕМЕСТРА
-     */
     @Transactional
     public BatchSaveResult saveLessonsBatch(List<LessonEntity> lessons, String entityType, String entityName) {
         log.info("Начало пакетного сохранения {} уроков для {} {}", lessons.size(), entityType, entityName);
@@ -97,9 +87,6 @@ public class SaverToMemory {
         }
     }
 
-    /**
-     * Обновляет или создает метаданные о расписании
-     */
     private void updateScheduleMetadata(String entityType, String entityName,
                                         String semester, int lessonCount) {
         try {
@@ -127,9 +114,6 @@ public class SaverToMemory {
         }
     }
 
-    /**
-     * УСИЛЕННАЯ ДЕДУПЛИКАЦИЯ С ПРОВЕРКОЙ БД
-     */
     private List<LessonEntity> deduplicateLessonsWithDBCheck(List<LessonEntity> lessons) {
         log.info("Начало усиленной дедупликации {} занятий", lessons.size());
 
@@ -336,7 +320,6 @@ public class SaverToMemory {
     }
 
     private void processTeachersBatch(List<LessonEntity> lessons) {
-        // Шаблон для ФИО: "Фамилия Имя Отчество" (все с большой буквы)
         java.util.regex.Pattern teacherNamePattern = java.util.regex.Pattern.compile(
                 "[А-ЯЁ][а-яё]+\\s+[А-ЯЁ][а-яё]+\\s+[А-ЯЁ][а-яё]+"
         );
@@ -350,7 +333,6 @@ public class SaverToMemory {
                         teachers.add(matcher.group().trim());
                     }
                     if (teachers.isEmpty()) {
-                        // fallback: разбиваем по запятой или переносу строки
                         teachers.addAll(Arrays.asList(lesson.getTeacher().split("[,\n]")));
                     }
                     return teachers.stream().map(String::trim).filter(s -> !s.isEmpty());
@@ -416,7 +398,6 @@ public class SaverToMemory {
                         rooms.add(matcher.group().trim());
                     }
                     if (rooms.isEmpty()) {
-                        // fallback: разбиваем по запятой
                         rooms.addAll(Arrays.asList(lesson.getRoom().split(",")));
                     }
                     return rooms.stream().map(String::trim).filter(s -> !s.isEmpty());

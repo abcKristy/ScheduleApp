@@ -29,9 +29,6 @@ public class ScheduleCleanupScheduler {
         this.metadataRepository = metadataRepository;
     }
 
-    /**
-     * Ежедневная очистка устаревших данных в 03:00
-     */
     @Scheduled(cron = "0 0 3 * * ?")
     @Transactional
     public void cleanupOutdatedData() {
@@ -56,9 +53,6 @@ public class ScheduleCleanupScheduler {
         }
     }
 
-    /**
-     * Удаление занятий с семестром, отличным от текущего
-     */
     private void cleanupLessonsWithDifferentSemester(String currentSemester) {
         try {
             int deletedCount = lessonRepository.deleteBySemesterNot(currentSemester);
@@ -68,9 +62,6 @@ public class ScheduleCleanupScheduler {
         }
     }
 
-    /**
-     * Удаление занятий старше 30 дней после окончания семестра
-     */
     private void cleanupOldLessons(String currentSemester) {
         try {
             LocalDate semesterEndDate = SemesterUtils.getSemesterEndDate(currentSemester);
@@ -86,9 +77,6 @@ public class ScheduleCleanupScheduler {
         }
     }
 
-    /**
-     * Удаление устаревших метаданных
-     */
     private void cleanupOutdatedMetadata(String currentSemester) {
         try {
             LocalDateTime cutoffDate = LocalDateTime.now().minusDays(90);
@@ -100,9 +88,6 @@ public class ScheduleCleanupScheduler {
         }
     }
 
-    /**
-     * Пересчет количества занятий для всех метаданных
-     */
     private void recalculateAllMetadataCounts() {
         try {
             List<ScheduleMetadataEntity> allMetadata = metadataRepository.findAll();
@@ -123,9 +108,6 @@ public class ScheduleCleanupScheduler {
         }
     }
 
-    /**
-     * Вывод статистики по данным в БД
-     */
     private void printStatistics() {
         try {
             long totalLessons = lessonRepository.count();
@@ -148,9 +130,6 @@ public class ScheduleCleanupScheduler {
         }
     }
 
-    /**
-     * Ручной запуск очистки (может вызываться из контроллера)
-     */
     @Transactional
     public void manualCleanup() {
         log.info("Запуск ручной очистки данных");

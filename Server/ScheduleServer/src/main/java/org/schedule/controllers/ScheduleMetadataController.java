@@ -21,11 +21,6 @@ public class ScheduleMetadataController {
         this.metadataService = metadataService;
     }
 
-    /**
-     * Проверка метаданных для одной сущности
-     *
-     * GET /schedule/metadata?entity=ИВБО-01-22
-     */
     @GetMapping
     public ResponseEntity<ScheduleMetadataResponseDto> checkMetadata(@RequestParam("entity") String entity) {
         log.info("GET /schedule/metadata?entity={}", entity);
@@ -38,11 +33,6 @@ public class ScheduleMetadataController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Проверка метаданных для сущности через path variable
-     *
-     * GET /schedule/metadata/ИВБО-01-22
-     */
     @GetMapping("/{entity}")
     public ResponseEntity<ScheduleMetadataResponseDto> checkMetadataByPath(@PathVariable("entity") String entity) {
         log.info("GET /schedule/metadata/{}", entity);
@@ -55,12 +45,6 @@ public class ScheduleMetadataController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Пакетная проверка метаданных
-     *
-     * POST /schedule/metadata/batch
-     * Body: ["ИВБО-01-22", "ИКБО-60-23", "Иванов И.И."]
-     */
     @PostMapping("/batch")
     public ResponseEntity<List<ScheduleMetadataResponseDto>> checkMetadataBatch(@RequestBody List<String> entities) {
         log.info("POST /schedule/metadata/batch with {} entities", entities.size());
@@ -73,11 +57,6 @@ public class ScheduleMetadataController {
         return ResponseEntity.ok(responses);
     }
 
-    /**
-     * Проверка актуальности — упрощенный ответ (только флаг needsUpdate)
-     *
-     * HEAD /schedule/metadata?entity=ИВБО-01-22
-     */
     @RequestMapping(method = RequestMethod.HEAD)
     public ResponseEntity<Void> checkMetadataHead(@RequestParam("entity") String entity) {
         log.info("HEAD /schedule/metadata?entity={}", entity);

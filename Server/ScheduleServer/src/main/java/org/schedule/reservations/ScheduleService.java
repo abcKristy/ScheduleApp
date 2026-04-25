@@ -45,20 +45,16 @@ public class ScheduleService {
         }
 
         try {
-            // Шаг 1: Получаем данные из кэша/БД (только чтение)
             List<LessonEntity> lessonsFromDb = readService.getLessonsFromCacheOrDatabase(entityList);
 
-            // Шаг 2: Получаем недостающие данные из внешнего API
             List<String> remainingEntities = getRemainingEntities(entityList, lessonsFromDb);
 
             if (!remainingEntities.isEmpty()) {
                 log.info("Получение данных из внешнего источника для {} сущностей", remainingEntities.size());
 
-                // Определяем тип первой сущности для очистки устаревших данных
                 EntityType entityType = determineEntityType(remainingEntities.get(0));
                 String currentSemester = SemesterUtils.getCurrentSemester();
 
-                // Проверяем, нужно ли очистить устаревшие данные
                 boolean needsUpdate = readService.needsUpdate(entityType, remainingEntities.get(0));
                 if (needsUpdate) {
                     log.info("Обнаружены устаревшие данные для {} {}, выполняем очистку",
@@ -66,17 +62,14 @@ public class ScheduleService {
                     readService.cleanupOutdatedLessons(entityType, remainingEntities.get(0), "LEGACY");
                 }
 
-                // Загружаем свежие данные
                 List<ResponseDto> response = scheduleMapper.mapToResponseDto(remainingEntities, MIREA_API_URL);
                 List<ScheduleDto> schedule = scheduleMapper.mapToScheduleDto(response);
                 List<LessonEntity> parsedLessons = scheduleMapper.parseStringData(schedule);
                 log.debug("Распаршено {} занятий", parsedLessons.size());
 
-                // Сохраняем новые данные в БД
                 writeService.saveLessonsAndUpdateIds(parsedLessons, response, entityType, remainingEntities.get(0));
             }
 
-            // Шаг 3: Получаем все данные из БД (чтение)
             List<LessonEntity> allLessonsFromDb = readService.getLessonsFromDatabase(entityList);
 
             List<ScheduleResponseDto> result = mapper.toResponseDtoList(allLessonsFromDb);
@@ -99,24 +92,20 @@ public class ScheduleService {
         Set<String> coveredEntities = new HashSet<>();
 
         for (LessonEntity lesson : foundLessons) {
-            // Проверяем, что занятие относится к текущему семестру
             if (!currentSemester.equals(lesson.getSemester())) {
-                continue; // Пропускаем занятия из других семестров
+                continue;
             }
 
-            // Группы
             if (lesson.getGroups() != null) {
                 lesson.getGroups().stream()
                         .map(GroupEntity::getGroupName)
                         .forEach(coveredEntities::add);
             }
-            // Преподаватели
             if (lesson.getTeachers() != null) {
                 lesson.getTeachers().stream()
                         .map(TeacherEntity::getFullName)
                         .forEach(coveredEntities::add);
             }
-            // Аудитории
             if (lesson.getRooms() != null) {
                 lesson.getRooms().stream()
                         .map(RoomEntity::getRoomName)

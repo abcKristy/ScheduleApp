@@ -113,7 +113,6 @@ public class ParserToLesson {
             if (line.isEmpty()) continue;
 
             if (line.contains(":") && !line.startsWith(" ")) {
-                // Сохраняем предыдущий ключ-значение с ОЧИСТКОЙ
                 if (currentKey != null) {
                     String cleanedValue = cleanText(currentValue.toString());
                     properties.put(currentKey, cleanedValue);
@@ -138,13 +137,11 @@ public class ParserToLesson {
             }
         }
 
-        // Сохраняем последний ключ-значение с ОЧИСТКОЙ
         if (currentKey != null) {
             String cleanedValue = cleanText(currentValue.toString());
             properties.put(currentKey, cleanedValue);
         }
 
-        // Отладочный лог для проверки DESCRIPTION
         if (properties.containsKey("DESCRIPTION")) {
             log.debug("DESCRIPTION после очистки: {}", properties.get("DESCRIPTION"));
         }
@@ -213,7 +210,6 @@ public class ParserToLesson {
 
         String description = properties.getOrDefault("DESCRIPTION", "");
 
-        // ИСПРАВЛЕНО: [ьяи] вместо [ья]
         if (description.contains("Преподавател")) {
             Pattern teacherPattern = Pattern.compile("Преподавател[ьяи]:\\s*(.+?)(?:\\s+Групп[аы]:|$)");
             Matcher matcher = teacherPattern.matcher(description);
@@ -228,7 +224,6 @@ public class ParserToLesson {
             }
         }
 
-        // Способ 3: Поиск по всем ключам X-META-TEACHER
         for (Map.Entry<String, String> entry : properties.entrySet()) {
             String key = entry.getKey();
             if (key.startsWith("X-META-TEACHER") && !entry.getValue().isEmpty()) {
@@ -239,7 +234,6 @@ public class ParserToLesson {
             }
         }
 
-        // Способ 4: Из SUMMARY (в скобках)
         String summary = properties.getOrDefault("SUMMARY", "");
         if (summary.contains("(") && summary.contains(")")) {
             Pattern teacherInSummaryPattern = Pattern.compile("\\(([А-ЯЁ][а-яё]+\\s+[А-ЯЁ]\\.\\s*[А-ЯЁ]\\.)\\)");
@@ -253,7 +247,6 @@ public class ParserToLesson {
             }
         }
 
-        // Способ 5: FALLBACK — если scheduleTitle похож на имя преподавателя
         if (isLikelyTeacherName(scheduleTitle)) {
             log.debug("Преподаватель из scheduleTitle до очистки: '{}'", scheduleTitle);
             String cleaned = cleanText(scheduleTitle).replace("\n", " ");
@@ -286,7 +279,6 @@ public class ParserToLesson {
     private List<GroupEntity> extractGroups(Map<String, String> properties, String scheduleTitle) {
         List<GroupEntity> groups = new ArrayList<>();
 
-        // Способ 1: X-META-GROUP
         for (Map.Entry<String, String> entry : properties.entrySet()) {
             String key = entry.getKey();
             if (key.startsWith("X-META-GROUP") && !entry.getValue().trim().isEmpty()) {
@@ -348,7 +340,6 @@ public class ParserToLesson {
         try {
             String cleanStr = dateTimeStr;
 
-            // Обрабатываем параметры временной зоны
             if (cleanStr.contains(";")) {
                 cleanStr = cleanStr.substring(cleanStr.indexOf(":") + 1);
             } else if (cleanStr.contains(":")) {
@@ -408,23 +399,19 @@ public class ParserToLesson {
                 try {
                     String dateStr = entry.getValue();
 
-                    // Извлекаем значение после двоеточия если есть
                     if (dateStr.contains(":")) {
                         dateStr = dateStr.substring(dateStr.indexOf(":") + 1);
                     }
 
-                    // Разбиваем строку на отдельные даты по запятой
                     String[] dateStrings = dateStr.split(",");
 
                     for (String singleDateStr : dateStrings) {
                         String cleanDateStr = singleDateStr.trim();
 
-                        // Обрабатываем временную зону если есть
                         if (cleanDateStr.contains(";")) {
                             cleanDateStr = cleanDateStr.substring(0, cleanDateStr.indexOf(";"));
                         }
 
-                        // Убираем 'Z' в конце если есть
                         if (cleanDateStr.endsWith("Z")) {
                             cleanDateStr = cleanDateStr.substring(0, cleanDateStr.length() - 1);
                         }
@@ -443,13 +430,11 @@ public class ParserToLesson {
         return exceptions;
     }
 
-    // Вспомогательный метод для парсинга строки даты
     private LocalDateTime parseDateTimeString(String dateTimeStr) {
         try {
             if (dateTimeStr.contains("T")) {
                 return LocalDateTime.parse(dateTimeStr, DATE_TIME_FORMATTER);
             } else {
-                // Если только дата, добавляем время 00:00:00
                 return LocalDateTime.parse(dateTimeStr + "T000000", DATE_TIME_FORMATTER);
             }
         } catch (Exception e) {
@@ -494,16 +479,13 @@ public class ParserToLesson {
 
         String result = text;
 
-        // Убираем БУКВАЛЬНЫЕ \n (текст из двух символов: \ и n)
         result = result.replace("\\n", " ");
         result = result.replace("\\r", " ");
 
-        // Убираем реальные переносы строк (на всякий случай)
         result = result.replace("\r\n", " ");
         result = result.replace("\n", " ");
         result = result.replace("\r", " ");
 
-        // Убираем лишние пробелы
         result = result.replaceAll("\\s+", " ").trim();
 
         return result;

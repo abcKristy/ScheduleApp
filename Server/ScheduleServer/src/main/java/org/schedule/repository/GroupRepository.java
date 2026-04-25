@@ -17,7 +17,6 @@ public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
     @Query("SELECT g FROM GroupEntity g WHERE g.groupName IN :groupNames")
     List<GroupEntity> findByGroupNamesIn(@Param("groupNames") List<String> groupNames);
 
-    // Для массового поиска с возвратом Map
     @Query("SELECT g FROM GroupEntity g WHERE g.groupName IN :groupNames")
     List<GroupEntity> findByGroupNameIn(@Param("groupNames") Collection<String> groupNames);
 }

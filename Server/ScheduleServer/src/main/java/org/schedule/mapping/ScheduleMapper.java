@@ -17,7 +17,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -157,7 +156,6 @@ public class ScheduleMapper {
                     .map(GroupEntity::getGroupName)
                     .collect(Collectors.toList());
 
-            // ✅ Берём из списков сущностей, а не из строк!
             List<String> teacherList = lesson.getTeachers() != null ?
                     lesson.getTeachers().stream()
                             .map(TeacherEntity::getFullName)

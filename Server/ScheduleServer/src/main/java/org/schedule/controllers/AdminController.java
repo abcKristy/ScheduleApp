@@ -22,10 +22,6 @@ public class AdminController {
         this.cleanupScheduler = cleanupScheduler;
     }
 
-    /**
-     * Ручной запуск очистки данных
-     * POST /admin/cleanup
-     */
     @PostMapping("/cleanup")
     public ResponseEntity<Map<String, Object>> manualCleanup() {
         log.info("Получен запрос на ручную очистку данных");

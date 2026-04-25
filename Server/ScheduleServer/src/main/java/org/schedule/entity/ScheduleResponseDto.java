@@ -23,12 +23,9 @@ public class ScheduleResponseDto {
     private List<String> groups;
     private String groupsSummary;
     private String description;
-
-    // Новые поля
     private RecurrenceRule recurrence;
     private List<LocalDate> exceptions;
 
-    // Конструкторы
     public ScheduleResponseDto() {}
 
     public ScheduleResponseDto(String discipline, LessonType lessonType,
@@ -46,7 +43,6 @@ public class ScheduleResponseDto {
         this.description = description;
     }
 
-    // Полный конструктор со всеми полями
     public ScheduleResponseDto(String discipline, LessonType lessonType,
                                LocalDateTime startTime, LocalDateTime endTime,
                                List<String> rooms, List<String> teachers, List<String> groups,
@@ -65,7 +61,6 @@ public class ScheduleResponseDto {
         this.exceptions = exceptions;
     }
 
-    // Getters and Setters
     public String getDiscipline() { return discipline; }
     public void setDiscipline(String discipline) { this.discipline = discipline; }
 
@@ -92,7 +87,6 @@ public class ScheduleResponseDto {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    // Новые геттеры и сеттеры
     public RecurrenceRule getRecurrence() { return recurrence; }
     public void setRecurrence(RecurrenceRule recurrence) { this.recurrence = recurrence; }
 

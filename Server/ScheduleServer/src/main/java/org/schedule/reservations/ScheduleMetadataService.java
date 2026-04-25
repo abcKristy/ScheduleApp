@@ -26,9 +26,6 @@ public class ScheduleMetadataService {
         this.checkHelper = checkHelper;
     }
 
-    /**
-     * Проверяет актуальность расписания для сущности
-     */
     public ScheduleMetadataResponseDto checkMetadata(String entityString) {
         log.info("Проверка метаданных для: {}", entityString);
 
@@ -88,9 +85,6 @@ public class ScheduleMetadataService {
         }
     }
 
-    /**
-     * Проверяет актуальность для нескольких сущностей
-     */
     public List<ScheduleMetadataResponseDto> checkMetadataBatch(List<String> entityStrings) {
         log.info("Пакетная проверка метаданных для {} сущностей", entityStrings.size());
 
