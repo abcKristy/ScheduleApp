@@ -403,9 +403,8 @@ public class SaverToMemory {
     }
 
     private void processRoomsBatch(List<LessonEntity> lessons) {
-        // Шаблон для аудитории: "БУКВА-ЦИФРЫ (КОРПУС)" или "БУКВА-ЦИФРЫ-БУКВА (КОРПУС)"
         java.util.regex.Pattern roomPattern = java.util.regex.Pattern.compile(
-                "[А-ЯA-Z]-\\d+[а-яa-z]?\\s*\\([^)]+\\)"
+                "(?:[А-ЯA-Z]+-\\d+[а-яa-z]?|стр\\.\\d+\\s+[А-ЯЁ][а-яё]+)\\s*\\([^)]+\\)"
         );
 
         Set<String> allRoomNames = lessons.stream()

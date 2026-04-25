@@ -35,10 +35,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.scheduleapp.data.entity.ScheduleItem
+import com.example.scheduleapp.screens.master.detail.getLessonTypeText
 import com.example.scheduleapp.ui.theme.blue
 import com.example.scheduleapp.ui.theme.customColors
 import com.example.scheduleapp.ui.theme.deepGreen
 import com.example.scheduleapp.ui.theme.pink40
+import com.example.scheduleapp.ui.theme.pink80
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.LocalDateTime
@@ -80,6 +82,7 @@ fun ScheduleListItem(
     val dotColor = when (scheduleItem.lessonType.uppercase()) {
         "LK", "LECTURE", "ЛЕКЦИЯ" -> deepGreen
         "PR", "PRACTICE", "ПРАКТИКА" -> blue
+        "SR", "СР" -> pink80
         else -> pink40
     }
     Card(
@@ -115,7 +118,7 @@ fun ScheduleListItem(
                                 .background(dotColor)
                         )
                         Text(
-                            text = scheduleItem.lessonType,
+                            text = getLessonTypeText(scheduleItem.lessonType),
                             style = MaterialTheme.typography.bodySmall,
                             color = colorScheme.onSurfaceVariant,
                             modifier = Modifier

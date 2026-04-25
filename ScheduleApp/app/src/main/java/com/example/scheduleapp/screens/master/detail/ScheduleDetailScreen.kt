@@ -83,6 +83,8 @@ fun ScheduleDetailScreen(
 
     val backgroundImage = when (scheduleItem.lessonType.uppercase()) {
         "LECTURE", "ЛЕКЦИЯ", "LK" -> R.drawable.bg_lk
+        "SR", "СР" -> R.drawable.bg_pr
+        "LAB", "ЛАБОРАТОРНАЯ"  -> R.drawable.bg_pr
         else -> R.drawable.bg_pr
     }
 
@@ -90,8 +92,9 @@ fun ScheduleDetailScreen(
     val lessonTypeText = getLessonTypeText(scheduleItem.lessonType)
     val circleColor = when (scheduleItem.lessonType.uppercase()) {
         "LECTURE", "ЛЕКЦИЯ", "LK" -> lightGreen
-        "PRACTICE", "ПРАКТИКА","PR" -> blue
+        "PRACTICE", "ПРАКТИКА", "PR" -> blue
         "LAB", "ЛАБОРАТОРНАЯ" -> pink40
+        "SR", "СР" -> pink80
         else -> pink80
     }
 
@@ -129,9 +132,10 @@ fun ScheduleDetailScreen(
 
         when (scheduleItem.lessonType.uppercase()) {
             "LECTURE", "ЛЕКЦИЯ", "LK" -> AnimatedShinyBottom(shiny = lightGreen, 180f, 650f, shouldMove = false)
-            "PRACTICE", "ПРАКТИКА","PR" -> AnimatedShinyBottom(shiny = blue, 200f, 630f, shouldMove = false)
+            "PRACTICE", "ПРАКТИКА", "PR" -> AnimatedShinyBottom(shiny = blue, 200f, 630f, shouldMove = false)
             "LAB", "ЛАБОРАТОРНАЯ" -> AnimatedShinyBottom(shiny = pink40, 200f, 630f, shouldMove = false)
-            else ->  AnimatedShinyBottom(shiny = pink80, 200f, 630f, shouldMove = false)
+            "SR", "СР" -> AnimatedShinyBottom(shiny = pink80, 200f, 630f, shouldMove = false)  // ← добавляем
+            else -> AnimatedShinyBottom(shiny = pink80, 200f, 630f, shouldMove = false)
         }
 
         Column(
@@ -415,11 +419,12 @@ private fun getLessonNumber(startTime: LocalDateTime): Int {
     }
 }
 
-private fun getLessonTypeText(lessonType: String): String {
+fun getLessonTypeText(lessonType: String): String {
     return when (lessonType.uppercase()) {
-        "LECTURE", "ЛЕКЦИЯ" -> "Лекция"
-        "PRACTICE", "ПРАКТИКА" -> "Практика"
+        "LK", "ЛЕКЦИЯ" -> "Лекция"
+        "PR", "ПРАКТИКА" -> "Практика"
         "LAB", "ЛАБОРАТОРНАЯ" -> "Лабораторная"
+        "SR", "СР" -> "Сам. работа"
         else -> lessonType
     }
 }

@@ -177,7 +177,8 @@ public class ParserToLesson {
         String summary = properties.getOrDefault("SUMMARY", "");
         String cleanSummary = summary;
 
-        if (cleanSummary.startsWith("ЛК ") || cleanSummary.startsWith("ПР ") || cleanSummary.startsWith("ЛАБ ")) {
+        if (cleanSummary.startsWith("ЛК ") || cleanSummary.startsWith("ПР ") ||
+                cleanSummary.startsWith("ЛАБ ") || cleanSummary.startsWith("СР ")) {
             cleanSummary = cleanSummary.substring(3);
         }
 
@@ -191,7 +192,9 @@ public class ParserToLesson {
         String categories = properties.getOrDefault("CATEGORIES", "");
         String summary = properties.getOrDefault("SUMMARY", "");
 
-        if (categories.contains("ЛК") || summary.startsWith("ЛК")) {
+        if (categories.contains("СР") || summary.startsWith("СР")) {
+            return LessonType.SR;
+        } else if (categories.contains("ЛК") || summary.startsWith("ЛК")) {
             return LessonType.LK;
         } else if (categories.contains("ПР") || summary.startsWith("ПР")) {
             return LessonType.PR;
